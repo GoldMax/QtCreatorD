@@ -1,0 +1,9 @@
+<plugin name=\"DLangEditor\" version=\"$$QTCREATOR_VERSION\" compatVersion=\"$$QTCREATOR_COMPAT_VERSION\">
+    <vendor>Max Goldaev</vendor>
+    <copyright>(C) 2013 Max Goldaev</copyright>
+    <license>Boost 1.0 </license>
+    <category>D Language</category>
+    <description>Editor for D language files.</description>
+    <url></url>
+    $$dependencyList
+</plugin>
