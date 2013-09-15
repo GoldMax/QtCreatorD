@@ -18,8 +18,8 @@ const char C_DLANGEDITOR_DISPLAY_NAME[] = QT_TRANSLATE_NOOP("OpenWith::Editors",
 const char DLANG_MIMETYPE[] = "text/x-dsrc";
 const char DLANG_MIMETYPE_INT[] = "text/x-dint";
 
-const char WIZARD_CATEGORY_DLANG[] = "U.DLang";
-const char WIZARD_TR_CATEGORY_DLANG[] = QT_TRANSLATE_NOOP("DLangEditor", "DLang");
+const char WIZARD_CATEGORY_DLANG[] = "A.D";
+const char WIZARD_TR_CATEGORY_DLANG[] = QT_TRANSLATE_NOOP("DLangEditor", "D");
 
 } // namespace Constants
 } // namespace DLangEditor

@@ -3,12 +3,12 @@
 #include "dlangeditorplugin.h"
 #include "reuse.h"
 
-#include <glsl/glslengine.h>
-#include <glsl/glsllexer.h>
-#include <glsl/glslparser.h>
-#include <glsl/glslsemantic.h>
-#include <glsl/glslsymbols.h>
-#include <glsl/glslastdump.h>
+//#include <glsl/glslengine.h>
+//#include <glsl/glsllexer.h>
+//#include <glsl/glslparser.h>
+//#include <glsl/glslsemantic.h>
+//#include <glsl/glslsymbols.h>
+//#include <glsl/glslastdump.h>
 
 #include <coreplugin/idocument.h>
 #include <texteditor/completionsettings.h>

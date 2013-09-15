@@ -1,6 +1,7 @@
 #include "dlangfilewizard.h"
 #include "dlangeditorconstants.h"
 
+#include <projectexplorer/projectexplorerconstants.h>
 #include <utils/filewizarddialog.h>
 #include <utils/qtcassert.h>
 
@@ -14,19 +15,19 @@ class DLangFileWizardDialog : public Utils::FileWizardDialog
 {
     Q_OBJECT
 public:
-				DLangFileWizardDialog(QWidget *parent = 0)
-        : Utils::FileWizardDialog(parent)
+    DLangFileWizardDialog(QWidget *parent,const QString projFile)
+        : Utils::FileWizardDialog(parent), m_projFile(projFile)
     {
     }
+ QString m_projFile;
 };
 } // anonymous namespace
 
 using namespace DLangEditor;
 
 DLangFileWizard::DLangFileWizard(const BaseFileWizardParameters &parameters,
-                               ShaderType shaderType, QObject *parent):
-    Core::BaseFileWizard(parameters, parent),
-    m_shaderType(shaderType)
+                               FileType fileType, QObject *parent):
+    Core::BaseFileWizard(parameters, parent), m_fileType(fileType)
 {
 }
 
@@ -41,100 +42,54 @@ Core::IWizard::WizardFlags DLangFileWizard::flags() const
 }
 
 Core::GeneratedFiles DLangFileWizard::generateFiles(const QWizard *w,
-                                                 QString * /*errorMessage*/) const
+                                                    QString * /*errorMessage*/) const
 {
-				const DLangFileWizardDialog *wizardDialog = qobject_cast<const DLangFileWizardDialog *>(w);
-    const QString path = wizardDialog->path();
-    const QString name = wizardDialog->fileName();
+ const DLangFileWizardDialog *wizardDialog = qobject_cast<const DLangFileWizardDialog *>(w);
+ const QString path = wizardDialog->path();
+ const QString name = wizardDialog->fileName();
+ const QString fileName = Core::BaseFileWizard::buildFileName(path, name, preferredSuffix(m_fileType));
 
-    const QString fileName = Core::BaseFileWizard::buildFileName(path, name, preferredSuffix(m_shaderType));
+ Core::GeneratedFile file(fileName);
+ file.setAttributes(Core::GeneratedFile::OpenEditorAttribute);
 
-    Core::GeneratedFile file(fileName);
-    file.setContents(fileContents(fileName, m_shaderType));
-    file.setAttributes(Core::GeneratedFile::OpenEditorAttribute);
-    return Core::GeneratedFiles() << file;
-}
+ QString contents = QLatin1String("module ");
+ QString module = wizardDialog->m_projFile;
+ if(module.length() == 0)
+  module = name;
+ else
+ {
 
-QString DLangFileWizard::fileContents(const QString &, ShaderType shaderType) const
-{
-    QString contents;
-    QTextStream str(&contents);
+ }
+ contents.append(module);
+ contents.append(QLatin1String(";\n"));
+ //switch(m_fileType) {}
+ file.setContents(contents);
 
-    switch (shaderType) {
-				case DLangFileWizard::VertexShaderES:
-        str << QLatin1String("attribute highp vec4 qt_Vertex;\n")
-            << QLatin1String("attribute highp vec4 qt_MultiTexCoord0;\n")
-            << QLatin1String("uniform highp mat4 qt_ModelViewProjectionMatrix;\n")
-            << QLatin1String("varying highp vec4 qt_TexCoord0;\n")
-            << QLatin1String("\n")
-            << QLatin1String("void main(void)\n")
-            << QLatin1String("{\n")
-            << QLatin1String("    gl_Position = qt_ModelViewProjectionMatrix * qt_Vertex;\n")
-            << QLatin1String("    qt_TexCoord0 = qt_MultiTexCoord0;\n")
-            << QLatin1String("}\n");
-        break;
-				case DLangFileWizard::FragmentShaderES:
-        str << QLatin1String("uniform sampler2D qt_Texture0;\n")
-            << QLatin1String("varying highp vec4 qt_TexCoord0;\n")
-            << QLatin1String("\n")
-            << QLatin1String("void main(void)\n")
-            << QLatin1String("{\n")
-            << QLatin1String("    gl_FragColor = texture2D(qt_Texture0, qt_TexCoord0.st);\n")
-            << QLatin1String("}\n");
-        break;
-				case DLangFileWizard::VertexShaderDesktop:
-        str << QLatin1String("attribute vec4 qt_Vertex;\n")
-            << QLatin1String("attribute vec4 qt_MultiTexCoord0;\n")
-            << QLatin1String("uniform mat4 qt_ModelViewProjectionMatrix;\n")
-            << QLatin1String("varying vec4 qt_TexCoord0;\n")
-            << QLatin1String("\n")
-            << QLatin1String("void main(void)\n")
-            << QLatin1String("{\n")
-            << QLatin1String("    gl_Position = qt_ModelViewProjectionMatrix * qt_Vertex;\n")
-            << QLatin1String("    qt_TexCoord0 = qt_MultiTexCoord0;\n")
-            << QLatin1String("}\n");
-        break;
-				case DLangFileWizard::FragmentShaderDesktop:
-        str << QLatin1String("uniform sampler2D qt_Texture0;\n")
-            << QLatin1String("varying vec4 qt_TexCoord0;\n")
-            << QLatin1String("\n")
-            << QLatin1String("void main(void)\n")
-            << QLatin1String("{\n")
-            << QLatin1String("    gl_FragColor = texture2D(qt_Texture0, qt_TexCoord0.st);\n")
-            << QLatin1String("}\n");
-        break;
-    default: break;
-    }
-
-    return contents;
+ return Core::GeneratedFiles() << file;
 }
 
 QWizard *DLangFileWizard::createWizardDialog(QWidget *parent,
-                                            const Core::WizardDialogParameters &wizardDialogParameters) const
+  const Core::WizardDialogParameters &wizardDialogParameters) const
 {
-				DLangFileWizardDialog *wizardDialog = new DLangFileWizardDialog(parent);
-    wizardDialog->setWindowTitle(tr("New %1").arg(displayName()));
-    setupWizard(wizardDialog);
-    wizardDialog->setPath(wizardDialogParameters.defaultPath());
-    foreach (QWizardPage *p, wizardDialogParameters.extensionPages())
-        BaseFileWizard::applyExtensionPageShortTitle(wizardDialog, wizardDialog->addPage(p));
-    return wizardDialog;
+ QLatin1String key(ProjectExplorer::Constants::PREFERED_PROJECT_NODE);
+ QString projFile = wizardDialogParameters.extraValues().value(key).toString();
+
+ DLangFileWizardDialog *wizardDialog = new DLangFileWizardDialog(parent, projFile);
+ wizardDialog->setWindowTitle(tr("New %1").arg(displayName()));
+ setupWizard(wizardDialog);
+ wizardDialog->setPath(wizardDialogParameters.defaultPath());
+ foreach (QWizardPage *p, wizardDialogParameters.extensionPages())
+  BaseFileWizard::applyExtensionPageShortTitle(wizardDialog, wizardDialog->addPage(p));
+ return wizardDialog;
 }
 
-QString DLangFileWizard::preferredSuffix(ShaderType shaderType) const
+QString DLangFileWizard::preferredSuffix(FileType fileType) const
 {
-    switch (shaderType) {
-				case DLangFileWizard::VertexShaderES:
-        return QLatin1String("vsh");
-				case DLangFileWizard::FragmentShaderES:
-        return QLatin1String("fsh");
-				case DLangFileWizard::VertexShaderDesktop:
-        return QLatin1String("vert");
-				case DLangFileWizard::FragmentShaderDesktop:
-        return QLatin1String("frag");
-    default:
-        return QLatin1String("glsl");
-    }
+ return QLatin1String("d");
+// switch (fileType)
+// {
+//  default: return QLatin1String("d");
+// }
 }
 
 #include "dlangfilewizard.moc"

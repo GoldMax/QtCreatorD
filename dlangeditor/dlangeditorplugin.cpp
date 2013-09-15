@@ -81,12 +81,12 @@ bool DLangEditorPlugin::initialize(const QStringList & /*arguments*/, QString *e
 				if (!MimeDatabase::addMimeTypes(QLatin1String(":/dlangeditor/DLangEditor.mimetypes.xml"), errorMessage))
         return false;
 
-				addAutoReleasedObject(new DLangHoverHandler(this));
-
 				m_editor = new DLangEditorFactory(this);
     addObject(m_editor);
 
 				addAutoReleasedObject(new DLangCompletionAssistProvider);
+    addAutoReleasedObject(new DLangHoverHandler(this));
+    addAutoReleasedObject(new DLangHighlighterFactory);
 
 				m_actionHandler = new TextEditorActionHandler(Constants::C_DLANGEDITOR_ID,
 						TextEditorActionHandler::Format
@@ -123,48 +123,13 @@ bool DLangEditorPlugin::initialize(const QStringList & /*arguments*/, QString *e
 
 
     QObject *core = ICore::instance();
-    BaseFileWizardParameters fragWizardParameters(IWizard::FileWizard);
-				fragWizardParameters.setCategory(QLatin1String(Constants::WIZARD_CATEGORY_DLANG));
-				fragWizardParameters.setDisplayCategory(QCoreApplication::translate("DLangEditor", Constants::WIZARD_TR_CATEGORY_DLANG));
-    fragWizardParameters.setDescription
-        (tr("Creates a fragment shader in the OpenGL/ES 2.0 Shading "
-												"Language (DLang/ES). Fragment shaders generate the final "
-            "pixel colors for triangles, points and lines rendered "
-            "with OpenGL."));
-    fragWizardParameters.setDisplayName(tr("Fragment Shader (OpenGL/ES 2.0)"));
-				fragWizardParameters.setId(QLatin1String("F.DLang"));
-				addAutoReleasedObject(new DLangFileWizard(fragWizardParameters, DLangFileWizard::FragmentShaderES, core));
-
-    BaseFileWizardParameters vertWizardParameters(IWizard::FileWizard);
-				vertWizardParameters.setCategory(QLatin1String(Constants::WIZARD_CATEGORY_DLANG));
-				vertWizardParameters.setDisplayCategory(QCoreApplication::translate("DLangEditor", Constants::WIZARD_TR_CATEGORY_DLANG));
-    vertWizardParameters.setDescription
-        (tr("Creates a vertex shader in the OpenGL/ES 2.0 Shading "
-												"Language (DLang/ES). Vertex shaders transform the "
-            "positions, normals and texture co-ordinates of "
-            "triangles, points and lines rendered with OpenGL."));
-    vertWizardParameters.setDisplayName(tr("Vertex Shader (OpenGL/ES 2.0)"));
-				vertWizardParameters.setId(QLatin1String("G.DLang"));
-				addAutoReleasedObject(new DLangFileWizard(vertWizardParameters, DLangFileWizard::VertexShaderES, core));
-
-    fragWizardParameters.setDescription
-        (tr("Creates a fragment shader in the Desktop OpenGL Shading "
-												"Language (DLang). Fragment shaders generate the final "
-            "pixel colors for triangles, points and lines rendered "
-            "with OpenGL."));
-    fragWizardParameters.setDisplayName(tr("Fragment Shader (Desktop OpenGL)"));
-				fragWizardParameters.setId(QLatin1String("J.DLang"));
-				addAutoReleasedObject(new DLangFileWizard(fragWizardParameters, DLangFileWizard::FragmentShaderDesktop, core));
-
-    vertWizardParameters.setDescription
-        (tr("Creates a vertex shader in the Desktop OpenGL Shading "
-												"Language (DLang). Vertex shaders transform the "
-            "positions, normals and texture co-ordinates of "
-            "triangles, points and lines rendered with OpenGL."));
-    vertWizardParameters.setDisplayName(tr("Vertex Shader (Desktop OpenGL)"));
-				vertWizardParameters.setId(QLatin1String("K.DLang"));
-				addAutoReleasedObject(new DLangFileWizard(vertWizardParameters, DLangFileWizard::VertexShaderDesktop, core));
-				addAutoReleasedObject(new DLangHighlighterFactory);
+    BaseFileWizardParameters emptyWizardParameters(IWizard::FileWizard);
+    emptyWizardParameters.setCategory(QLatin1String(Constants::WIZARD_CATEGORY_DLANG));
+    emptyWizardParameters.setDisplayCategory(QCoreApplication::translate("DLangEditor", Constants::WIZARD_TR_CATEGORY_DLANG));
+    emptyWizardParameters.setDescription(tr("Creates a empty D language file."));
+    emptyWizardParameters.setDisplayName(tr("Empty D file"));
+    emptyWizardParameters.setId(QLatin1String("F.DLang"));
+    addAutoReleasedObject(new DLangFileWizard(emptyWizardParameters, DLangFileWizard::Empty, core));
 
     return true;
 }

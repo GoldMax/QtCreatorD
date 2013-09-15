@@ -33,3 +33,6 @@ dlanghoverhandler.cpp \
     reuse.cpp
 
 RESOURCES += dlangeditor.qrc
+
+OTHER_FILES += \
+    dlangeditor_dependencies.pri

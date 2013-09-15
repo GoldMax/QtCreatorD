@@ -7,38 +7,30 @@ namespace DLangEditor {
 
 class DLangFileWizard: public Core::BaseFileWizard
 {
-    Q_OBJECT
+ Q_OBJECT
 
 public:
-    typedef Core::BaseFileWizardParameters BaseFileWizardParameters;
+ typedef Core::BaseFileWizardParameters BaseFileWizardParameters;
 
-    enum ShaderType
-    {
-        VertexShaderES,
-        FragmentShaderES,
-        VertexShaderDesktop,
-        FragmentShaderDesktop
-    };
+ enum FileType { Empty };
 
-				explicit DLangFileWizard(const BaseFileWizardParameters &parameters,
-                            ShaderType shaderType, QObject *parent = 0);
+ explicit DLangFileWizard(const BaseFileWizardParameters &parameters,
+                          FileType fileType, QObject *parent = 0);
 
-    virtual Core::FeatureSet requiredFeatures() const;
-    virtual WizardFlags flags() const;
+ virtual Core::FeatureSet requiredFeatures() const;
+ virtual WizardFlags flags() const;
 
 protected:
-    QString fileContents(const QString &baseName, ShaderType shaderType) const;
+ virtual QWizard *createWizardDialog(QWidget *parent,
+                                     const Core::WizardDialogParameters &wizardDialogParameters) const;
 
-    virtual QWizard *createWizardDialog(QWidget *parent,
-                                        const Core::WizardDialogParameters &wizardDialogParameters) const;
+ virtual Core::GeneratedFiles generateFiles(const QWizard *w,
+                                            QString *errorMessage) const;
 
-    virtual Core::GeneratedFiles generateFiles(const QWizard *w,
-                                               QString *errorMessage) const;
-
-    virtual QString preferredSuffix(ShaderType shaderType) const;
+ virtual QString preferredSuffix(FileType fileType) const;
 
 private:
-    ShaderType m_shaderType;
+ FileType m_fileType;
 };
 
 } // namespace DLangEditor
