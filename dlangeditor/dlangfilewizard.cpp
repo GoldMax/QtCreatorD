@@ -9,6 +9,7 @@
 #include <QTextStream>
 #include <QWizard>
 #include <QPushButton>
+#include <QDir>
 
 namespace {
 class DLangFileWizardDialog : public Utils::FileWizardDialog
@@ -58,7 +59,20 @@ Core::GeneratedFiles DLangFileWizard::generateFiles(const QWizard *w,
   module = name;
  else
  {
-
+  module = QDir::cleanPath(module);
+  module.truncate(module.lastIndexOf(QDir::separator()));
+  QString p = wizardDialog->path();
+  module = p.replace(module, QString());
+  if(module.length() > 0)
+  {
+   if(module.at(0) == QDir::separator())
+    module = module.remove(0,1);
+   if(module.endsWith(QDir::separator()))
+    module.chop(1);
+   module = module.replace(QDir::separator(), QChar::fromLatin1('.'));
+   module.append(QChar::fromAscii('.'));
+   module.append(name);
+  }
  }
  contents.append(module);
  contents.append(QLatin1String(";\n"));
@@ -85,6 +99,7 @@ QWizard *DLangFileWizard::createWizardDialog(QWidget *parent,
 
 QString DLangFileWizard::preferredSuffix(FileType fileType) const
 {
+ Q_UNUSED(fileType);
  return QLatin1String("d");
 // switch (fileType)
 // {
