@@ -71,8 +71,8 @@ Core::GeneratedFiles DLangFileWizard::generateFiles(const QWizard *w,
     module.chop(1);
    module = module.replace(QDir::separator(), QChar::fromLatin1('.'));
    module.append(QChar::fromAscii('.'));
-   module.append(name);
   }
+  module.append(name);
  }
  contents.append(module);
  contents.append(QLatin1String(";\n"));

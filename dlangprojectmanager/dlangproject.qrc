@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/dlangproject">
+        <file>DLangProjectManager.mimetypes.xml</file>
+    </qresource>
+</RCC>
