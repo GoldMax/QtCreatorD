@@ -2,8 +2,8 @@
 #include "dlangeditorplugin.h"
 #include "dlangtexteditor.h"
 //#include "dlangautocompleter.h"
-//#include "dlangindenter.h"
-//#include "dlangcompletionassist.h"
+#include "dlangindenter.h"
+#include "dlangcompletionassist.h"
 
 #include <coreplugin/coreconstants.h>
 #include <coreplugin/icore.h>
@@ -35,10 +35,35 @@ Core::Id DLangTextEditor::id() const
  return DLangEditor::Constants::C_DLANGEDITOR_ID;
 }
 
-DLangTextEditorWidget::DLangTextEditorWidget(QWidget *parent)
-  : PlainTextEditorWidget(parent)
-{
+//-----------------------------
+//- DLangTextEditorWidget
+//-----------------------------
 
+DLangTextEditorWidget::DLangTextEditorWidget(QWidget *parent)
+  : PlainTextEditorWidget(parent) // BaseTextEditorWidget(parent)
+{
+ //setIndenter(new DLangIndenter());
+}
+
+TextEditor::IAssistInterface* DLangTextEditorWidget::createAssistInterface(
+  TextEditor::AssistKind kind,
+  TextEditor::AssistReason reason) const
+{
+ if (kind == TextEditor::Completion)
+  return new DLangCompletionAssistInterface(document(),
+                                            position(),
+                                            editor()->document()->filePath(),
+                                            reason,
+                                            mimeType()/*,
+                                            dDocument()*/);
+ return BaseTextEditorWidget::createAssistInterface(kind, reason);
+}
+
+TextEditor::BaseTextEditor* DLangTextEditorWidget::createEditor()
+{
+ DLangTextEditor* edit = new DLangTextEditor(this);
+ //createToolBar(edit);
+ return edit;
 }
 
 /*#include "dlangeditor.h"
@@ -244,12 +269,7 @@ QString DLangTextEditorWidget::wordUnderCursor() const
     return word;
 }
 
-TextEditor::BaseTextEditor *DLangTextEditorWidget::createEditor()
-{
-				DLangEditorEditable *editable = new DLangEditorEditable(this);
-    createToolBar(editable);
-    return editable;
-}
+
 
 void DLangTextEditorWidget::createToolBar(DLangEditorEditable *editor)
 {

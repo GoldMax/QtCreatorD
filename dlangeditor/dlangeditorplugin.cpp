@@ -1,10 +1,10 @@
 #include "_dlangeditorconstants.h"
 #include "dlangeditorplugin.h"
-//#include "dlangeditor.h"
+#include "dlangtexteditor.h"
 #include "dlangeditorfactory.h"
 #include "dlangfilewizard.h"
-//#include "dlanghoverhandler.h"
-//#include "dlangcompletionassist.h"
+#include "dlanghoverhandler.h"
+#include "dlangcompletionassist.h"
 
 #include <coreplugin/icore.h>
 #include <coreplugin/coreconstants.h>
@@ -24,7 +24,6 @@ using namespace TextEditor::Internal;
 
 
 using namespace DLangEditor;
-using namespace DLangEditor::Internal;
 
 DLangEditorPlugin *DLangEditorPlugin::m_instance = 0;
 
@@ -39,6 +38,7 @@ DLangEditorPlugin::DLangEditorPlugin()
 DLangEditorPlugin::~DLangEditorPlugin()
 {
  //removeObject(m_editorFactory);
+ delete m_actionHandler;
  m_instance = 0;
 }
 
@@ -68,19 +68,26 @@ bool DLangEditorPlugin::initialize(const QStringList & arguments, QString *error
  m_editorFactory = new DLangEditorFactory(this);
  addAutoReleasedObject(m_editorFactory);
 
- m_editorFactory->actionHandler()->initializeActions();
+ m_actionHandler = new TextEditorActionHandler(
+     Constants::C_DLANGEDITOR_ID,
+     TextEditorActionHandler::Format |
+     TextEditorActionHandler::UnCommentSelection |
+     TextEditorActionHandler::UnCollapseAll);
+ m_actionHandler->initializeActions();
+
+ addAutoReleasedObject(new DLangCompletionAssistProvider);
+ addAutoReleasedObject(new DLangHoverHandler(this));
+
+
  errorMessage->clear();
  return true;
-// addAutoReleasedObject(new DLangCompletionAssistProvider);
-// addAutoReleasedObject(new DLangHoverHandler(this));
 
 }
 
 void DLangEditorPlugin::initializeEditor(DLangTextEditorWidget* editor)
 {
  // common actions
- m_editorFactory->actionHandler()->
-   setupActions((BaseTextEditorWidget*)(editor));
+ m_actionHandler->setupActions((BaseTextEditorWidget*)(editor));
 
  TextEditorSettings::instance()->initializeEditor((BaseTextEditorWidget*)editor);
 }

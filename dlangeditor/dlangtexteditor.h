@@ -21,12 +21,16 @@ public:
  Core::Id id() const;
 };
 
-class DLangTextEditorWidget : public TextEditor::PlainTextEditorWidget
+class DLangTextEditorWidget : public TextEditor::PlainTextEditorWidget // TextEditor::BaseTextEditorWidget
 {
     Q_OBJECT
 
 public:
     DLangTextEditorWidget(QWidget* parent);
+    TextEditor::BaseTextEditor *createEditor();
+    TextEditor::IAssistInterface *createAssistInterface(TextEditor::AssistKind assistKind,
+                                                        TextEditor::AssistReason reason) const;
+
 
     /*virtual void unCommentSelection();
 
@@ -39,8 +43,6 @@ public:
 
 				Document::Ptr dDocument() const;
 
-    TextEditor::IAssistInterface *createAssistInterface(TextEditor::AssistKind assistKind,
-                                                        TextEditor::AssistReason reason) const;
 
 private slots:
     void updateDocument();

@@ -4,6 +4,7 @@
 #include <extensionsystem/iplugin.h>
 #include <texteditor/texteditorsettings.h>
 #include <texteditor/fontsettings.h>
+#include <texteditor/texteditoractionhandler.h>
 #include <find/searchresultwindow.h>
 
 namespace DLangEditor {
@@ -29,6 +30,7 @@ public:
 
  void initializeEditor(DLangTextEditorWidget *editor);
  DLangEditorFactory *editorFactory() { return m_editorFactory; }
+ TextEditor::TextEditorActionHandler *actionHandler() const { return m_actionHandler; }
 
 private slots:
  void updateSearchResultsFont(const TextEditor::FontSettings &);
@@ -36,6 +38,7 @@ private slots:
 private:
  static DLangEditorPlugin* m_instance;
  DLangEditorFactory* m_editorFactory;
+ TextEditor::TextEditorActionHandler *m_actionHandler;
 
  TextEditor::TextEditorSettings* m_settings;
  Find::SearchResultWindow *m_searchResultWindow;

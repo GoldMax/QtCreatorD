@@ -8,13 +8,19 @@ dlangeditorplugin.h \
     _dlangeditorconstants.h \
     dlangeditorfactory.h \
     dlangfilewizard.h \
-    dlangtexteditor.h
+    dlangtexteditor.h \
+    dlangcompletionassist.h \
+    dlanghoverhandler.h \
+    dlangindenter.h
 
 SOURCES += \
 dlangeditorplugin.cpp \
     dlangeditorfactory.cpp \
     dlangfilewizard.cpp \
-    dlangtexteditor.cpp
+    dlangtexteditor.cpp \
+    dlangcompletionassist.cpp \
+    dlanghoverhandler.cpp \
+    dlangindenter.cpp
 
 RESOURCES += dlangeditor.qrc
 

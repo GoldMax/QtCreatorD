@@ -1,5 +1,5 @@
-#ifndef DLangHOVERHANDLER_H
-#define DLangHOVERHANDLER_H
+#ifndef DLANGHOVERHANDLER_H
+#define DLANGHOVERHANDLER_H
 
 #include <texteditor/basehoverhandler.h>
 
@@ -14,22 +14,20 @@ class ITextEditor;
 }
 
 namespace DLangEditor {
-namespace Internal {
 
 class DLangHoverHandler : public TextEditor::BaseHoverHandler
 {
-    Q_OBJECT
+ Q_OBJECT
 public:
-				DLangHoverHandler(QObject *parent = 0);
-				virtual ~DLangHoverHandler();
+ DLangHoverHandler(QObject *parent = 0);
+ virtual ~DLangHoverHandler();
 
 private:
-    virtual bool acceptEditor(Core::IEditor *editor);
-    virtual void identifyMatch(TextEditor::ITextEditor *editor, int pos);
-    virtual void decorateToolTip();
+ virtual bool acceptEditor(Core::IEditor *editor);
+ virtual void identifyMatch(TextEditor::ITextEditor *editor, int pos);
+ virtual void decorateToolTip();
 };
 
-} // namespace Internal
 } // namespace DLangEditor
 
-#endif // DLangHOVERHANDLER_H
+#endif // DLANGHOVERHANDLER_H

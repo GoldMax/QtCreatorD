@@ -1,7 +1,7 @@
+#include "_dlangeditorconstants.h"
 #include "dlangcompletionassist.h"
-#include "dlangeditorconstants.h"
 #include "dlangeditorplugin.h"
-#include "reuse.h"
+//#include "reuse.h"
 
 //#include <glsl/glslengine.h>
 //#include <glsl/glsllexer.h>
@@ -29,7 +29,6 @@
 #include <QDebug>
 
 using namespace DLangEditor;
-using namespace Internal;
 using namespace TextEditor;
 
 namespace {
@@ -115,18 +114,18 @@ bool DLangCompletionAssistProvider::isActivationCharSequence(const QString &sequ
 class DLangFunctionHintProposalModel : public TextEditor::IFunctionHintProposalModel
 {
 public:
-				DLangFunctionHintProposalModel(QVector<DLang::Function *> functionSymbols)
-        : m_items(functionSymbols)
-        , m_currentArg(-1)
+    DLangFunctionHintProposalModel(/*QVector<DLang::Function *> functionSymbols*/)
+        : //m_items(functionSymbols),
+         m_currentArg(-1)
     {}
 
     virtual void reset() {}
-    virtual int size() const { return m_items.size(); }
+    virtual int size() const { return 1; /*m_items.size();*/ }
     virtual QString text(int index) const;
     virtual int activeArgument(const QString &prefix) const;
 
 private:
-				QVector<DLang::Function *> m_items;
+    //QVector<DLang::Function *> m_items;
     mutable int m_currentArg;
 };
 
@@ -380,13 +379,13 @@ IAssistProposal *DLangCompletionAssistProcessor::createContentProposal() const
     return proposal;
 }
 
-IAssistProposal *DLangCompletionAssistProcessor::createHintProposal(
-				const QVector<DLang::Function *> &symbols)
-{
-				IFunctionHintProposalModel *model = new DLangFunctionHintProposalModel(symbols);
-    IAssistProposal *proposal = new FunctionHintProposal(m_startPosition, model);
-    return proposal;
-}
+//IAssistProposal *DLangCompletionAssistProcessor::createHintProposal(
+//				const QVector<DLang::Function *> &symbols)
+//{
+//				IFunctionHintProposalModel *model = new DLangFunctionHintProposalModel(symbols);
+//    IAssistProposal *proposal = new FunctionHintProposal(m_startPosition, model);
+//    return proposal;
+//}
 
 bool DLangCompletionAssistProcessor::acceptsIdleEditor() const
 {
@@ -436,10 +435,10 @@ DLangCompletionAssistInterface::DLangCompletionAssistInterface(QTextDocument *te
                                                              int position,
                                                              const QString &fileName,
                                                              TextEditor::AssistReason reason,
-                                                             const QString &mimeType,
-                                                             const Document::Ptr &glslDoc)
+                                                             const QString &mimeType/*,
+                                                             const Document::Ptr &glslDoc*/)
     : DefaultAssistInterface(textDocument, position, fileName, reason)
     , m_mimeType(mimeType)
-    , m_glslDoc(glslDoc)
+    //, m_glslDoc(glslDoc)
 {
 }

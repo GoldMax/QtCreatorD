@@ -1,6 +1,5 @@
 #include "dlanghoverhandler.h"
-#include "dlangeditor.h"
-#include "dlangeditoreditable.h"
+#include "dlangtexteditor.h"
 
 #include <coreplugin/editormanager/ieditor.h>
 #include <coreplugin/editormanager/editormanager.h>
@@ -13,7 +12,6 @@
 #include <QUrl>
 
 using namespace DLangEditor;
-using namespace DLangEditor::Internal;
 using namespace Core;
 
 DLangHoverHandler::DLangHoverHandler(QObject *parent) : BaseHoverHandler(parent)
@@ -24,21 +22,21 @@ DLangHoverHandler::~DLangHoverHandler()
 
 bool DLangHoverHandler::acceptEditor(IEditor *editor)
 {
-				if (qobject_cast<DLangEditorEditable *>(editor) != 0)
-        return true;
-    return false;
+ if (qobject_cast<DLangTextEditor *>(editor) != 0)
+  return true;
+ return false;
 }
 
 void DLangHoverHandler::identifyMatch(TextEditor::ITextEditor *editor, int pos)
 {
-				if (DLangTextEditorWidget *glslEditor = qobject_cast<DLangTextEditorWidget *>(editor->widget())) {
-        if (! glslEditor->extraSelectionTooltip(pos).isEmpty())
-            setToolTip(glslEditor->extraSelectionTooltip(pos));
-    }
+ if (DLangTextEditorWidget *dEditor = qobject_cast<DLangTextEditorWidget *>(editor->widget())) {
+  if (! dEditor->extraSelectionTooltip(pos).isEmpty())
+   setToolTip(dEditor->extraSelectionTooltip(pos));
+ }
 }
 
 void DLangHoverHandler::decorateToolTip()
 {
-    if (Qt::mightBeRichText(toolTip()))
-        setToolTip(Qt::escape(toolTip()));
+ if (Qt::mightBeRichText(toolTip()))
+  setToolTip(Qt::escape(toolTip()));
 }

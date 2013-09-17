@@ -14,6 +14,7 @@
 
 using namespace DLangEditor;
 using namespace DLangEditor::Constants;
+using namespace TextEditor;
 
 DLangEditorFactory::DLangEditorFactory(QObject *parent)
  : Core::IEditorFactory(parent)
@@ -22,15 +23,9 @@ DLangEditorFactory::DLangEditorFactory(QObject *parent)
  setDisplayName(qApp->translate("OpenWith::Editors", C_DLANGEDITOR_DISPLAY_NAME));
  addMimeType(DLangEditor::Constants::DLANG_MIMETYPE);
 
- m_actionHandler = new TextEditorActionHandler(
-     Constants::C_DLANGEDITOR_ID,
-     TextEditorActionHandler::Format |
-     TextEditorActionHandler::UnCommentSelection |
-     TextEditorActionHandler::UnCollapseAll);
 }
 DLangEditorFactory::~DLangEditorFactory()
 {
- delete m_actionHandler;
 }
 
 Core::IEditor *DLangEditorFactory::createEditor(QWidget *parent)
@@ -49,26 +44,26 @@ Core::IEditor *DLangEditorFactory::createEditor(QWidget *parent)
  */
 void DLangEditorFactory::updateEditorInfoBar(Core::IEditor* editor)
 {
- DLangTextEditor *editorEditable = qobject_cast<DLangTextEditor *>(editor);
- if (editorEditable)
- {
-  BaseTextDocument *file = qobject_cast<BaseTextDocument *>(editor->document());
-  if (!file)
-   return;
-  DLangTextEditorWidget *textEditor =
-    static_cast<DLangTextEditorWidget *>(editorEditable->editorWidget());
-  Core::Id infoSyntaxDefinition(TextEditor::Constants::INFO_SYNTAX_DEFINITION);
-  Core::InfoBar *infoBar = file->infoBar();
-  if (!textEditor->isMissingSyntaxDefinition()) {
-   infoBar->removeInfo(infoSyntaxDefinition);
-  } else if (infoBar->canInfoBeAdded(infoSyntaxDefinition)) {
-   Core::InfoBarEntry info(infoSyntaxDefinition,
-                           tr("A highlight definition was not found for this file. "
-                              "Would you like to try to find one?"),
-                           Core::InfoBarEntry::GlobalSuppressionEnabled);
-   info.setCustomButtonInfo(tr("Show highlighter options..."),
-                            textEditor, SLOT(acceptMissingSyntaxDefinitionInfo()));
-   infoBar->addInfo(info);
-  }
- }
+// DLangTextEditor *editorEditable = qobject_cast<DLangTextEditor *>(editor);
+// if (editorEditable)
+// {
+//  BaseTextDocument *file = qobject_cast<BaseTextDocument *>(editor->document());
+//  if (!file)
+//   return;
+//  DLangTextEditorWidget *textEditor =
+//    static_cast<DLangTextEditorWidget *>(editorEditable->editorWidget());
+//  Core::Id infoSyntaxDefinition(TextEditor::Constants::INFO_SYNTAX_DEFINITION);
+//  Core::InfoBar *infoBar = file->infoBar();
+//  if (!textEditor->isMissingSyntaxDefinition()) {
+//   infoBar->removeInfo(infoSyntaxDefinition);
+//  } else if (infoBar->canInfoBeAdded(infoSyntaxDefinition)) {
+//   Core::InfoBarEntry info(infoSyntaxDefinition,
+//                           tr("A highlight definition was not found for this file. "
+//                              "Would you like to try to find one?"),
+//                           Core::InfoBarEntry::GlobalSuppressionEnabled);
+//   info.setCustomButtonInfo(tr("Show highlighter options..."),
+//                            textEditor, SLOT(acceptMissingSyntaxDefinitionInfo()));
+//   infoBar->addInfo(info);
+//  }
+// }
 }
