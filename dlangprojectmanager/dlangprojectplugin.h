@@ -4,7 +4,6 @@
 #include <extensionsystem/iplugin.h>
 
 #include <QObject>
-#include <QAction>
 
 namespace ProjectExplorer {
 class Project;
@@ -29,8 +28,6 @@ public:
     void extensionsInitialized();
 
 private:
-    ProjectFilesFactory *m_projectFilesEditorFactory;
-    QAction *m_editFilesAction;
     ProjectExplorer::Project *m_contextMenuProject;
 };
 

@@ -1,5 +1,5 @@
-#ifndef DLangFILEWIZARD_H
-#define DLangFILEWIZARD_H
+#ifndef DLANGFILEWIZARD_H
+#define DLANGFILEWIZARD_H
 
 #include <coreplugin/basefilewizard.h>
 
@@ -35,4 +35,4 @@ private:
 
 } // namespace DLangEditor
 
-#endif // DLangFILEWIZARD_H
+#endif // DLANGFILEWIZARD_H

@@ -1,8 +1,50 @@
-#include "dlangeditor.h"
+#include "_dlangeditorconstants.h"
+#include "dlangeditorplugin.h"
+#include "dlangtexteditor.h"
+//#include "dlangautocompleter.h"
+//#include "dlangindenter.h"
+//#include "dlangcompletionassist.h"
+
+#include <coreplugin/coreconstants.h>
+#include <coreplugin/icore.h>
+#include <texteditor/texteditorconstants.h>
+#include <texteditor/basetexteditor.h>
+#include <texteditor/plaintexteditor.h>
+
+using namespace DLangEditor;
+using namespace TextEditor;
+
+DLangTextEditor::DLangTextEditor(DLangTextEditorWidget* editor)
+ : BaseTextEditor(editor)
+{
+ setContext(Core::Context(DLangEditor::Constants::C_DLANGEDITOR_ID,
+                          TextEditor::Constants::C_TEXTEDITOR));
+}
+
+Core::IEditor* DLangTextEditor::duplicate(QWidget *parent)
+{
+ DLangTextEditorWidget *newWidget = new DLangTextEditorWidget(parent);
+ newWidget->duplicateFrom(editorWidget());
+ DLangEditorPlugin::instance()->initializeEditor(newWidget);
+ return newWidget->editor();
+}
+
+Core::Id DLangTextEditor::id() const
+{
+ //return Core::Constants::K_DEFAULT_TEXT_EDITOR_ID;
+ return DLangEditor::Constants::C_DLANGEDITOR_ID;
+}
+
+DLangTextEditorWidget::DLangTextEditorWidget(QWidget *parent)
+  : PlainTextEditorWidget(parent)
+{
+
+}
+
+/*#include "dlangeditor.h"
 #include "dlangeditoreditable.h"
 #include "dlangeditorconstants.h"
 #include "dlangeditorplugin.h"
-#include "dlanghighlighter.h"
 #include "dlangautocompleter.h"
 #include "dlangindenter.h"
 #include "dlangcompletionassist.h"
@@ -26,6 +68,7 @@
 #include <texteditor/texteditorsettings.h>
 #include <texteditor/syntaxhighlighter.h>
 #include <texteditor/refactoroverlay.h>
+#include <texteditor/generichighlighter/highlighter.h>
 #include <qmldesigner/qmldesignerconstants.h>
 #include <utils/changeset.h>
 #include <utils/uncommentselection.h>
@@ -111,38 +154,55 @@ Document::~Document()
 //    _cursors.append(c);
 //}
 
+
+DLangEditorEditable::DLangEditorEditable(DLangTextEditorWidget *editor)
+    : BaseTextEditor(editor)
+{
+    setContext(Core::Context(DLangEditor::Constants::C_DLANGEDITOR_ID,
+                             TextEditor::Constants::C_TEXTEDITOR));
+}
+
 DLangTextEditorWidget::DLangTextEditorWidget(QWidget *parent) :
-    TextEditor::BaseTextEditorWidget(parent),
+    TextEditor::PlainTextEditorWidget(parent),
     m_outlineCombo(0)
 {
-    setParenthesesMatchingEnabled(true);
-    setMarksVisible(true);
-    setCodeFoldingSupported(true);
-				setIndenter(new DLangIndenter());
-				setAutoCompleter(new DLangCompleter());
+ setParenthesesMatchingEnabled(true);
+ setMarksVisible(true);
+ setCodeFoldingSupported(true);
+ setIndenter(new DLangIndenter());
+ setAutoCompleter(new DLangCompleter());
 
-    m_updateDocumentTimer = new QTimer(this);
-    m_updateDocumentTimer->setInterval(UPDATE_DOCUMENT_DEFAULT_INTERVAL);
-    m_updateDocumentTimer->setSingleShot(true);
-    connect(m_updateDocumentTimer, SIGNAL(timeout()), this, SLOT(updateDocumentNow()));
+ m_updateDocumentTimer = new QTimer(this);
+ m_updateDocumentTimer->setInterval(UPDATE_DOCUMENT_DEFAULT_INTERVAL);
+ m_updateDocumentTimer->setSingleShot(true);
+ connect(m_updateDocumentTimer, SIGNAL(timeout()), this, SLOT(updateDocumentNow()));
 
-    connect(this, SIGNAL(textChanged()), this, SLOT(updateDocument()));
+ connect(this, SIGNAL(textChanged()), this, SLOT(updateDocument()));
 
-    new Highlighter(baseTextDocument().data());
+ //-- Highlighter init --
 
-//    if (m_modelManager) {
-//        m_semanticHighlighter->setModelManager(m_modelManager);
-//        connect(m_modelManager, SIGNAL(documentUpdated(DLang::Document::Ptr)),
-//                this, SLOT(onDocumentUpdated(DLang::Document::Ptr)));
-//        connect(m_modelManager, SIGNAL(libraryInfoUpdated(QString,DLang::LibraryInfo)),
-//                this, SLOT(forceSemanticRehighlight()));
-//        connect(this->document(), SIGNAL(modificationChanged(bool)), this, SLOT(modificationChanged(bool)));
-//    }
+ //    if (m_modelManager) {
+ //        m_semanticHighlighter->setModelManager(m_modelManager);
+ //        connect(m_modelManager, SIGNAL(documentUpdated(DLang::Document::Ptr)),
+ //                this, SLOT(onDocumentUpdated(DLang::Document::Ptr)));
+ //        connect(m_modelManager, SIGNAL(libraryInfoUpdated(QString,DLang::LibraryInfo)),
+ //                this, SLOT(forceSemanticRehighlight()));
+ //        connect(this->document(), SIGNAL(modificationChanged(bool)), this, SLOT(modificationChanged(bool)));
+ //    }
 }
 
 DLangTextEditorWidget::~DLangTextEditorWidget()
 {
 }
+
+bool DLangEditorEditable::open(QString *errorString, const QString &fileName, const QString &realFileName)
+{
+ editorWidget()->setMimeType(Core::MimeDatabase::findByFile(QFileInfo(fileName)).type());
+ bool b = TextEditor::BaseTextEditor::open(errorString, fileName, realFileName);
+ return b;
+}
+
+
 
 int DLangTextEditorWidget::editorRevision() const
 {
@@ -169,13 +229,6 @@ Core::IEditor *DLangEditorEditable::duplicate(QWidget *parent)
 Core::Id DLangEditorEditable::id() const
 {
 				return DLangEditor::Constants::C_DLANGEDITOR_ID;
-}
-
-bool DLangEditorEditable::open(QString *errorString, const QString &fileName, const QString &realFileName)
-{
-    editorWidget()->setMimeType(Core::MimeDatabase::findByFile(QFileInfo(fileName)).type());
-    bool b = TextEditor::BaseTextEditor::open(errorString, fileName, realFileName);
-    return b;
 }
 
 QString DLangTextEditorWidget::wordUnderCursor() const
@@ -355,3 +408,4 @@ TextEditor::IAssistInterface *DLangTextEditorWidget::createAssistInterface(
 																																																	dDocument());
     return BaseTextEditorWidget::createAssistInterface(kind, reason);
 }
+*/

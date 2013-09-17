@@ -7,10 +7,4 @@
 								<glob pattern="*.d"/>
 					</mime-type>
 
-				<mime-type type="text/x-dint">
-								<sub-class-of type="text/x-dsrc"/>
-								<comment>D interface file</comment>
-								<glob pattern="*.di"/>
-				</mime-type>
-
 </mime-info>

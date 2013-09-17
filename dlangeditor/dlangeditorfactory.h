@@ -1,25 +1,33 @@
-#ifndef DLangEDITORFACTORY_H
-#define DLangEDITORFACTORY_H
+#ifndef DLANGEDITORFACTORY_H
+#define DLANGEDITORFACTORY_H
 
 #include <coreplugin/editormanager/ieditorfactory.h>
+#include <texteditor/texteditoractionhandler.h>
 
 namespace DLangEditor {
-namespace Internal {
+
+using namespace TextEditor;
 
 class DLangEditorFactory : public Core::IEditorFactory
 {
-    Q_OBJECT
+ Q_OBJECT
 
 public:
-				DLangEditorFactory(QObject *parent);
+ // parent is DLangEditorPlugin
+ DLangEditorFactory(QObject *parent);
+ ~DLangEditorFactory();
 
-    Core::IEditor *createEditor(QWidget *parent);
+ using Core::IEditorFactory::addMimeType;
+ Core::IEditor *createEditor(QWidget *parent);
+ TextEditor::TextEditorActionHandler *actionHandler() const { return m_actionHandler; }
 
 private slots:
-    void updateEditorInfoBar(Core::IEditor *editor);
+ void updateEditorInfoBar(Core::IEditor *editor);
+
+private:
+ TextEditor::TextEditorActionHandler* m_actionHandler;
 };
 
-} // namespace Internal
 } // namespace DLangEditor
 
-#endif // DLangEDITORFACTORY_H
+#endif // DLANGEDITORFACTORY_H

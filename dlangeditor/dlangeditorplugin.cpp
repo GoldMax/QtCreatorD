@@ -1,3 +1,119 @@
+#include "_dlangeditorconstants.h"
+#include "dlangeditorplugin.h"
+//#include "dlangeditor.h"
+#include "dlangeditorfactory.h"
+#include "dlangfilewizard.h"
+//#include "dlanghoverhandler.h"
+//#include "dlangcompletionassist.h"
+
+#include <coreplugin/icore.h>
+#include <coreplugin/coreconstants.h>
+#include <coreplugin/mimedatabase.h>
+#include <coreplugin/id.h>
+#include <coreplugin/fileiconprovider.h>
+#include <utils/qtcassert.h>
+#include <texteditor/generichighlighter/manager.h>
+
+#include <QtPlugin>
+#include <QCoreApplication>
+#include <QShortcut>
+
+using namespace Core;
+using namespace TextEditor;
+using namespace TextEditor::Internal;
+
+
+using namespace DLangEditor;
+using namespace DLangEditor::Internal;
+
+DLangEditorPlugin *DLangEditorPlugin::m_instance = 0;
+
+DLangEditorPlugin::DLangEditorPlugin()
+ : m_editorFactory(0),
+   m_settings(0),
+   m_searchResultWindow(0)
+{
+ QTC_ASSERT(!m_instance, return);
+ m_instance = this;
+}
+DLangEditorPlugin::~DLangEditorPlugin()
+{
+ //removeObject(m_editorFactory);
+ m_instance = 0;
+}
+
+bool DLangEditorPlugin::initialize(const QStringList & arguments, QString *errorMessage)
+{
+ Q_UNUSED(arguments);
+
+ if (!MimeDatabase::addMimeTypes(QLatin1String(":/dlangeditor/DLangEditor.mimetypes.xml"), errorMessage))
+  return false;
+
+ QObject *core = ICore::instance();
+ BaseFileWizardParameters emptyWizardParameters(IWizard::FileWizard);
+ emptyWizardParameters.setCategory(QLatin1String(Constants::WIZARD_CATEGORY_DLANG));
+ emptyWizardParameters.setDisplayCategory(QCoreApplication::translate("DLangEditor", Constants::WIZARD_TR_CATEGORY_DLANG));
+ emptyWizardParameters.setDescription(tr("Creates a empty D language file."));
+ emptyWizardParameters.setDisplayName(tr("Empty D file"));
+ emptyWizardParameters.setId(QLatin1String("F.DLang"));
+ addAutoReleasedObject(new DLangFileWizard(emptyWizardParameters, DLangFileWizard::Empty, core));
+
+ FileIconProvider *iconProvider = FileIconProvider::instance();
+ iconProvider->registerIconOverlayForMimeType(QIcon(QLatin1String(":/dlangeditor/images/d.png")),
+                                              MimeDatabase::findByType(QLatin1String(DLangEditor::Constants::DLANG_MIMETYPE)));
+ m_settings = TextEditorSettings::instance();
+ if(!m_settings)
+  m_settings = new TextEditorSettings(this);
+
+ m_editorFactory = new DLangEditorFactory(this);
+ addAutoReleasedObject(m_editorFactory);
+
+ m_editorFactory->actionHandler()->initializeActions();
+ errorMessage->clear();
+ return true;
+// addAutoReleasedObject(new DLangCompletionAssistProvider);
+// addAutoReleasedObject(new DLangHoverHandler(this));
+
+}
+
+void DLangEditorPlugin::initializeEditor(DLangTextEditorWidget* editor)
+{
+ // common actions
+ m_editorFactory->actionHandler()->
+   setupActions((BaseTextEditorWidget*)(editor));
+
+ TextEditorSettings::instance()->initializeEditor((BaseTextEditorWidget*)editor);
+}
+
+void DLangEditorPlugin::extensionsInitialized()
+{
+ m_searchResultWindow = Find::SearchResultWindow::instance();
+
+// m_outlineFactory->setWidgetFactories(ExtensionSystem::PluginManager::getObjects<TextEditor::IOutlineWidgetFactory>());
+
+ connect(m_settings, SIGNAL(fontSettingsChanged(TextEditor::FontSettings)),
+         this, SLOT(updateSearchResultsFont(TextEditor::FontSettings)));
+
+ updateSearchResultsFont(m_settings->fontSettings());
+}
+
+void DLangEditorPlugin::updateSearchResultsFont(const FontSettings &settings)
+{
+ if (m_searchResultWindow)
+ {
+  m_searchResultWindow->setTextEditorFont(
+     QFont(settings.family(), settings.fontSize() * settings.fontZoom() / 100),
+           settings.formatFor(TextEditor::C_TEXT).foreground(),
+           settings.formatFor(TextEditor::C_TEXT).background(),
+           settings.formatFor(TextEditor::C_SEARCH_RESULT).foreground(),
+           settings.formatFor(TextEditor::C_SEARCH_RESULT).background());
+ }
+}
+
+Q_EXPORT_PLUGIN(DLangEditor::Internal::DLangEditorPlugin)
+
+
+/*
 #include "dlangeditorplugin.h"
 #include "dlangeditor.h"
 #include "dlangeditorconstants.h"
@@ -5,7 +121,6 @@
 #include "dlangfilewizard.h"
 #include "dlanghoverhandler.h"
 #include "dlangcompletionassist.h"
-#include "dlanghighlighterfactory.h"
 
 #include <coreplugin/icore.h>
 #include <coreplugin/coreconstants.h>
@@ -52,13 +167,13 @@ DLangEditorPlugin *DLangEditorPlugin::m_instance = 0;
 
 DLangEditorPlugin::DLangEditorPlugin() :
     m_editor(0),
-				m_actionHandler(0)/*,
-				m_dlang_120_frag(0),
-				m_dlang_120_vert(0),
-				m_dlang_120_common(0),
-				m_dlang_es_100_frag(0),
-				m_dlang_es_100_vert(0),
-				m_dlang_es_100_common(0)*/
+    m_actionHandler(0)//
+    //,m_dlang_120_frag(0),
+    //m_dlang_120_vert(0),
+    //m_dlang_120_common(0),
+    //m_dlang_es_100_frag(0),
+    //m_dlang_es_100_vert(0),
+    //m_dlang_es_100_common(0)
 {
     m_instance = this;
 }
@@ -76,7 +191,7 @@ DLangEditorPlugin::~DLangEditorPlugin()
     m_instance = 0;
 }
 
-bool DLangEditorPlugin::initialize(const QStringList & /*arguments*/, QString *errorMessage)
+bool DLangEditorPlugin::initialize(const QStringList & arguments, QString *errorMessage)
 {
 				if (!MimeDatabase::addMimeTypes(QLatin1String(":/dlangeditor/DLangEditor.mimetypes.xml"), errorMessage))
         return false;
@@ -86,7 +201,6 @@ bool DLangEditorPlugin::initialize(const QStringList & /*arguments*/, QString *e
 
 				addAutoReleasedObject(new DLangCompletionAssistProvider);
     addAutoReleasedObject(new DLangHoverHandler(this));
-    addAutoReleasedObject(new DLangHighlighterFactory);
 
 				m_actionHandler = new TextEditorActionHandler(Constants::C_DLANGEDITOR_ID,
 						TextEditorActionHandler::Format
@@ -118,8 +232,6 @@ bool DLangEditorPlugin::initialize(const QStringList & /*arguments*/, QString *e
     FileIconProvider *iconProvider = FileIconProvider::instance();
 				iconProvider->registerIconOverlayForMimeType(QIcon(QLatin1String(":/dlangeditor/images/d.png")),
 					MimeDatabase::findByType(QLatin1String(DLangEditor::Constants::DLANG_MIMETYPE)));
-				iconProvider->registerIconOverlayForMimeType(QIcon(QLatin1String(":/dlangeditor/images/d.png")),
-					MimeDatabase::findByType(QLatin1String(DLangEditor::Constants::DLANG_MIMETYPE_INT)));
 
 
     QObject *core = ICore::instance();
@@ -206,4 +318,4 @@ void DLangEditorPlugin::initializeEditor(DLangTextEditorWidget *editor)
 } // namespace Internal
 } // namespace DLangEditor
 
-Q_EXPORT_PLUGIN(DLangEditor::Internal::DLangEditorPlugin)
+Q_EXPORT_PLUGIN(DLangEditor::Internal::DLangEditorPlugin)*/

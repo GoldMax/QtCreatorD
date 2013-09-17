@@ -1,5 +1,5 @@
+#include "_dlangeditorconstants.h"
 #include "dlangfilewizard.h"
-#include "dlangeditorconstants.h"
 
 #include <projectexplorer/projectexplorerconstants.h>
 #include <utils/filewizarddialog.h>

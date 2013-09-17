@@ -4,10 +4,8 @@
 #include "dlangprojectmanager.h"
 #include "dlangprojectwizard.h"
 #include "dlangprojectconstants.h"
-#include "dlangprojectfileseditor.h"
 #include "dlangmakestep.h"
 #include "dlangproject.h"
-//#include "selectablefilesmodel.h"
 
 #include <coreplugin/icore.h>
 #include <coreplugin/mimedatabase.h>
@@ -26,15 +24,9 @@
 namespace DLangProjectManager {
 namespace Internal {
 
-DLangProjectPlugin::DLangProjectPlugin()
-    : m_projectFilesEditorFactory(0)
-{ }
+DLangProjectPlugin::DLangProjectPlugin(){ }
 
-DLangProjectPlugin::~DLangProjectPlugin()
-{
-    removeObject(m_projectFilesEditorFactory);
-    delete m_projectFilesEditorFactory;
-}
+DLangProjectPlugin::~DLangProjectPlugin(){}
 
 bool DLangProjectPlugin::initialize(const QStringList &, QString *errorMessage)
 {
@@ -45,13 +37,6 @@ bool DLangProjectPlugin::initialize(const QStringList &, QString *errorMessage)
         return false;
 
     Manager *manager = new Manager;
-
-    TextEditor::TextEditorActionHandler *actionHandler =
-            new TextEditor::TextEditorActionHandler(Constants::C_FILESEDITOR);
-
-    m_projectFilesEditorFactory = new ProjectFilesFactory(manager, actionHandler);
-    addObject(m_projectFilesEditorFactory);
-
     addAutoReleasedObject(manager);
     addAutoReleasedObject(new DLangMakeStepFactory);
     addAutoReleasedObject(new DLangProjectWizard);

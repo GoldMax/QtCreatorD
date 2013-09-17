@@ -6,7 +6,6 @@ HEADERS = dlangproject.h \
     dlangprojectconstants.h \
     dlangprojectnodes.h \
     dlangprojectwizard.h \
-    dlangprojectfileseditor.h \
     dlangmakestep.h \
     dlangbuildconfiguration.h \
     buildrunconfig.h \
@@ -16,7 +15,6 @@ SOURCES = dlangproject.cpp \
     dlangprojectmanager.cpp \
     dlangprojectnodes.cpp \
     dlangprojectwizard.cpp \
-    dlangprojectfileseditor.cpp \
     dlangmakestep.cpp \
     dlangbuildconfiguration.cpp \
     buildrunconfig.cpp \
