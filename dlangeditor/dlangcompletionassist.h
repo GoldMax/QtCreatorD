@@ -17,8 +17,14 @@ class BasicProposalItem;
 
 namespace DLangEditor {
 
-class DLangCompletionAssistInterface;
-
+class DLangCompletionAssistInterface : public TextEditor::DefaultAssistInterface
+{
+public:
+    DLangCompletionAssistInterface(QTextDocument *textDocument,
+                                  int position, const QString &fileName,
+                                  TextEditor::AssistReason reason);
+};
+//**************************************************************************************
 class DLangCompletionAssistProvider : public TextEditor::CompletionAssistProvider
 {
 public:
@@ -28,7 +34,7 @@ public:
     virtual int activationCharSequenceLength() const;
     virtual bool isActivationCharSequence(const QString &sequence) const;
 };
-
+//**************************************************************************************
 class DLangCompletionAssistProcessor : public TextEditor::IAssistProcessor
 {
 public:
@@ -57,24 +63,24 @@ private:
     QIcon m_varyingIcon;
     QIcon m_otherIcon;
 };
-
-class DLangCompletionAssistInterface : public TextEditor::DefaultAssistInterface
+//**************************************************************************************
+class DLangFunctionHintProposalModel : public TextEditor::IFunctionHintProposalModel
 {
 public:
-				DLangCompletionAssistInterface(QTextDocument *textDocument,
-                                  int position, const QString &fileName,
-                                  TextEditor::AssistReason reason,
-                                  const QString &mimeType/*,
-                                  const Document::Ptr &glslDoc*/);
+    DLangFunctionHintProposalModel(/*QVector<DLang::Function *> functionSymbols*/)
+        : //m_items(functionSymbols),
+         m_currentArg(-1)
+    {}
 
-    const QString &mimeType() const { return m_mimeType; }
-    //const Document::Ptr &glslDocument() const { return m_glslDoc; }
+    virtual void reset() {}
+    virtual int size() const { return 1; /*m_items.size();*/ }
+    virtual QString text(int index) const;
+    virtual int activeArgument(const QString &prefix) const;
 
 private:
-    QString m_mimeType;
-    //Document::Ptr m_glslDoc;
+    //QVector<DLang::Function *> m_items;
+    mutable int m_currentArg;
 };
-
 } // DLangEditor
 
 #endif // DLangCOMPLETIONASSIST_H

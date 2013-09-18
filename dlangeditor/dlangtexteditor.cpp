@@ -42,20 +42,18 @@ Core::Id DLangTextEditor::id() const
 DLangTextEditorWidget::DLangTextEditorWidget(QWidget *parent)
   : PlainTextEditorWidget(parent) // BaseTextEditorWidget(parent)
 {
+ // Indenter вызывает исключения в стандартном hightlighter
  //setIndenter(new DLangIndenter());
 }
 
 TextEditor::IAssistInterface* DLangTextEditorWidget::createAssistInterface(
-  TextEditor::AssistKind kind,
-  TextEditor::AssistReason reason) const
+  TextEditor::AssistKind kind, TextEditor::AssistReason reason) const
 {
  if (kind == TextEditor::Completion)
   return new DLangCompletionAssistInterface(document(),
                                             position(),
                                             editor()->document()->filePath(),
-                                            reason,
-                                            mimeType()/*,
-                                            dDocument()*/);
+                                            reason);
  return BaseTextEditorWidget::createAssistInterface(kind, reason);
 }
 
