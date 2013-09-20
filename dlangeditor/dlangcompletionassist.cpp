@@ -2,6 +2,7 @@
 #include "dlangcompletionassist.h"
 #include "dlangeditorplugin.h"
 //#include "reuse.h"
+#include "qcdassist.h"
 
 //#include <glsl/glslengine.h>
 //#include <glsl/glsllexer.h>
@@ -109,17 +110,17 @@ bool DLangCompletionAssistProvider::isActivationCharSequence(const QString &sequ
 // --------------------------------------------------------------------------------
 // DLangFunctionHintProposalModel
 // --------------------------------------------------------------------------------
-
-
 QString DLangFunctionHintProposalModel::text(int index) const
 {
+ Q_UNUSED(index);
 				return QLatin1String("DLangFunctionHintProposalModel::text"); //m_items.at(index)->prettyPrint(m_currentArg);
 }
 
 int DLangFunctionHintProposalModel::activeArgument(const QString &prefix) const
 {
-    const QByteArray &str = prefix.toLatin1();
-    int argnr = 0;
+ Q_UNUSED(prefix);
+//    const QByteArray &str = prefix.toLatin1();
+//    int argnr = 0;
 //    int parcount = 0;
 //				DLang::Lexer lexer(0, str.constData(), str.length());
 //				DLang::Token tk;
@@ -144,9 +145,9 @@ int DLangFunctionHintProposalModel::activeArgument(const QString &prefix) const
 //    if (argnr != m_currentArg)
 //        m_currentArg = argnr;
 
-    return argnr;
+//    return argnr;
+ return 0;
 }
-
 // ----------------------------------------------------------------------------
 // DLangCompletionAssistProcessor
 // ----------------------------------------------------------------------------
@@ -155,7 +156,11 @@ DLangCompletionAssistProcessor::DLangCompletionAssistProcessor()
     , m_keywordIcon(QLatin1String(":/dlangeditor/images/keyword.png"))
     , m_varIcon(QLatin1String(":/dlangeditor/images/var.png"))
     , m_functionIcon(QLatin1String(":/dlangeditor/images/func.png"))
-    , m_typeIcon(QLatin1String(":/dlangeditor/images/type.png"))
+    , m_classIcon(QLatin1String(":/dlangeditor/images/class.png"))
+    , m_namespaceIcon(QLatin1String(":/dlangeditor/images/namespace.png"))
+    , m_enumIcon(QLatin1String(":/dlangeditor/images/enum.png"))
+    , m_enumMemberIcon(QLatin1String(":/dlangeditor/images/enumerator.png"))
+
     , m_constIcon(QLatin1String(":/dlangeditor/images/const.png"))
     , m_attributeIcon(QLatin1String(":/dlangeditor/images/attribute.png"))
     , m_uniformIcon(QLatin1String(":/dlangeditor/images/uniform.png"))
@@ -173,7 +178,38 @@ IAssistProposal *DLangCompletionAssistProcessor::perform(const IAssistInterface 
 
  int pos = m_interface->position() - 1;
  QChar ch = m_interface->characterAt(pos);
- while (ch.isLetterOrNumber() || ch == QLatin1Char('_'))
+ if(ch == QLatin1Char('.'))
+ {
+  using namespace QcdAssist;
+  QTextDocument* doc = interface->textDocument();
+  QByteArray arr = doc->toPlainText().toUtf8();
+  DCDCompletion c = sendRequestToDCD(arr, pos+1);
+  foreach(DCDCompletionItem i, c.completions)
+  {
+   QIcon icon;
+   switch(c.type)
+   {
+    case Calltip: icon = m_functionIcon; break;
+    case ClassName: icon = m_classIcon; break;
+    case InterfaceName: RETURN_CACHED_ICON("code-class")
+    case StructName: RETURN_CACHED_ICON("struct")
+    case UnionName: RETURN_CACHED_ICON("union")
+    case VariableName: RETURN_CACHED_ICON("code-variable")
+    case MemberVariableName: RETURN_CACHED_ICON("field")
+    case Keyword: icon = m_keywordIcon; break;
+    case FunctionName: icon = m_functionIcon; break;
+    case EnumName: icon = m_enumIcon; break;
+    case EnumMember: icon = m_enumMemberIcon; break;
+    case PackageName: icon = m_namespaceIcon; break;
+    case ModuleName: icon = m_namespaceIcon; break;
+    defailt: icon = m_otherIcon;
+   }
+   addCompletion(i.name,icon);
+
+  }
+  m_startPosition = pos+1;
+ }
+/* while (ch.isLetterOrNumber() || ch == QLatin1Char('_'))
   ch = m_interface->characterAt(--pos);
 
  CPlusPlus::ExpressionUnderCursor expressionUnderCursor;
@@ -320,7 +356,7 @@ IAssistProposal *DLangCompletionAssistProcessor::perform(const IAssistInterface 
 //  //        }
 
 //  //      m_completions += m_keywordCompletions;
- }
+ }*/
 
  /*foreach (DLang::Symbol *s, members)
  {

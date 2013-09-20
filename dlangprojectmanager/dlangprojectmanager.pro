@@ -21,3 +21,5 @@ SOURCES = dlangproject.cpp \
     buildrunconfigwidget.cpp
 RESOURCES += dlangproject.qrc
 FORMS += dlangmakestep.ui
+
+PROVIDER = GoldMax

@@ -115,7 +115,7 @@ Core::GeneratedFiles DLangProjectWizard::generateFiles(const QWizard *w,
  const QDir dir(projectDir);
  dir.mkpath(projectDir);
 
- const QString creatorFileName = QFileInfo(dir, projectName + QLatin1String(".qdp")).absoluteFilePath();
+ const QString creatorFileName = QFileInfo(dir, projectName + QLatin1String(".qcd")).absoluteFilePath();
  const QString filesFileName = QFileInfo(dir, projectName + QLatin1String(".files")).absoluteFilePath();
  const QString mainFileName = QFileInfo(dir, QLatin1String("main.d")).absoluteFilePath();
 

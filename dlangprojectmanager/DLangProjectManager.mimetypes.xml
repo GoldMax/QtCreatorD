@@ -3,8 +3,8 @@
 <mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
   <mime-type type="text/x-dlang-project">
     <sub-class-of type="text/plain"/>
-    <comment>Generic Qt Creator Project file</comment>
-    <glob pattern="*.qdp"/>
+    <comment>Qt Creator D language Project file</comment>
+    <glob pattern="*.qcd"/>
   </mime-type>
 
   <mime-type type="application/vnd.qtcreator.generic.files">

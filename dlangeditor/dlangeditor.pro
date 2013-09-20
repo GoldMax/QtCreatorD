@@ -11,7 +11,8 @@ dlangeditorplugin.h \
     dlangtexteditor.h \
     dlangcompletionassist.h \
     dlanghoverhandler.h \
-    dlangindenter.h
+    dlangindenter.h \
+    qcdassist.h
 
 SOURCES += \
 dlangeditorplugin.cpp \
@@ -20,9 +21,12 @@ dlangeditorplugin.cpp \
     dlangtexteditor.cpp \
     dlangcompletionassist.cpp \
     dlanghoverhandler.cpp \
-    dlangindenter.cpp
+    dlangindenter.cpp \
+    qcdassist.cpp
 
 RESOURCES += dlangeditor.qrc
 
 OTHER_FILES += \
     dlangeditor_dependencies.pri
+
+PROVIDER = GoldMax

@@ -56,7 +56,11 @@ private:
     QIcon m_keywordIcon;
     QIcon m_varIcon;
     QIcon m_functionIcon;
-    QIcon m_typeIcon;
+    QIcon m_classIcon;
+    QIcon m_namespaceIcon;
+    QIcon m_enumIcon;
+    QIcon m_enumMemberIcon;
+
     QIcon m_constIcon;
     QIcon m_attributeIcon;
     QIcon m_uniformIcon;
