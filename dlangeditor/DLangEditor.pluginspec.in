@@ -1,9 +1,0 @@
-<plugin name=\"DLangEditor\" version=\"0.0.1\" compatVersion=\"0.0.1\">
-    <vendor>GoldMax</vendor>
-    <copyright>(C) 2013 Max Goldaev</copyright>
-    <license>Boost 1.0 </license>
-    <category>D Language</category>
-    <description>Editor support for D language files.</description>
-    <url></url>
-    $$dependencyList
-</plugin>

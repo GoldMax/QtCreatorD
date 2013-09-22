@@ -1,0 +1,10 @@
+<plugin name=\"DProjectManager\" version=\"$$QTCREATOR_VERSION\" compatVersion=\"$$QTCREATOR_COMPAT_VERSION\">
+    <vendor>GoldMax</vendor>
+    <copyright>(C) 2013 Max Goldaev</copyright>
+    <license>GPL v3</license>
+    <description>Project manager for D language projects.</description>
+    <category>D Language</category>
+    <url></url>
+    $$dependencyList
+</plugin>
+

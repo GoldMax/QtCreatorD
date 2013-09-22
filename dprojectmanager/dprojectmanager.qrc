@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/dprojectmanager">
+        <file>DProjectManager.mimetypes.xml</file>
+        <file>dproj.png</file>
+    </qresource>
+</RCC>
