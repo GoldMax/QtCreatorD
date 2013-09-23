@@ -1,7 +1,7 @@
 #include "qcdassist.h"
 
 #include <coreplugin/messagemanager.h>
-
+#include <utils/environment.h>
 //#include <QAbstractSocket>
 //#include <QHostAddress>
 //#include <QDebug>
@@ -9,6 +9,18 @@
 //#include <msgpack.hpp>
 
 using namespace QcdAssist;
+
+static QString QcdAssist::dcdClient()
+{
+ static QString dcd;
+ if(dcd.length() == 0)
+ {
+  dcd = Utils::Environment::systemEnvironment().searchInPath(QLatin1String("dcd-client"));
+  if(dcd.length() == 0)
+   dcd = QLatin1String("dcd-client");
+ }
+ return dcd;
+}
 
 DCDCompletionItem::DCDCompletionItem(DCDCompletionItemType t, QString s) : type(t), name(s) {}
 //--------------------
@@ -57,7 +69,7 @@ void QcdAssist::sendClearChache()
 {
  QProcess proc;
  proc.setProcessChannelMode(QProcess::MergedChannels);
- proc.start(QcdAssist::dcdClient, QStringList() << QString(QLatin1String("--clearCache")));
+ proc.start(QcdAssist::dcdClient(), QStringList() << QString(QLatin1String("--clearCache")));
 
  if(!proc.waitForFinished(QcdAssist::waitForReadyReadTimeout))
  {
@@ -76,7 +88,7 @@ void QcdAssist::sendAddImportToDCD(QString path)
 {
  QProcess proc;
  proc.setProcessChannelMode(QProcess::MergedChannels);
- proc.start(QcdAssist::dcdClient, QStringList() << QString(QLatin1String("-I%1")).arg(path));
+ proc.start(QcdAssist::dcdClient(), QStringList() << QString(QLatin1String("-I%1")).arg(path));
 
  if(!proc.waitForFinished(QcdAssist::waitForReadyReadTimeout))
  {
@@ -96,9 +108,9 @@ DCDCompletion QcdAssist::sendRequestToDCD(QByteArray& filedata, uint pos)
 {
  QProcess proc;
  proc.setProcessChannelMode(QProcess::MergedChannels);
- proc.start(QcdAssist::dcdClient,
+ proc.start(QcdAssist::dcdClient(),
   QStringList()
-   << QString(QLatin1String("-p%1")).arg(QcdAssist::dcdPort)
+   //<< QString(QLatin1String("-p%1")).arg(QcdAssist::dcdPort)
    << QString(QLatin1String("-c%1")).arg(pos)
  );
  proc.write(filedata);
@@ -136,6 +148,8 @@ DCDCompletion QcdAssist::processCompletion(QByteArray dataArray)
  if(type.startsWith(QLatin1String("WARNING:")))
  {
   lines.pop_front();
+  if(lines.length() == 0)
+   return completion;
   type = lines.front();
  }
  if(type == QLatin1String("identifiers"))

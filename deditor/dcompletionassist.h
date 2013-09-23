@@ -44,9 +44,11 @@ public:
 
     virtual TextEditor::IAssistProposal *perform(const TextEditor::IAssistInterface *interface);
 
+    void toUtf8(QByteArray& arr, QTextDocument* doc, int & charPosition);
+
 private:
     TextEditor::IAssistProposal *createContentProposal() const;
-//				TextEditor::IAssistProposal *createHintProposal(const QVector<D::Function *> &symbols);
+    TextEditor::IAssistProposal *createHintProposal() const;
     bool acceptsIdleEditor() const;
     void addCompletion(const QString &text, const QIcon &icon, int order = 0);
 
@@ -68,18 +70,21 @@ private:
 class DFunctionHintProposalModel : public TextEditor::IFunctionHintProposalModel
 {
 public:
-    DFunctionHintProposalModel(/*QVector<D::Function *> functionSymbols*/)
+    DFunctionHintProposalModel(const QList<TextEditor::BasicProposalItem *> items)
+        ///*QVector<D::Function *> functionSymbols*/)
         : //m_items(functionSymbols),
+         m_items(items),
          m_currentArg(-1)
     {}
 
-    virtual void reset() {}
-    virtual int size() const { return 1; /*m_items.size();*/ }
+    virtual void reset() {  }
+    virtual int size() const { return m_items.size(); }
     virtual QString text(int index) const;
     virtual int activeArgument(const QString &prefix) const;
 
 private:
     //QVector<D::Function *> m_items;
+    const QList<TextEditor::BasicProposalItem *> m_items;
     mutable int m_currentArg;
 };
 

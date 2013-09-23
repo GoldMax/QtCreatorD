@@ -26,11 +26,11 @@ HEADERS += dprojectmanagerplugin.h \
 
 ## set the QTC_SOURCE environment variable to override the setting here
 QTCREATOR_SOURCES = $$(QTC_SOURCE)
-isEmpty(QTCREATOR_SOURCES):QTCREATOR_SOURCES=/opt/Qt/src/qt-creator
+isEmpty(QTCREATOR_SOURCES):QTCREATOR_SOURCES=/opt/qt-creator
 
 ## set the QTC_BUILD environment variable to override the setting here
 IDE_BUILD_TREE = $$(QTC_BUILD)
-isEmpty(IDE_BUILD_TREE):IDE_BUILD_TREE=/opt/Qt/src/build-qtcreator-Desktop_Qt_5_1_1_GCC_64bit-Debug
+isEmpty(IDE_BUILD_TREE):IDE_BUILD_TREE=/opt/build-qtcreator-Desktop_Qt_5_1_1_GCC_64bit-Debug
 
 ## uncomment to build plugin into user config directory
 ## <localappdata>/plugins/<ideversion>
