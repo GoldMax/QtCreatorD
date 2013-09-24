@@ -6,8 +6,7 @@
 namespace DEditor {
 namespace Constants {
 
-const char D_ACTION_ID[] = "DEditor.Action";
-const char D_MENU_ID[] = "DEditor.Menu";
+const char D_ACTION_CLEARASSISTCACHE_ID[] = "DEditor.Action";
 
 const char M_CONTEXT[] = "DEditor.ContextMenu";
 const char M_TOOLS_D[] = "DEditor.Tools.Menu";

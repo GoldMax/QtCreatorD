@@ -4,6 +4,10 @@
 #include <texteditor/basetexteditor.h>
 #include <texteditor/plaintexteditor.h>
 
+namespace Core
+{
+class MimeType;
+}
 
 namespace DEditor {
 namespace Internal {
@@ -20,17 +24,35 @@ public:
  bool duplicateSupported() const { return true; }
  Core::IEditor *duplicate(QWidget *parent);
  Core::Id id() const;
+ bool open(QString *errorString, const QString &fileName, const QString &realFileName);
+
 };
 
-class DTextEditorWidget : public TextEditor::PlainTextEditorWidget // TextEditor::BaseTextEditorWidget
+class DTextEditorWidget : public TextEditor::BaseTextEditorWidget  // TextEditor::PlainTextEditorWidget // TextEditor::BaseTextEditorWidget
 {
-    Q_OBJECT
+ Q_OBJECT
 
 public:
-    DTextEditorWidget(QWidget* parent);
-    TextEditor::BaseTextEditor *createEditor();
-    TextEditor::IAssistInterface *createAssistInterface(TextEditor::AssistKind assistKind,
-                                                        TextEditor::AssistReason reason) const;
+ DTextEditorWidget(QWidget* parent);
+ TextEditor::IAssistInterface *createAssistInterface(TextEditor::AssistKind assistKind,
+                                                     TextEditor::AssistReason reason) const;
+ void configure(const QString& mimeType);
+ void configure(const Core::MimeType &mimeType);
+
+public slots:
+ virtual void unCommentSelection();
+ virtual void setTabSettings(const TextEditor::TabSettings &);
+
+private slots:
+ void configure();
+
+signals:
+ void configured(Core::IEditor *editor);
+
+protected:
+ bool event(QEvent *e);
+ TextEditor::BaseTextEditor *createEditor();
+
 };
 
 } // namespace Internal

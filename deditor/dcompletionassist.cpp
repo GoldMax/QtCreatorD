@@ -75,7 +75,9 @@ QString prettyPrint(QString str, int currentArgument)
  static QLatin1Char cb(')');
  int left = str.indexOf(ob);
  int right = str.lastIndexOf(cb);
- int x,y,i;
+ int x=0,y,i;
+ Q_UNUSED(x);
+ Q_UNUSED(i);
  for(int i = 0,x = y = left+1; y <= right-1; i++)
  {
   y = str.indexOf(QLatin1Char(','),y);

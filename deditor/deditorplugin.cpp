@@ -5,6 +5,7 @@
 #include "dfilewizard.h"
 #include "dhoverhandler.h"
 #include "dcompletionassist.h"
+//#include "deditorhighlighter.h"
 #include "qcdassist.h"
 
 #include <coreplugin/icore.h>
@@ -18,7 +19,7 @@
 #include <coreplugin/id.h>
 #include <coreplugin/fileiconprovider.h>
 #include <utils/qtcassert.h>
-#include <texteditor/generichighlighter/manager.h>
+//#include <texteditor/generichighlighter/manager.h>
 
 #include <QAction>
 #include <QMessageBox>
@@ -63,6 +64,24 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
 
  if (!MimeDatabase::addMimeTypes(QLatin1String(":/deditor/DEditor.mimetypes.xml"), errorString))
   return false;
+ FileIconProvider *iconProvider = FileIconProvider::instance();
+ iconProvider->registerIconOverlayForMimeType(
+    QIcon(QLatin1String(":/deditor/images/d.png")),
+    MimeDatabase::findByType(QLatin1String(Constants::D_MIMETYPE_SRC)));
+ iconProvider->registerIconOverlayForMimeType(
+    QIcon(QLatin1String(":/deditor/images/di.png")),
+    MimeDatabase::findByType(QLatin1String(Constants::D_MIMETYPE_HDR)));
+
+ m_settings = TextEditorSettings::instance();
+ if(!m_settings)
+  m_settings = new TextEditorSettings(this);
+
+ m_editorFactory = new DEditorFactory(this);
+ addAutoReleasedObject(m_editorFactory);
+
+ addAutoReleasedObject(new DCompletionAssistProvider);
+ addAutoReleasedObject(new DHoverHandler(this));
+ //addAutoReleasedObject(new DEditorHighlighterFactory);
 
  QObject *core = ICore::instance();
  BaseFileWizardParameters wizardParameters(IWizard::FileWizard);
@@ -80,30 +99,32 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
  wizardParameters.setId(QLatin1String("B.Header"));
  addAutoReleasedObject(new DFileWizard(wizardParameters, DFileWizard::Header, core));
 
- FileIconProvider *iconProvider = FileIconProvider::instance();
- iconProvider->registerIconOverlayForMimeType(
-    QIcon(QLatin1String(":/deditor/images/d.png")),
-    MimeDatabase::findByType(QLatin1String(Constants::D_MIMETYPE_SRC)));
- iconProvider->registerIconOverlayForMimeType(
-    QIcon(QLatin1String(":/deditor/images/di.png")),
-    MimeDatabase::findByType(QLatin1String(Constants::D_MIMETYPE_HDR)));
+ QAction *action;
+ Core::Command *cmd;
 
- QAction *action = new QAction(tr("Clear code assist cache"), this);
- Core::Command *cmd = Core::ActionManager::registerAction(action, Constants::D_ACTION_ID,
-                                                          Core::Context(Core::Constants::C_GLOBAL));
- connect(action, SIGNAL(triggered()), this, SLOT(clearAssistCacheAction()));
-
- Core::ActionContainer *menu = Core::ActionManager::createMenu(Constants::D_MENU_ID);
+ //*** Tools submenu *****************
+ Core::ActionContainer *menu = Core::ActionManager::createMenu(Constants::M_TOOLS_D);
  menu->menu()->setTitle(tr("D"));
+ //-- Clear code assist cache
+ action = new QAction(tr("Clear code assist cache"), this);
+ cmd = Core::ActionManager::registerAction(action, Constants::D_ACTION_CLEARASSISTCACHE_ID,
+                                           Core::Context(Core::Constants::C_GLOBAL));
+ connect(action, SIGNAL(triggered()), this, SLOT(clearAssistCacheAction()));
  menu->addAction(cmd);
+ //--
  Core::ActionManager::actionContainer(Core::Constants::M_TOOLS)->addMenu(menu);
 
- m_settings = TextEditorSettings::instance();
- if(!m_settings)
-  m_settings = new TextEditorSettings(this);
+ //*** Tools submenu *****************
+ //Context context(Constants::C_DEDITOR_ID);
+ ActionContainer *contextMenu =
+   ActionManager::createMenu(Constants::M_CONTEXT);
 
- m_editorFactory = new DEditorFactory(this);
- addAutoReleasedObject(m_editorFactory);
+ //contextMenu->addSeparator(context);
+ cmd = ActionManager::command(TextEditor::Constants::AUTO_INDENT_SELECTION);
+ contextMenu->addAction(cmd);
+ cmd = ActionManager::command(TextEditor::Constants::UN_COMMENT_SELECTION);
+ contextMenu->addAction(cmd);
+ //***
 
  m_actionHandler = new TextEditorActionHandler(
     Constants::C_DEDITOR_ID,
@@ -111,10 +132,6 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
     TextEditorActionHandler::UnCommentSelection |
     TextEditorActionHandler::UnCollapseAll);
  m_actionHandler->initializeActions();
-
- addAutoReleasedObject(new DCompletionAssistProvider);
- addAutoReleasedObject(new DHoverHandler(this));
-
 
  errorString->clear();
  return true;
@@ -154,8 +171,8 @@ ExtensionSystem::IPlugin::ShutdownFlag DEditorPlugin::aboutToShutdown()
 
 void DEditorPlugin::initializeEditor(DTextEditorWidget* editor)
 {
- m_actionHandler->setupActions((BaseTextEditorWidget*)(editor));
- TextEditorSettings::instance()->initializeEditor((BaseTextEditorWidget*)editor);
+ m_actionHandler->setupActions(editor);
+ TextEditorSettings::instance()->initializeEditor(editor);
 }
 
 void DEditorPlugin::updateSearchResultsFont(const FontSettings &settings)

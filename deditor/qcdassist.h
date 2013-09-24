@@ -3,6 +3,7 @@
 
 #include "deditor_global.h"
 
+#include <QtGlobal>
 #include <QString>
 #include <QList>
 //#include <QTcpSocket>
@@ -14,7 +15,7 @@ namespace QcdAssist
 {
  /// Port of DCD server
  //static quint16 dcdPort = 9166;
- static QString dcdClient();
+ QString dcdClient();
  //static QTcpSocket* dcdSocket = 0;
  //static int waitForConnectedTimeout = 1000;
  //static int waitForWriteTimeout = 5000;

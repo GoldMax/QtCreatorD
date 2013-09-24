@@ -4,15 +4,24 @@
 //#include "dautocompleter.h"
 //#include "dindenter.h"
 #include "dcompletionassist.h"
+#include "deditorhighlighter.h"
 
 #include <coreplugin/coreconstants.h>
 #include <coreplugin/icore.h>
-#include <texteditor/texteditorconstants.h>
-#include <texteditor/basetexteditor.h>
-#include <texteditor/plaintexteditor.h>
+#include <coreplugin/mimedatabase.h>
 
+#include <texteditor/basetextdocument.h>
+#include <texteditor/normalindenter.h>
+#include <texteditor/generichighlighter/highlighterutils.h>
+//#include <texteditor/generichighlighter/highlighter.h>
+//#include <cppeditor/cpphighlighter.h>
+
+#include <QFileInfo>
+
+using namespace Core;
 using namespace DEditor::Internal;
 using namespace TextEditor;
+using namespace TextEditor::Internal;
 
 DTextEditor::DTextEditor(DTextEditorWidget* editor)
  : BaseTextEditor(editor)
@@ -35,15 +44,36 @@ Core::Id DTextEditor::id() const
  return DEditor::Constants::C_DEDITOR_ID;
 }
 
+bool DTextEditor::open(QString *errorString, const QString &fileName, const QString &realFileName)
+{
+ editorWidget()->setMimeType(Core::MimeDatabase::findByFile(QFileInfo(fileName)).type());
+ bool b = TextEditor::BaseTextEditor::open(errorString, fileName, realFileName);
+ return b;
+}
+
+
 //-----------------------------
 //- DTextEditorWidget
 //-----------------------------
 
 DTextEditorWidget::DTextEditorWidget(QWidget *parent)
-  : PlainTextEditorWidget(parent) // BaseTextEditorWidget(parent)
+  : BaseTextEditorWidget(parent) // PlainTextEditorWidget(parent)
 {
+ setRevisionsVisible(true);
+ setMarksVisible(true);
+ setLineSeparatorsAllowed(true);
+ setParenthesesMatchingEnabled(true);
+ setCodeFoldingSupported(true);
+
  // Indenter вызывает исключения в стандартном hightlighter
  //setIndenter(new DIndenter());
+ setIndenter(new NormalIndenter);
+ // Понадобится для подсветки пользовательских типов
+ //new DEditorHighlighter(baseTextDocument().data());
+
+ setMimeType(QLatin1String(DEditor::Constants::D_MIMETYPE_SRC));
+ connect(editorDocument(), SIGNAL(changed()), this, SLOT(configure()));
+
 }
 
 TextEditor::IAssistInterface* DTextEditorWidget::createAssistInterface(
@@ -62,5 +92,59 @@ TextEditor::BaseTextEditor* DTextEditorWidget::createEditor()
  DTextEditor* edit = new DTextEditor(this);
  //createToolBar(edit);
  return edit;
+}
+
+void DTextEditorWidget::unCommentSelection()
+{
+ Utils::unCommentSelection(this);
+}
+
+bool DTextEditorWidget::event(QEvent *e)
+{
+ return BaseTextEditorWidget::event(e);
+}
+
+void DTextEditorWidget::setTabSettings(const TextEditor::TabSettings &ts)
+{
+// BaseTextEditorWidget::setTabSettings(ts);
+// if (baseTextDocument()->syntaxHighlighter())
+// {
+//  SyntaxHighlighter *highlighter =
+//    static_cast<SyntaxHighlighter *>(baseTextDocument()->syntaxHighlighter());
+//  highlighter->setTabSettings(ts);
+// }
+}
+
+void DTextEditorWidget::configure()
+{
+ MimeType mimeType;
+ if (editorDocument())
+  mimeType = MimeDatabase::findByFile(editorDocument()->filePath());
+ configure(mimeType);
+}
+
+void DTextEditorWidget::configure(const QString &mimeType)
+{
+ configure(MimeDatabase::findByType(mimeType));
+}
+
+void DTextEditorWidget::configure(const MimeType &mimeType)
+{
+ DEditorHighlighter *highlighter = new DEditorHighlighter();
+ baseTextDocument()->setSyntaxHighlighter(highlighter);
+
+ if(isParenthesesMatchingEnabled() == false)
+  setParenthesesMatchingEnabled(true);
+
+ if (!mimeType.isNull())
+ {
+  //setMimeTypeForHighlighter(highlighter, mimeType);
+  const QString &type = mimeType.type();
+  setMimeType(type);
+ }
+
+ setFontSettings(TextEditorSettings::instance()->fontSettings());
+
+ emit configured(editor());
 }
 

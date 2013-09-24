@@ -8,7 +8,8 @@ SOURCES += deditorplugin.cpp \
     dtexteditor.cpp \
     dhoverhandler.cpp \
     dcompletionassist.cpp \
-    qcdassist.cpp
+    qcdassist.cpp \
+    deditorhighlighter.cpp
 
 HEADERS += deditorplugin.h \
         deditor_global.h \
@@ -18,7 +19,8 @@ HEADERS += deditorplugin.h \
     dtexteditor.h \
     dhoverhandler.h \
     dcompletionassist.h \
-    qcdassist.h
+    qcdassist.h \
+    deditorhighlighter.h
 
 # Qt Creator linking
 
@@ -44,3 +46,10 @@ include($$QTCREATOR_SOURCES/src/qtcreatorplugin.pri)
 
 RESOURCES += \
     deditor.qrc
+
+win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../../libs/cplusplus/release/ -lCPlusPlus
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../../libs/cplusplus/debug/ -lCPlusPlus
+else:unix: LIBS += -L$$OUT_PWD/../../libs/cplusplus/ -lCPlusPlus
+
+INCLUDEPATH += $$PWD/../../libs/cplusplus
+DEPENDPATH += $$PWD/../../libs/cplusplus

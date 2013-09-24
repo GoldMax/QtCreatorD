@@ -10,7 +10,7 @@
 
 using namespace QcdAssist;
 
-static QString QcdAssist::dcdClient()
+QString QcdAssist::dcdClient()
 {
  static QString dcd;
  if(dcd.length() == 0)
