@@ -420,15 +420,37 @@ void DEditorHighlighter::highlightDoxygenComment(const QString &text, int positi
 void DEditorHighlighter::correctTokens(QList<Token>& tokens, const QString & text)
 {
  //foreach(Token t, tokens)
- for(int i = 0; i < tokens.length(); i++)
+	unsigned kind = 0;
+	for(int i = 0; i < tokens.length(); i++)
  {
+		bool skipReset = false;
   Token t = tokens[i];
-  QStringRef name = text.midRef(t.begin(),t.length());
-  if(name == QLatin1String("string") || name == QLatin1String("dstring") ||
-     name == QLatin1String("wstring"))
-  {
-   t.f.kind = (unsigned)T_INT;
-   tokens[i] = t;
-  }
+		if(kind == 0)
+		{
+			if(text.at(t.begin()) == QLatin1Char('@'))
+			{
+				kind = (unsigned)T_FIRST_KEYWORD;
+				skipReset = true;
+			}
+			else if(t.f.kind != T_IDENTIFIER)
+				continue;
+			QStringRef name = text.midRef(t.begin(),t.length());
+			if(name == QLatin1String("string") || name == QLatin1String("dstring") ||
+					name == QLatin1String("wstring") || name == QLatin1String("byte") ||
+					name == QLatin1String("ubyte"))
+				kind = (unsigned)T_INT;
+			else if(name == QLatin1String("immutable") || name == QLatin1String("package") ||
+							name == QLatin1String("override")  || name == QLatin1String("null") ||
+							name == QLatin1String("interface") || name == QLatin1String("nothrow") ||
+							name == QLatin1String("cast"))
+				kind = (unsigned)T_FIRST_KEYWORD;
+		}
+		if(kind > 0)
+		{
+			t.f.kind = kind;
+			tokens[i] = t;
+			if(skipReset == false)
+				kind = 0;
+		}
  }
 }
