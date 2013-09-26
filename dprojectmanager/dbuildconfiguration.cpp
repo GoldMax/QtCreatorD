@@ -95,11 +95,7 @@ BuildConfiguration *DBuildConfigurationFactory::create(Target *parent, const Cor
  DBuildConfiguration *bc = new DBuildConfiguration(parent);
  bc->setDisplayName(buildConfigurationName);
 
- // QString buildDirName = QLatin1String(".") + sep + QLatin1String("bin") + sep + buildConfigurationName.toLower();
- // QString sep(QDir::separator());
- // bc->setBuildDirectory(Utils::FileName::fromString(buildDirName));
-
- BuildStepList *buildSteps = bc->stepList(Constants::BUILDSTEPS_BUILD);
+	BuildStepList *buildSteps = bc->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
  Q_ASSERT(buildSteps);
  DMakeStep *makeStep = new DMakeStep(buildSteps);
  buildSteps->insertStep(0, makeStep);
@@ -173,34 +169,9 @@ DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
  fl->setContentsMargins(0, -1, 0, -1);
  fl->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
 
- // build directory
- m_pathChooser = new Utils::PathChooser(this);
- m_pathChooser->setEnabled(true);
- fl->addRow(tr("Build directory:"), m_pathChooser);
- connect(m_pathChooser, SIGNAL(changed(QString)), this, SLOT(buildDirectoryChanged()));
-
- m_buildConfiguration = bc;
- m_pathChooser->setBaseDirectory(bc->target()->project()->projectDirectory());
- m_pathChooser->setEnvironment(bc->environment());
- m_pathChooser->setPath(m_buildConfiguration->rawBuildDirectory().toString());
  setDisplayName(tr("D language Project Manager"));
-
- connect(bc, SIGNAL(environmentChanged()), this, SLOT(environmentHasChanged()));
 }
 
-void DBuildSettingsWidget::buildDirectoryChanged()
-{
- m_buildConfiguration->setBuildDirectory(Utils::FileName::fromString(m_pathChooser->rawPath()));
- //    BuildStepList *bsl = m_buildConfiguration->stepList(Constants::BUILDSTEPS_BUILD);
- //    for(int a = 0; a < bsl->count(); a++)
- //     (( bsl->at(a)->updateDetails();
-
-}
-
-void DBuildSettingsWidget::environmentHasChanged()
-{
- m_pathChooser->setEnvironment(m_buildConfiguration->environment());
-}
 
 } // namespace Internal
 } // namespace DProjectManager

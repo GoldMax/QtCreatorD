@@ -61,12 +61,7 @@ class DBuildSettingsWidget : public ProjectExplorer::NamedWidget
 public:
  DBuildSettingsWidget(DBuildConfiguration *bc);
 
-private slots:
- void buildDirectoryChanged();
- void environmentHasChanged();
-
 private:
- Utils::PathChooser *m_pathChooser;
  DBuildConfiguration *m_buildConfiguration;
 };
 

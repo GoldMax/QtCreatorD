@@ -24,6 +24,7 @@
 
 #include <QDir>
 #include <QProcessEnvironment>
+#include <QSettings>
 
 using namespace Core;
 using namespace ProjectExplorer;
@@ -39,25 +40,17 @@ namespace Internal {
 
 DProject::DProject(Manager *manager, const QString &fileName)
  : m_manager(manager),
-   m_fileName(fileName)
+			m_projectName(QFileInfo(fileName).completeBaseName()),
+			m_projectFileName(fileName),
+			m_projectDir(QFileInfo(fileName).dir())
 {
  setProjectContext(Context(DProjectManager::Constants::DPROJECTCONTEXT));
  setProjectLanguages(Context(ProjectExplorer::Constants::LANG_CXX));
 
- QFileInfo fileInfo(m_fileName);
- QDir dir = fileInfo.dir();
+	m_projectIDocument  = new DProjectFile(this, m_projectFileName, DProject::Everything);
 
- m_projectName      = fileInfo.completeBaseName();
- m_filesFileName    = QFileInfo(dir, m_projectName + QLatin1String(".files")).absoluteFilePath();
-
- m_creatorIDocument  = new DProjectFile(this, m_fileName, DProject::Everything);
- m_filesIDocument    = new DProjectFile(this, m_filesFileName, DProject::Files);
-
- DocumentManager::addDocument(m_creatorIDocument);
- DocumentManager::addDocument(m_filesIDocument);
-
- m_rootNode = new DProjectNode(this, m_creatorIDocument);
-
+	DocumentManager::addDocument(m_projectIDocument);
+	m_rootNode = new DProjectNode(this, m_projectIDocument);
  m_manager->registerProject(this);
 }
 
@@ -65,14 +58,24 @@ DProject::~DProject()
 {
  m_codeModelFuture.cancel();
  m_manager->unregisterProject(this);
-
  delete m_rootNode;
 }
 
-QString DProject::filesFileName() const
+Core::IDocument* DProject::document() const { return m_projectIDocument; }
+
+QStringList DProject::files() const { return m_files; }
+
+QStringList DProject::files(FilesMode ) const { return m_files; }
+
+bool DProject::addFiles(const QStringList &filePaths)
 {
- return m_filesFileName;
+	QStringList newList = m_rawFileList;
+	foreach (const QString &filePath, filePaths)
+		newList.append(m_projectDir.relativeFilePath(filePath));
+	return saveRawFileList(newList);
 }
+
+
 
 static QStringList readLines(const QString &absoluteFileName)
 {
@@ -98,30 +101,15 @@ static QStringList readLines(const QString &absoluteFileName)
 
 bool DProject::saveRawFileList(const QStringList &rawFileList)
 {
- // Make sure we can open the file for writing
- Utils::FileSaver saver(filesFileName(), QIODevice::Text);
- if (!saver.hasError()) {
-  QTextStream stream(saver.file());
-  foreach (const QString &filePath, rawFileList)
-   stream << filePath << QLatin1Char('\n');
-  saver.setResult(&stream);
- }
- if (!saver.finalize(ICore::mainWindow()))
-  return false;
- refresh(DProject::Files);
+	QSettings projectFiles(m_projectFileName, QSettings::IniFormat);
+	projectFiles.beginGroup(QLatin1String("Files"));
+	foreach (const QString& filePath, rawFileList)
+		projectFiles.setValue(filePath, 0);
+	projectFiles.sync();
+	refresh(DProject::Files);
  return true;
 }
 
-bool DProject::addFiles(const QStringList &filePaths)
-{
- QStringList newList = m_rawFileList;
-
- QDir baseDir(QFileInfo(m_fileName).dir());
- foreach (const QString &filePath, filePaths)
-  newList.append(baseDir.relativeFilePath(filePath));
-
- return saveRawFileList(newList);
-}
 
 bool DProject::removeFiles(const QStringList &filePaths)
 {
@@ -139,7 +127,7 @@ bool DProject::removeFiles(const QStringList &filePaths)
 bool DProject::setFiles(const QStringList &filePaths)
 {
  QStringList newList;
- QDir baseDir(QFileInfo(m_fileName).dir());
+	QDir baseDir(QFileInfo(m_projectFileName).dir());
  foreach (const QString &filePath, filePaths)
   newList.append(baseDir.relativeFilePath(filePath));
 
@@ -154,7 +142,7 @@ bool DProject::renameFile(const QString &filePath, const QString &newFilePath)
  if (i != m_rawListEntries.end()) {
   int index = newList.indexOf(i.value());
   if (index != -1) {
-   QDir baseDir(QFileInfo(m_fileName).dir());
+			QDir baseDir(QFileInfo(m_projectFileName).dir());
    newList.replace(index, baseDir.relativeFilePath(newFilePath));
   }
  }
@@ -164,21 +152,21 @@ bool DProject::renameFile(const QString &filePath, const QString &newFilePath)
 
 void DProject::parseProject(RefreshOptions options)
 {
- if (options & Files)
- {
-  m_rawListEntries.clear();
-  m_rawFileList = readLines(filesFileName());
-  m_files = processEntries(m_rawFileList, &m_rawListEntries);
- }
+// if (options & Files)
+// {
+//  m_rawListEntries.clear();
+//  m_rawFileList = readLines(filesFileName());
+//  m_files = processEntries(m_rawFileList, &m_rawListEntries);
+// }
 
- if (options & Configuration)
- {
-  // TODO : Possibly load some configuration from the project file
-  //QSettings projectInfo(m_fileName, QSettings::IniFormat);
- }
+// if (options & Configuration)
+// {
+//  // TODO : Possibly load some configuration from the project file
+//  //QSettings projectInfo(m_projectFileName, QSettings::IniFormat);
+// }
 
- if (options & Files)
-  emit fileListChanged();
+// if (options & Files)
+//  emit fileListChanged();
 }
 
 void DProject::refresh(RefreshOptions options)
@@ -224,7 +212,7 @@ QStringList DProject::processEntries(const QStringList &paths,
                                          QHash<QString, QString> *map) const
 {
  const QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
- const QDir projectDir(QFileInfo(m_fileName).dir());
+	const QDir projectDir(QFileInfo(m_projectFileName).dir());
 
  QFileInfo fileInfo;
  QStringList absolutePaths;
@@ -251,41 +239,7 @@ QStringList DProject::processEntries(const QStringList &paths,
  return absolutePaths;
 }
 
-QStringList DProject::files() const
-{
- return m_files;
-}
 
-QString DProject::displayName() const
-{
- return m_projectName;
-}
-
-Id DProject::id() const
-{
- return Id(Constants::DPROJECT_ID);
-}
-
-IDocument *DProject::document() const
-{
- return m_creatorIDocument;
-}
-
-IProjectManager *DProject::projectManager() const
-{
- return m_manager;
-}
-
-DProjectNode *DProject::rootProjectNode() const
-{
- return m_rootNode;
-}
-
-QStringList DProject::files(FilesMode fileMode) const
-{
- Q_UNUSED(fileMode)
- return m_files;
-}
 
 bool DProject::fromMap(const QVariantMap &map)
 {

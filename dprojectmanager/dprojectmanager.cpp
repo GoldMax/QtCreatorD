@@ -31,10 +31,12 @@ ProjectExplorer::Project *Manager::openProject(const QString &fileName, QString 
   return 0;
  }
  DProject* prj = new DProject(this, fileName);
+
  QString path = prj->rootProjectNode()->projectFilePath();
  if(path.endsWith(QLatin1String(".qcd")))
   path.chop(path.length() - path.lastIndexOf(QDir::separator()));
  QcdAssist::sendAddImportToDCD(path);
+
  return prj;
 }
 

@@ -176,7 +176,9 @@ QString DMakeStep::allArguments() const
 
  //Utils::QtcProcess::addArgs(&args, QLatin1String("-m64"));
  QString outFile = outFileName();
- Utils::QtcProcess::addArgs(&args, m_makeArguments);
+	QString makargs = m_makeArguments;
+	makargs.replace(QLatin1String("$TargetDir$"),m_targetDirName);
+	Utils::QtcProcess::addArgs(&args, makargs);
  if(m_targetDirName.length() == 0)
   Utils::QtcProcess::addArgs(&args, QLatin1String("-of") + outFile);
  else

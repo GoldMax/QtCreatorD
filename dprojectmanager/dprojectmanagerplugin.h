@@ -26,9 +26,6 @@ public:
 
     bool initialize(const QStringList &arguments, QString *errorString);
     void extensionsInitialized();
-
-private:
-    ProjectExplorer::Project *m_contextMenuProject;
 };
 
 } // namespace Internal

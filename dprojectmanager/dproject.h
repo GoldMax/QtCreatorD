@@ -1,6 +1,7 @@
 #ifndef DPROJECT_H
 #define DPROJECT_H
 
+#include "dprojectmanagerconstants.h"
 #include "dprojectmanager.h"
 #include "dprojectnodes.h"
 
@@ -26,14 +27,11 @@ public:
     DProject(Manager *manager, const QString &filename);
     ~DProject();
 
-    QString filesFileName() const;
-
-    QString displayName() const;
-    Core::Id id() const;
-    Core::IDocument *document() const;
-    ProjectExplorer::IProjectManager *projectManager() const;
-
-    DProjectNode *rootProjectNode() const;
+				Core::Id id() const { return Core::Id(Constants::DPROJECT_ID); }
+				QString displayName() const { return m_projectName; }
+				Core::IDocument *document() const;
+				ProjectExplorer::IProjectManager *projectManager() const { return m_manager; }
+				DProjectNode *rootProjectNode() const { return m_rootNode; }
     QStringList files(FilesMode fileMode) const;
 
     bool addFiles(const QStringList &filePaths);
@@ -61,12 +59,11 @@ private:
                                QHash<QString, QString> *map = 0) const;
 
     Manager *m_manager;
-    QString m_fileName;
-    QString m_filesFileName;
+				const QString m_projectName;
+				const QString m_projectFileName;
+				const QDir m_projectDir;
 
-    QString m_projectName;
-    DProjectFile *m_creatorIDocument;
-    DProjectFile *m_filesIDocument;
+				DProjectFile* m_projectIDocument;
 
     QStringList m_rawFileList;
     QStringList m_files;
