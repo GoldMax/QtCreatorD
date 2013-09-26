@@ -16,6 +16,8 @@
 //#include <texteditor/generichighlighter/highlighter.h>
 //#include <cppeditor/cpphighlighter.h>
 
+#include <cpptools/cppqtstyleindenter.h>
+
 #include <QFileInfo>
 
 using namespace Core;
@@ -65,9 +67,11 @@ DTextEditorWidget::DTextEditorWidget(QWidget *parent)
  setParenthesesMatchingEnabled(true);
  setCodeFoldingSupported(true);
 
+ setIndenter(new CppTools::CppQtStyleIndenter);
  // Indenter вызывает исключения в стандартном hightlighter
  //setIndenter(new DIndenter());
- setIndenter(new NormalIndenter);
+ //setIndenter(new NormalIndenter);
+
  // Понадобится для подсветки пользовательских типов
  //new DEditorHighlighter(baseTextDocument().data());
 
@@ -97,22 +101,6 @@ TextEditor::BaseTextEditor* DTextEditorWidget::createEditor()
 void DTextEditorWidget::unCommentSelection()
 {
  Utils::unCommentSelection(this);
-}
-
-bool DTextEditorWidget::event(QEvent *e)
-{
- return BaseTextEditorWidget::event(e);
-}
-
-void DTextEditorWidget::setTabSettings(const TextEditor::TabSettings &ts)
-{
-// BaseTextEditorWidget::setTabSettings(ts);
-// if (baseTextDocument()->syntaxHighlighter())
-// {
-//  SyntaxHighlighter *highlighter =
-//    static_cast<SyntaxHighlighter *>(baseTextDocument()->syntaxHighlighter());
-//  highlighter->setTabSettings(ts);
-// }
 }
 
 void DTextEditorWidget::configure()

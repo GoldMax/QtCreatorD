@@ -28,7 +28,7 @@ public:
 
 };
 
-class DTextEditorWidget : public TextEditor::BaseTextEditorWidget  // TextEditor::PlainTextEditorWidget // TextEditor::BaseTextEditorWidget
+class DTextEditorWidget : public TextEditor::BaseTextEditorWidget
 {
  Q_OBJECT
 
@@ -41,7 +41,6 @@ public:
 
 public slots:
  virtual void unCommentSelection();
- virtual void setTabSettings(const TextEditor::TabSettings &);
 
 private slots:
  void configure();
@@ -50,7 +49,6 @@ signals:
  void configured(Core::IEditor *editor);
 
 protected:
- bool event(QEvent *e);
  TextEditor::BaseTextEditor *createEditor();
 
 };
