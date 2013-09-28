@@ -1,12 +1,16 @@
 #include "dprojectnodes.h"
 #include "dproject.h"
 
+#include <coreplugin/messagemanager.h>
+
 #include <utils/fileutils.h>
 #include <coreplugin/idocument.h>
 #include <projectexplorer/projectexplorer.h>
 
 #include <QFileInfo>
 #include <QDir>
+#include <QStack>
+#include <QSet>
 
 using namespace ProjectExplorer;
 
@@ -24,176 +28,21 @@ Core::IDocument *DProjectNode::projectFile() const
  return m_projectFile;
 }
 
-QString DProjectNode::projectFilePath() const
+bool DProjectNode::addFiles(const QStringList &filePaths, QStringList *notAdded)
 {
- return m_projectFile->filePath();
+ Q_UNUSED(notAdded)
+ return m_project->addFiles(filePaths);
 }
 
-QHash<QString, QStringList> sortFilesIntoPaths(const QString &base, const QSet<QString> files)
+bool DProjectNode::removeFiles(const QStringList &filePaths, QStringList *notRemoved)
 {
- QHash<QString, QStringList> filesInPath;
- const QDir baseDir(base);
-
- foreach (const QString &absoluteFileName, files)
- {
-  QFileInfo fileInfo(absoluteFileName);
-  Utils::FileName absoluteFilePath = Utils::FileName::fromString(fileInfo.path());
-  QString relativeFilePath;
-
-  if (absoluteFilePath.isChildOf(baseDir))
-  {
-   relativeFilePath = absoluteFilePath.relativeChildPath(Utils::FileName::fromString(base)).toString();
-  }
-  else
-  {
-   // `file' is not part of the project.
-   relativeFilePath = baseDir.relativeFilePath(absoluteFilePath.toString());
-   if (relativeFilePath.endsWith(QDir::separator()))
-    relativeFilePath.chop(1);
-  }
-
-  filesInPath[relativeFilePath].append(absoluteFileName);
- }
- return filesInPath;
+ Q_UNUSED(notRemoved)
+ return m_project->removeFiles(filePaths);
 }
 
-void DProjectNode::refresh(QSet<QString> oldFileList)
+bool DProjectNode::renameFile(const QString &filePath, const QString &newFilePath)
 {
-// typedef QHash<QString, QStringList> FilesInPathHash;
-// typedef FilesInPathHash::ConstIterator FilesInPathHashConstIt;
-
-// if (oldFileList.isEmpty())
-// {
-//  // Only do this once
-//  FileNode *projectFilesNode = new FileNode(m_project->filesFileName(),
-//                                            ProjectFileType,
-//                                            /* generated = */ false);
-
-//  addFileNodes(QList<FileNode *>() << projectFilesNode, this);
-// }
-
-// // Do those separately
-// oldFileList.remove(m_project->filesFileName());
-
-// QSet<QString> newFileList = m_project->files().toSet();
-// newFileList.remove(m_project->filesFileName());
-
-// QSet<QString> removed = oldFileList;
-// removed.subtract(newFileList);
-// QSet<QString> added = newFileList;
-// added.subtract(oldFileList);
-
-// QString baseDir = QFileInfo(path()).absolutePath();
-// FilesInPathHash filesInPaths = sortFilesIntoPaths(baseDir, added);
-
-// FilesInPathHashConstIt cend = filesInPaths.constEnd();
-// for (FilesInPathHashConstIt it = filesInPaths.constBegin(); it != cend; ++it)
-// {
-//  const QString &filePath = it.key();
-//  QStringList components;
-//  if (!filePath.isEmpty())
-//   components = filePath.split(QDir::separator());
-//  FolderNode *folder = findFolderByName(components, components.size());
-//  if (!folder)
-//   folder = createFolderByName(components, components.size());
-
-//  QList<FileNode *> fileNodes;
-//  foreach (const QString &file, it.value())
-//  {
-//   FileType fileType = SourceType; // ### FIXME
-//   FileNode *fileNode = new FileNode(file, fileType, /*generated = */ false);
-//   fileNodes.append(fileNode);
-//  }
-
-//  addFileNodes(fileNodes, folder);
-// }
-
-// filesInPaths = sortFilesIntoPaths(baseDir, removed);
-// cend = filesInPaths.constEnd();
-// for (FilesInPathHashConstIt it = filesInPaths.constBegin(); it != cend; ++it)
-// {
-//  const QString &filePath = it.key();
-//  QStringList components;
-//  if (!filePath.isEmpty())
-//   components = filePath.split(QDir::separator());
-//  FolderNode *folder = findFolderByName(components, components.size());
-
-//  QList<FileNode *> fileNodes;
-//  foreach (const QString &file, it.value()) {
-//   foreach (FileNode *fn, folder->fileNodes())
-//    if (fn->path() == file)
-//     fileNodes.append(fn);
-//  }
-
-//  removeFileNodes(fileNodes, folder);
-// }
-
-// foreach (FolderNode *fn, subFolderNodes())
-//  removeEmptySubFolders(this, fn);
-}
-
-void DProjectNode::removeEmptySubFolders(FolderNode *gparent, FolderNode *parent)
-{
- foreach (FolderNode *fn, parent->subFolderNodes())
-  removeEmptySubFolders(parent, fn);
-
- if (parent->subFolderNodes().isEmpty() && parent->fileNodes().isEmpty())
-  removeFolderNodes(QList<FolderNode*>() << parent, gparent);
-}
-
-FolderNode *DProjectNode::createFolderByName(const QStringList &components, int end)
-{
- if (end == 0)
-  return this;
-
- QString folderName;
- for (int i = 0; i < end; ++i)
- {
-  folderName.append(components.at(i));
-  folderName += QDir::separator();
- }
-
- const QString component = components.at(end - 1);
-
- const QString baseDir = QFileInfo(path()).path();
- FolderNode *folder = new FolderNode(baseDir + QDir::separator() + folderName);
- folder->setDisplayName(component);
-
- FolderNode *parent = findFolderByName(components, end - 1);
- if (!parent)
-  parent = createFolderByName(components, end - 1);
- addFolderNodes(QList<FolderNode*>() << folder, parent);
-
- return folder;
-}
-
-FolderNode *DProjectNode::findFolderByName(const QStringList &components, int end)
-{
- if (end == 0)
-  return this;
-
- QString folderName;
- for (int i = 0; i < end; ++i)
- {
-  folderName.append(components.at(i));
-  folderName += QDir::separator();
- }
-
- FolderNode *parent = findFolderByName(components, end - 1);
-
- if (!parent)
-  return 0;
-
- const QString baseDir = QFileInfo(path()).path();
- foreach (FolderNode *fn, parent->subFolderNodes())
-  if (fn->path() == baseDir + QDir::separator() + folderName)
-   return fn;
- return 0;
-}
-
-bool DProjectNode::hasBuildTargets() const
-{
- return true;
+ return m_project->renameFile(filePath, newFilePath);
 }
 
 QList<ProjectNode::ProjectAction> DProjectNode::supportedActions(Node *node) const
@@ -206,54 +55,102 @@ QList<ProjectNode::ProjectAction> DProjectNode::supportedActions(Node *node) con
    << Rename;
 }
 
-bool DProjectNode::canAddSubProject(const QString &proFilePath) const
-{
- Q_UNUSED(proFilePath)
- return false;
-}
-
-bool DProjectNode::addSubProjects(const QStringList &proFilePaths)
-{
- Q_UNUSED(proFilePaths)
- return false;
-}
-
-bool DProjectNode::removeSubProjects(const QStringList &proFilePaths)
-{
- Q_UNUSED(proFilePaths)
- return false;
-}
-
-bool DProjectNode::addFiles(const QStringList &filePaths, QStringList *notAdded)
-{
- Q_UNUSED(notAdded)
-
- return m_project->addFiles(filePaths);
-}
-
-bool DProjectNode::removeFiles(const QStringList &filePaths, QStringList *notRemoved)
-{
- Q_UNUSED(notRemoved)
-
- return m_project->removeFiles(filePaths);
-}
-
-bool DProjectNode::deleteFiles(const QStringList &filePaths)
-{
- Q_UNUSED(filePaths)
- return false;
-}
-
-bool DProjectNode::renameFile(const QString &filePath, const QString &newFilePath)
-{
- return m_project->renameFile(filePath, newFilePath);
-}
-
 QList<RunConfiguration *> DProjectNode::runConfigurationsFor(Node *node)
 {
  Q_UNUSED(node)
  return QList<RunConfiguration *>();
 }
 
+bool isEmpty(FolderNode* f)
+{
+ return f->fileNodes().length() + f->subFolderNodes().length() == 0;
+}
+
+void DProjectNode::refresh()
+{
+ //Core::MessageManager::write(QLatin1String("refresh"));
+ const QSet<QString>& files = m_project->files();
+
+ QHash<QString,FileNode*> nodes;
+ QStack<FolderNode*> stack;
+ stack.push(this);
+ while(stack.count() > 0)
+ {
+  FolderNode* n = stack.pop();
+  foreach(FileNode* i, n->fileNodes())
+   nodes[i->path()] = i;
+  foreach(FolderNode* i, n->subFolderNodes())
+   stack.push(i);
+ }
+ QDir base(m_project->projectDirectory());
+
+ // adding
+ foreach(QString filePath, files)
+ {
+  if(nodes.contains(filePath))
+   continue;
+  FolderNode* folder = this;
+  QStringList parts = base.relativeFilePath(filePath).split(QDir::separator());
+  QString absFolderPath = m_project->projectDirectory();
+  parts.pop_back();
+  foreach(QString part, parts)
+  {
+   FolderNode* fn = 0;
+   absFolderPath.append(QDir::separator()).append(part);
+
+   foreach(FolderNode* f, folder->subFolderNodes())
+    if(f->displayName() == part)
+    {
+     fn = f;
+     break;
+    }
+   if(fn == 0)
+   {
+    QList<FolderNode*> list;
+    list.append(fn = new FolderNode(absFolderPath));
+    fn->setDisplayName(part);
+    addFolderNodes(list, folder);
+   }
+   folder = fn;
+  }
+  FileNode* node = 0;
+  foreach(FileNode* n, folder->fileNodes())
+   if(n->path() == filePath)
+   {
+    node = n;
+    break;
+   }
+  if(node == 0)
+  {
+   QList<FileNode*> list;
+   list.append(new FileNode(filePath, SourceType, false));
+   addFileNodes(list, folder);
+  }
+ }
+
+ // removing
+ typedef QHash<QString, FileNode*>::Iterator KeyValue;
+ for (KeyValue kv = nodes.begin(); kv != nodes.end(); ++kv)
+ {
+  if(files.contains(kv.key()))
+   continue;
+  QList<FileNode*> list;
+  list.append(kv.value());
+  FolderNode* parent = kv.value()->parentFolderNode();
+  removeFileNodes(list, parent);
+
+  while(parent != this)
+   if(isEmpty(parent))
+   {
+    FolderNode* p = parent->parentFolderNode();
+    QList<FolderNode*> list;
+    list.append(parent);
+    removeFolderNodes(list, p);
+    parent = p;
+   }
+  else
+    break;
+ }
+}
 } // namespace Internal
 } // namespace DProjectManager

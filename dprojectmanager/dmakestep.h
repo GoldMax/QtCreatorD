@@ -45,10 +45,10 @@ public:
 
  QString outFileName() const;
  QString targetDirName() const { return m_targetDirName; }
+ bool fromMap(const QVariantMap &map);
 protected:
  DMakeStep(ProjectExplorer::BuildStepList *parent, DMakeStep *bs);
  DMakeStep(ProjectExplorer::BuildStepList *parent, const Core::Id id);
- bool fromMap(const QVariantMap &map);
 
 private:
  void ctor();

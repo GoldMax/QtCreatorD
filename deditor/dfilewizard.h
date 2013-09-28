@@ -11,11 +11,11 @@ class DFileWizard: public Core::BaseFileWizard
  Q_OBJECT
 
 public:
- typedef Core::BaseFileWizardParameters BaseFileWizardParameters;
+ //typedef Core::BaseFileWizardParameters BaseFileWizardParameters;
 
  enum FileType { Source, Header };
 
- explicit DFileWizard(const BaseFileWizardParameters &parameters,
+ explicit DFileWizard(//const BaseFileWizardParameters &parameters,
                           FileType fileType, QObject *parent = 0);
 
  virtual Core::FeatureSet requiredFeatures() const;

@@ -3,8 +3,12 @@
 
 #include <projectexplorer/buildconfiguration.h>
 #include <projectexplorer/namedwidget.h>
+#include <projectexplorer/buildinfo.h>
+#include <projectexplorer/target.h>
 
 namespace Utils { class PathChooser; }
+
+using namespace ProjectExplorer;
 
 namespace DProjectManager {
 namespace Internal {
@@ -19,15 +23,15 @@ class DBuildConfiguration : public ProjectExplorer::BuildConfiguration
  friend class DBuildConfigurationFactory;
 
 public:
- explicit DBuildConfiguration(ProjectExplorer::Target *parent);
+ explicit DBuildConfiguration(Target *parent);
 
- ProjectExplorer::NamedWidget *createConfigWidget();
-
- BuildType buildType() const;
+ NamedWidget *createConfigWidget();
+ BuildType buildType() const { return Unknown; }
+ bool fromMap(const QVariantMap &map);
 
 protected:
- DBuildConfiguration(ProjectExplorer::Target *parent, DBuildConfiguration *source);
- DBuildConfiguration(ProjectExplorer::Target *parent, const Core::Id id);
+ DBuildConfiguration(Target *parent, DBuildConfiguration *source);
+ DBuildConfiguration(Target *parent, const Core::Id id);
 
  friend class DBuildSettingsWidget;
 };
@@ -40,18 +44,19 @@ public:
  explicit DBuildConfigurationFactory(QObject *parent = 0);
  ~DBuildConfigurationFactory();
 
- QList<Core::Id> availableCreationIds(const ProjectExplorer::Target *parent) const;
- QString displayNameForId(const Core::Id id) const;
+ bool canCreate(const Target *parent) const;
+ QList<BuildInfo *> availableBuilds(const Target *parent) const;
+ ProjectExplorer::BuildConfiguration *create(Target *parent, const BuildInfo *info) const;
 
- bool canCreate(const ProjectExplorer::Target *parent, const Core::Id id) const;
- ProjectExplorer::BuildConfiguration *create(ProjectExplorer::Target *parent, const Core::Id id, const QString &name = QString());
- bool canClone(const ProjectExplorer::Target *parent, ProjectExplorer::BuildConfiguration *source) const;
- ProjectExplorer::BuildConfiguration *clone(ProjectExplorer::Target *parent, ProjectExplorer::BuildConfiguration *source);
- bool canRestore(const ProjectExplorer::Target *parent, const QVariantMap &map) const;
- ProjectExplorer::BuildConfiguration *restore(ProjectExplorer::Target *parent, const QVariantMap &map);
+ bool canClone(const Target *parent, BuildConfiguration *source) const;
+ BuildConfiguration *clone(Target *parent, BuildConfiguration *source);
+ bool canRestore(const Target *parent, const QVariantMap &map) const;
+ BuildConfiguration *restore(Target *parent, const QVariantMap &map);
+
 
 private:
- bool canHandle(const ProjectExplorer::Target *t) const;
+ bool canHandle(const Target *t) const;
+
 };
 
 class DBuildSettingsWidget : public ProjectExplorer::NamedWidget

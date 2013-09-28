@@ -64,13 +64,8 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
 
  if (!MimeDatabase::addMimeTypes(QLatin1String(":/deditor/DEditor.mimetypes.xml"), errorString))
   return false;
- FileIconProvider *iconProvider = FileIconProvider::instance();
- iconProvider->registerIconOverlayForMimeType(
-    QIcon(QLatin1String(":/deditor/images/d.png")),
-    MimeDatabase::findByType(QLatin1String(Constants::D_MIMETYPE_SRC)));
- iconProvider->registerIconOverlayForMimeType(
-    QIcon(QLatin1String(":/deditor/images/di.png")),
-    MimeDatabase::findByType(QLatin1String(Constants::D_MIMETYPE_HDR)));
+ FileIconProvider::registerIconOverlayForMimeType(":/deditor/images/d.png", Constants::D_MIMETYPE_SRC);
+ FileIconProvider::registerIconOverlayForMimeType(":/deditor/images/di.png", Constants::D_MIMETYPE_HDR);
 
  m_settings = TextEditorSettings::instance();
  if(!m_settings)
@@ -84,20 +79,23 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
  //addAutoReleasedObject(new DEditorHighlighterFactory);
 
  QObject *core = ICore::instance();
- BaseFileWizardParameters wizardParameters(IWizard::FileWizard);
- wizardParameters.setKind(IWizard::FileWizard);
- wizardParameters.setCategory(QLatin1String(Constants::WIZARD_CATEGORY_D));
- wizardParameters.setDisplayCategory(QCoreApplication::translate("DEditor", Constants::WIZARD_TR_CATEGORY_D));
+ DFileWizard* wizard = new DFileWizard(DFileWizard::Source, core);
+ wizard->setWizardKind(IWizard::FileWizard);
+ wizard->setCategory(QLatin1String(Constants::WIZARD_CATEGORY_D));
+ wizard->setDisplayCategory(QCoreApplication::translate("DEditor", Constants::WIZARD_TR_CATEGORY_D));
+ wizard->setDescription(tr("Creates a D source file."));
+ wizard->setDisplayName(tr("D Source File"));
+ wizard->setId(QLatin1String("A.Source"));
+ addAutoReleasedObject(wizard);
 
- wizardParameters.setDescription(tr("Creates a D source file."));
- wizardParameters.setDisplayName(tr("D Source File"));
- wizardParameters.setId(QLatin1String("A.Source"));
- addAutoReleasedObject(new DFileWizard(wizardParameters, DFileWizard::Source, core));
-
- wizardParameters.setDescription(tr("Creates a D header file."));
- wizardParameters.setDisplayName(tr("D Header File"));
- wizardParameters.setId(QLatin1String("B.Header"));
- addAutoReleasedObject(new DFileWizard(wizardParameters, DFileWizard::Header, core));
+ wizard = new DFileWizard(DFileWizard::Header, core);
+ wizard->setWizardKind(IWizard::FileWizard);
+ wizard->setCategory(QLatin1String(Constants::WIZARD_CATEGORY_D));
+ wizard->setDisplayCategory(QCoreApplication::translate("DEditor", Constants::WIZARD_TR_CATEGORY_D));
+ wizard->setDescription(tr("Creates a D header file."));
+ wizard->setDisplayName(tr("D Header File"));
+ wizard->setId(QLatin1String("B.Header"));
+ addAutoReleasedObject(wizard);
 
  QAction *action;
  Core::Command *cmd;

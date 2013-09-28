@@ -230,18 +230,18 @@ QString DRunConfiguration::defaultDisplayName() const
 QVariantMap DRunConfiguration::toMap() const
 {
  QVariantMap map(LocalApplicationRunConfiguration::toMap());
- map.insert(QLatin1String(EXECUTABLE_KEY), m_executable);
+ //map.insert(QLatin1String(EXECUTABLE_KEY), m_executable);
  map.insert(QLatin1String(ARGUMENTS_KEY), m_cmdArguments);
- map.insert(QLatin1String(WORKING_DIRECTORY_KEY), m_workingDirectory);
+ //map.insert(QLatin1String(WORKING_DIRECTORY_KEY), m_workingDirectory);
  map.insert(QLatin1String(USE_TERMINAL_KEY), m_runMode == Console);
  return map;
 }
 
 bool DRunConfiguration::fromMap(const QVariantMap &map)
 {
- m_executable = map.value(QLatin1String(EXECUTABLE_KEY)).toString();
+ //m_executable = map.value(QLatin1String(EXECUTABLE_KEY)).toString();
  m_cmdArguments = map.value(QLatin1String(ARGUMENTS_KEY)).toString();
- m_workingDirectory = map.value(QLatin1String(WORKING_DIRECTORY_KEY)).toString();
+ //m_workingDirectory = map.value(QLatin1String(WORKING_DIRECTORY_KEY)).toString();
  m_runMode = map.value(QLatin1String(USE_TERMINAL_KEY)).toBool() ? Console : Gui;
 
  setDefaultDisplayName(defaultDisplayName());
@@ -300,8 +300,8 @@ void DRunConfiguration::updateConfig(const DMakeStep* makeStep)
  QString outDir = makeStep->targetDirName();
  if(outDir.startsWith(QDir::separator()) == false)
  {
-  QString projDir = makeStep->target()->project()->rootProjectNode()->path();
-  projDir.truncate(projDir.lastIndexOf(QDir::separator()));
+  QString projDir = makeStep->target()->project()->projectDirectory();
+  //projDir.truncate(projDir.lastIndexOf(QDir::separator()));
   outDir = projDir + QDir::separator() + outDir;
  }
  setBaseWorkingDirectory(outDir);
@@ -312,9 +312,14 @@ void DRunConfiguration::updateConfig(const DMakeStep* makeStep)
 //--- DRunConfigurationFactory
 //---------------------------------------------------------------------------------
 
+DRunConfigurationFactory* DRunConfigurationFactory::m_instance = 0;
+
 DRunConfigurationFactory::DRunConfigurationFactory(QObject *parent) :
   ProjectExplorer::IRunConfigurationFactory(parent)
-{ setObjectName(QLatin1String("DRunConfigurationFactory")); }
+{
+ setObjectName(QLatin1String("DRunConfigurationFactory"));
+ m_instance = this;
+}
 
 DRunConfigurationFactory::~DRunConfigurationFactory() { }
 

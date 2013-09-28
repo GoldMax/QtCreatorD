@@ -32,8 +32,6 @@ public:
     DProjectWizard();
     Core::FeatureSet requiredFeatures() const;
 
-    static Core::BaseFileWizardParameters parameters();
-
 protected:
     QWizard *createWizardDialog(QWidget *parent,
                                 const Core::WizardDialogParameters &wizardDialogParameters) const;

@@ -18,6 +18,7 @@
 #include <projectexplorer/kitinformation.h>
 #include <projectexplorer/kitmanager.h>
 #include <projectexplorer/projectexplorerconstants.h>
+#include <projectexplorer/editorconfiguration.h>
 #include <qtsupport/customexecutablerunconfiguration.h>
 #include <utils/fileutils.h>
 #include <utils/qtcassert.h>
@@ -28,6 +29,14 @@
 
 using namespace Core;
 using namespace ProjectExplorer;
+
+namespace {
+const char ACTIVE_TARGET_KEY[] = "ProjectExplorer.Project.ActiveTarget";
+const char TARGET_KEY_PREFIX[] = "ProjectExplorer.Project.Target.";
+const char TARGET_COUNT_KEY[] = "ProjectExplorer.Project.TargetCount";
+const char EDITOR_SETTINGS_KEY[] = "ProjectExplorer.Project.EditorSettings";
+const char PLUGIN_SETTINGS_KEY[] = "ProjectExplorer.Project.PluginSettings";
+} // namespace
 
 namespace DProjectManager {
 namespace Internal {
@@ -41,8 +50,7 @@ namespace Internal {
 DProject::DProject(Manager *manager, const QString &fileName)
  : m_manager(manager),
 			m_projectName(QFileInfo(fileName).completeBaseName()),
-			m_projectFileName(fileName),
-			m_projectDir(QFileInfo(fileName).dir())
+   m_projectFileName(fileName)
 {
  setProjectContext(Context(DProjectManager::Constants::DPROJECTCONTEXT));
  setProjectLanguages(Context(ProjectExplorer::Constants::LANG_CXX));
@@ -63,215 +71,187 @@ DProject::~DProject()
 
 Core::IDocument* DProject::document() const { return m_projectIDocument; }
 
-QStringList DProject::files() const { return m_files; }
-
-QStringList DProject::files(FilesMode ) const { return m_files; }
-
-bool DProject::addFiles(const QStringList &filePaths)
+bool DProject::addFiles(const QStringList& filePaths)
 {
-	QStringList newList = m_rawFileList;
-	foreach (const QString &filePath, filePaths)
-		newList.append(m_projectDir.relativeFilePath(filePath));
-	return saveRawFileList(newList);
-}
-
-
-
-static QStringList readLines(const QString &absoluteFileName)
-{
- QStringList lines;
-
- QFile file(absoluteFileName);
- if (file.open(QFile::ReadOnly))
+ QDir projDir(projectDirectory());
+ QSettings projectFiles(m_projectFileName, QSettings::IniFormat);
+ projectFiles.beginGroup(QLatin1String("Files"));
+ foreach (const QString &filePath, filePaths)
  {
-  QTextStream stream(&file);
-
-  forever
-  {
-   QString line = stream.readLine();
-   if (line.isNull())
-    break;
-
-   lines.append(line);
-  }
+  if(m_files.contains(filePath) == false)
+   projectFiles.setValue(projDir.relativeFilePath(filePath), 0);
  }
-
- return lines;
-}
-
-bool DProject::saveRawFileList(const QStringList &rawFileList)
-{
-	QSettings projectFiles(m_projectFileName, QSettings::IniFormat);
-	projectFiles.beginGroup(QLatin1String("Files"));
-	foreach (const QString& filePath, rawFileList)
-		projectFiles.setValue(filePath, 0);
-	projectFiles.sync();
-	refresh(DProject::Files);
  return true;
 }
 
-
 bool DProject::removeFiles(const QStringList &filePaths)
 {
- QStringList newList = m_rawFileList;
-
- foreach (const QString &filePath, filePaths) {
-  QHash<QString, QString>::iterator i = m_rawListEntries.find(filePath);
-  if (i != m_rawListEntries.end())
-   newList.removeOne(i.value());
- }
-
- return saveRawFileList(newList);
-}
-
-bool DProject::setFiles(const QStringList &filePaths)
-{
- QStringList newList;
-	QDir baseDir(QFileInfo(m_projectFileName).dir());
+ QDir projDir(projectDirectory());
+ QSettings projectFiles(m_projectFileName, QSettings::IniFormat);
+ projectFiles.beginGroup(QLatin1String("Files"));
  foreach (const QString &filePath, filePaths)
-  newList.append(baseDir.relativeFilePath(filePath));
-
- return saveRawFileList(newList);
+   projectFiles.remove(projDir.relativeFilePath(filePath));
+ return true;
 }
 
 bool DProject::renameFile(const QString &filePath, const QString &newFilePath)
 {
- QStringList newList = m_rawFileList;
+ QSettings projectFiles(m_projectFileName, QSettings::IniFormat);
+ projectFiles.beginGroup(QLatin1String("Files"));
+ QDir projDir(projectDirectory());
 
- QHash<QString, QString>::iterator i = m_rawListEntries.find(filePath);
- if (i != m_rawListEntries.end()) {
-  int index = newList.indexOf(i.value());
-  if (index != -1) {
-			QDir baseDir(QFileInfo(m_projectFileName).dir());
-   newList.replace(index, baseDir.relativeFilePath(newFilePath));
-  }
- }
+ projectFiles.remove(projDir.relativeFilePath(filePath));
+ projectFiles.setValue(projDir.relativeFilePath(newFilePath), 0);
 
- return saveRawFileList(newList);
+ return true;
 }
 
 void DProject::parseProject(RefreshOptions options)
 {
-// if (options & Files)
-// {
-//  m_rawListEntries.clear();
-//  m_rawFileList = readLines(filesFileName());
-//  m_files = processEntries(m_rawFileList, &m_rawListEntries);
-// }
+ // if (options & Configuration)
+ // {
+ //  // TODO : Possibly load some configuration from the project file
+ //  //QSettings projectInfo(m_projectFileName, QSettings::IniFormat);
+ // }
 
-// if (options & Configuration)
-// {
-//  // TODO : Possibly load some configuration from the project file
-//  //QSettings projectInfo(m_projectFileName, QSettings::IniFormat);
-// }
+ if (options & Files)
+ {
+  m_files.clear();
 
-// if (options & Files)
-//  emit fileListChanged();
+  QDir projDir(projectDirectory());
+  QSettings projectFiles(m_projectFileName, QSettings::IniFormat);
+  projectFiles.beginGroup(QLatin1String("Files"));
+  foreach(QString rel, projectFiles.allKeys())
+  {
+   QString abs = projDir.absoluteFilePath(rel);
+   m_files << abs;
+  }
+  emit fileListChanged();
+ }
 }
 
 void DProject::refresh(RefreshOptions options)
 {
- QSet<QString> oldFileList;
- if (!(options & Configuration))
-  oldFileList = m_files.toSet();
-
  parseProject(options);
 
  if (options & Files)
-  m_rootNode->refresh(oldFileList);
+  m_rootNode->refresh();
 }
 
-/*
- * Expands environment variables in the given \a string when they are written
- * like $$(VARIABLE).
- */
-static void expandEnvironmentVariables(const QProcessEnvironment &env, QString &string)
+//-------
+bool DProject::setupTarget(Target* t)
 {
- static QRegExp candidate(QLatin1String("\\$\\$\\((.+)\\)"));
+ //if(Project::setupTarget(t) == false)
+ // return false;
 
- int index = candidate.indexIn(string);
- while (index != -1)
- {
-  const QString value = env.value(candidate.cap(1));
+ IBuildConfigurationFactory *factory = IBuildConfigurationFactory::find(t);
+ if (!factory)
+  return false;
 
-  string.replace(index, candidate.matchedLength(), value);
-  index += value.length();
+ Utils::FileName projectDir =
+   Utils::FileName::fromString(t->project()->projectDirectory());
 
-  index = candidate.indexIn(string, index);
- }
-}
-
-/*
- * Expands environment variables and converts the path from relative to the
- * project to an absolute path.
- *
- * The \a map variable is an optional argument that will map the returned
- * absolute paths back to their original \a entries.
- */
-QStringList DProject::processEntries(const QStringList &paths,
-                                         QHash<QString, QString> *map) const
-{
- const QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-	const QDir projectDir(QFileInfo(m_projectFileName).dir());
-
- QFileInfo fileInfo;
- QStringList absolutePaths;
- foreach (const QString &path, paths)
- {
-  QString trimmedPath = path.trimmed();
-  if (trimmedPath.isEmpty())
-   continue;
-
-  expandEnvironmentVariables(env, trimmedPath);
-
-  trimmedPath = Utils::FileName::fromUserInput(trimmedPath).toString();
-
-  fileInfo.setFile(projectDir, trimmedPath);
-  if (fileInfo.exists())
+ QSettings sets(m_projectFileName, QSettings::IniFormat);
+ QStringList groups = sets.childGroups();
+ foreach(QString group, groups)
+  if(group.startsWith(QLatin1String("BC.")))
   {
-   const QString absPath = fileInfo.absoluteFilePath();
-   absolutePaths.append(absPath);
-   if (map)
-    map->insert(absPath, trimmedPath);
+   QVariantMap map;
+   map[QLatin1String("BuildConfigurationName")] = group.remove(0,3);
+   BuildConfiguration* bc = factory->restore(t,map); //create(t,info);
+   if (!bc)
+    return false;
+   t->addBuildConfiguration(bc);
   }
- }
- absolutePaths.removeDuplicates();
- return absolutePaths;
+
+ if(t->buildConfigurations().length() > 0)
+  return true;
+
+ BuildInfo* info = new BuildInfo(factory);
+ info->displayName = tr("Debug");
+ info->typeName = tr("D Build");
+ info->buildDirectory = projectDir;
+ info->kitId = t->kit()->id();
+
+ BuildConfiguration* bc = factory->create(t,info);
+ if (!bc)
+  return false;
+ t->addBuildConfiguration(bc);
+
+ info = new BuildInfo(factory);
+ info->displayName = tr("Release");
+ info->typeName = tr("D Build");
+ info->buildDirectory = projectDir;
+ info->kitId = t->kit()->id();
+
+ bc = factory->create(t,info);
+ if (!bc)
+  return false;
+ t->addBuildConfiguration(bc);
+
+ info = new BuildInfo(factory);
+ info->displayName = tr("Unittest");
+ info->typeName = tr("D Build");
+ info->buildDirectory = projectDir;
+ info->kitId = t->kit()->id();
+
+ bc = factory->create(t,info);
+ if (!bc)
+  return false;
+ t->addBuildConfiguration(bc);
+
+ return true;
 }
 
+QVariantMap DProject::toMap() const
+{
+ QVariantMap map = Project::toMap();
+ map.remove(QLatin1String(ACTIVE_TARGET_KEY));
+ map.remove(QLatin1String(TARGET_COUNT_KEY));
+ const QList<Target *> ts = targets();
+ for (int i = 0; i < ts.size(); ++i)
+  map.remove(QString::fromLatin1(TARGET_KEY_PREFIX) + QString::number(i));
+// const QList<Target *> ts = targets();
 
+// QVariantMap map;
+//// map.insert(QLatin1String(ACTIVE_TARGET_KEY), ts.indexOf(d->m_activeTarget));
+// map.insert(QLatin1String(TARGET_COUNT_KEY), 0);
+//// for (int i = 0; i < ts.size(); ++i)
+////  map.insert(QString::fromLatin1(TARGET_KEY_PREFIX) + QString::number(i), ts.at(i)->toMap());
 
+// map.insert(QLatin1String(EDITOR_SETTINGS_KEY), editorConfiguration()->toMap());
+ return map;
+}
 bool DProject::fromMap(const QVariantMap &map)
 {
  if (!Project::fromMap(map))
   return false;
 
+
+ /*QSettings sets(m_projectFileName, QSettings::IniFormat);
+ QVariantMap map;
+ // TODO send QSettings
+ // map[QLatin1String("QSettings")] = QVariant(sets;
+
+ QStringList groups = sets.childGroups();
+ foreach(QString group, groups)
+  if(group.startsWith(QLatin1String("BC.")))
+  {
+   map[QLatin1String("Name")] = group.remove(0,3);
+   BuildConfiguration* bc = factory->restore(t,map);
+   if (!bc)
+    return false;
+   t->addBuildConfiguration(bc);
+  }
+
+ if(t->buildConfigurations().length() > 0)
+  return true;
+*/
+
  Kit *defaultKit = KitManager::defaultKit();
  if (!activeTarget() && defaultKit)
- {
-  Target* t = createTarget(defaultKit);
-  addTarget(t);
+     addTarget(createTarget(defaultKit));
 
-
-  IBuildConfigurationFactory *factory = IBuildConfigurationFactory::find(t);
-  if (!factory)
-   return false;
-  const Core::Id id = factory->availableCreationIds(t)[0];
-
-
-  QString name = QLatin1String("Release");
-  BuildConfiguration *bc = factory->create(t,id, name);
-  if (!bc)
-   return false;
-  t->addBuildConfiguration(bc);
-
-  name = QLatin1String("Unittest");
-  bc = factory->create(t, id,name);
-  if (!bc)
-   return false;
-  t->addBuildConfiguration(bc);
-
- }
  // Sanity check: We need both a buildconfiguration and a runconfiguration!
  QList<Target *> targetList = targets();
  foreach (Target *t, targetList)
@@ -279,16 +259,14 @@ bool DProject::fromMap(const QVariantMap &map)
   if (!t->activeBuildConfiguration())
   {
    removeTarget(t);
-   delete t;
+   try {
+    delete t;
+   } catch(...) {}
    continue;
   }
   if (!t->activeRunConfiguration())
-  {
-   //QtSupport::CustomExecutableRunConfiguration* run = new QtSupport::CustomExecutableRunConfiguration(t);
-   DRunConfiguration* run = new DRunConfiguration(t);
-
-   t->addRunConfiguration(run);
-  }
+   t->addRunConfiguration(
+      DRunConfigurationFactory::instance()->create(t, ProjectExplorer::Constants::BUILDSTEPS_BUILD));
  }
 
  refresh(Everything);

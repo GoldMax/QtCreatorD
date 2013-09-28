@@ -38,9 +38,25 @@ DBuildConfiguration::DBuildConfiguration(Target *parent, DBuildConfiguration *so
  cloneSteps(source);
 }
 
-NamedWidget *DBuildConfiguration::createConfigWidget()
+NamedWidget* DBuildConfiguration::createConfigWidget()
 {
  return new DBuildSettingsWidget(this);
+}
+
+bool DBuildConfiguration::fromMap(const QVariantMap &map)
+{
+ if(map.contains(QLatin1String("BuildConfigurationName")))
+  this->setDisplayName(map[QLatin1String("BuildConfigurationName")].toString());
+
+ BuildStepList *buildSteps = this->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
+ Q_ASSERT(buildSteps);
+ DMakeStep *makeStep = new DMakeStep(buildSteps);
+ makeStep->fromMap(map);
+ buildSteps->insertStep(0, makeStep);
+
+ // TODO : configure clean step
+
+ return true;
 }
 
 //------------------------------------------------------------------------------------------------
@@ -52,78 +68,64 @@ DBuildConfigurationFactory::DBuildConfigurationFactory(QObject *parent) :
 
 DBuildConfigurationFactory::~DBuildConfigurationFactory() { }
 
-QList<Core::Id> DBuildConfigurationFactory::availableCreationIds(const Target *parent) const
+bool DBuildConfigurationFactory::canCreate(const Target *parent) const
 {
- if (!canHandle(parent))
-  return QList<Core::Id>();
- return QList<Core::Id>() << Core::Id(D_BC_ID);
+ return canHandle(parent);
 }
 
-QString DBuildConfigurationFactory::displayNameForId(const Core::Id id) const
+QList<BuildInfo *> DBuildConfigurationFactory::availableBuilds(const Target *parent) const
 {
- if (id == D_BC_ID)
-  return tr("Build");
- return QString();
+ QList<BuildInfo *> result;
+ QTC_ASSERT(canCreate(parent), return result);
+
+ Utils::FileName projectDir = Utils::FileName::fromString(parent->project()->projectDirectory());
+
+ BuildInfo* info = new BuildInfo(this);
+ info->displayName = tr("Debug");
+ info->typeName = tr("D Build");
+ info->buildDirectory = projectDir;
+ info->kitId = parent->kit()->id();
+ result << info;
+
+ return result;
 }
 
-bool DBuildConfigurationFactory::canCreate(const Target *parent, const Core::Id id) const
+BuildConfiguration* DBuildConfigurationFactory::create(Target *parent, const BuildInfo *info) const
 {
- if (!canHandle(parent))
-  return false;
- if (id == D_BC_ID)
-  return true;
- return false;
-}
+ QTC_ASSERT(canCreate(parent), return 0);
+ QTC_ASSERT(info->factory() == this, return 0);
+ QTC_ASSERT(info->kitId == parent->kit()->id(), return 0);
+ QTC_ASSERT(!info->displayName.isEmpty(), return 0);
 
-BuildConfiguration *DBuildConfigurationFactory::create(Target *parent, const Core::Id id, const QString &name)
-{
- if (!canCreate(parent, id))
-  return 0;
-
- bool ok = true;
- QString buildConfigurationName = name == QLatin1String("Default build") ? QLatin1String("Debug") : name;
- if (buildConfigurationName.isNull())
-  buildConfigurationName = QInputDialog::getText(0,
-                                                 tr("New Configuration"),
-                                                 tr("New configuration name:"),
-                                                 QLineEdit::Normal,
-                                                 QString(), &ok);
- buildConfigurationName = buildConfigurationName.trimmed();
- if (!ok || buildConfigurationName.isEmpty())
-  return 0;
 
  DBuildConfiguration *bc = new DBuildConfiguration(parent);
- bc->setDisplayName(buildConfigurationName);
+ bc->setDisplayName(info->displayName);
+ bc->setDefaultDisplayName(info->displayName);
 
-	BuildStepList *buildSteps = bc->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
+ BuildStepList *buildSteps = bc->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
  Q_ASSERT(buildSteps);
  DMakeStep *makeStep = new DMakeStep(buildSteps);
  buildSteps->insertStep(0, makeStep);
 
  // TODO : configure clean step
-
- // BuildStepList *cleanSteps = bc->stepList(Constants::BUILDSTEPS_CLEAN);
- // Q_ASSERT(cleanSteps);
- // GenericProjectManager::Internal::GenericMakeStep *cleanMakeStep = new GenericProjectManager::Internal::GenericMakeStep(cleanSteps);
- // cleanSteps->insertStep(0, cleanMakeStep);
- // cleanMakeStep->setClean(true);
-
- if(parent->runConfigurations().length() == 0)
- {
-  DRunConfiguration* run = new DRunConfiguration(parent);
-  run->setDisplayName(QLatin1String("Build Run"));
-  parent->addRunConfiguration(run);
- }
+ //    BuildStepList *cleanSteps = bc->stepList(ProjectExplorer::Constants::BUILDSTEPS_CLEAN);
+ //    Q_ASSERT(cleanSteps);
+ //    GenericMakeStep *cleanMakeStep = new GenericMakeStep(cleanSteps);
+ //    cleanSteps->insertStep(0, cleanMakeStep);
+ //    cleanMakeStep->setBuildTarget(QLatin1String("clean"), /* on = */ true);
+ //    cleanMakeStep->setClean(true);
 
  return bc;
 }
 
-bool DBuildConfigurationFactory::canClone(const Target *parent, BuildConfiguration *source) const
+bool DBuildConfigurationFactory::canClone(const Target* parent, BuildConfiguration *source) const
 {
- return canCreate(parent, source->id());
+ if (!canHandle(parent))
+  return false;
+ return source->id() == D_BC_ID;
 }
 
-BuildConfiguration *DBuildConfigurationFactory::clone(Target *parent, BuildConfiguration *source)
+BuildConfiguration* DBuildConfigurationFactory::clone(Target *parent, BuildConfiguration *source)
 {
  if (!canClone(parent, source))
   return 0;
@@ -132,10 +134,12 @@ BuildConfiguration *DBuildConfigurationFactory::clone(Target *parent, BuildConfi
 
 bool DBuildConfigurationFactory::canRestore(const Target *parent, const QVariantMap &map) const
 {
- return canCreate(parent, ProjectExplorer::idFromMap(map));
+ if (!canHandle(parent))
+  return false;
+ return true; //ProjectExplorer::idFromMap(map) == D_BC_ID;
 }
 
-BuildConfiguration *DBuildConfigurationFactory::restore(Target *parent, const QVariantMap &map)
+BuildConfiguration* DBuildConfigurationFactory::restore(Target *parent, const QVariantMap &map)
 {
  if (!canRestore(parent, map))
   return 0;
@@ -153,17 +157,12 @@ bool DBuildConfigurationFactory::canHandle(const Target *t) const
  return qobject_cast<DProject *>(t->project());
 }
 
-BuildConfiguration::BuildType DBuildConfiguration::buildType() const
-{
- return Unknown;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////
 // DBuildSettingsWidget
 ////////////////////////////////////////////////////////////////////////////////////
 
 DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
- : m_buildConfiguration(0)
+ : m_buildConfiguration(bc)
 {
  QFormLayout *fl = new QFormLayout(this);
  fl->setContentsMargins(0, -1, 0, -1);

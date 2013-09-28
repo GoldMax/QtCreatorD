@@ -12,9 +12,7 @@
 
 #include <texteditor/basetextdocument.h>
 #include <texteditor/normalindenter.h>
-#include <texteditor/generichighlighter/highlighterutils.h>
-//#include <texteditor/generichighlighter/highlighter.h>
-//#include <cppeditor/cpphighlighter.h>
+//#include <texteditor/generichighlighter/highlighterutils.h>
 
 #include <cpptools/cppqtstyleindenter.h>
 

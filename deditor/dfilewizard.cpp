@@ -26,9 +26,9 @@ public:
 
 using namespace DEditor::Internal;
 
-DFileWizard::DFileWizard(const BaseFileWizardParameters &parameters,
+DFileWizard::DFileWizard(//const BaseFileWizardParameters &parameters,
                                  FileType fileType, QObject *parent):
-  Core::BaseFileWizard(parameters, parent), m_fileType(fileType)
+  Core::BaseFileWizard(/*parameters,*/ parent), m_fileType(fileType)
 {
 }
 

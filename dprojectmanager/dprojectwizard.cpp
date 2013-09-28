@@ -61,26 +61,23 @@ QString DProjectWizardDialog::projectName() const
 //----------------------------------------------------------------------------
 
 DProjectWizard::DProjectWizard()
-    : Core::BaseFileWizard(parameters())
-{ }
+    : Core::BaseFileWizard()
+{
+ setWizardKind(ProjectWizard);
+ setId(QLatin1String("A.DProject"));
+ setDisplayName(tr("D Project"));
+ setDescription(tr("Create a D language project."));
+ setCategory(QLatin1String(ProjectExplorer::Constants::PROJECT_WIZARD_CATEGORY));
+ setDisplayCategory(QLatin1String(ProjectExplorer::Constants::PROJECT_WIZARD_CATEGORY_DISPLAY));
+ setIcon(QIcon(QLatin1String(":/dprojectmanager/dproj.png")));
+ setFlags(Core::IWizard::PlatformIndependent);
+}
 
 Core::FeatureSet DProjectWizard::requiredFeatures() const
 {
  return Core::FeatureSet();
 }
 
-Core::BaseFileWizardParameters DProjectWizard::parameters()
-{
- Core::BaseFileWizardParameters parameters(ProjectWizard);
- parameters.setIcon(QIcon(QLatin1String(":/dprojectmanager/dproj.png")));
- parameters.setDisplayName(tr("D Project"));
- parameters.setId(QLatin1String("Z.Makefile"));
- parameters.setDescription(tr("Create a D language project."));
- parameters.setCategory(QLatin1String(ProjectExplorer::Constants::PROJECT_WIZARD_CATEGORY));
- parameters.setDisplayCategory(QLatin1String(ProjectExplorer::Constants::PROJECT_WIZARD_CATEGORY_DISPLAY));
- parameters.setFlags(Core::IWizard::PlatformIndependent);
- return parameters;
-}
 
 QWizard *DProjectWizard::createWizardDialog(QWidget *parent,
                                                   const Core::WizardDialogParameters &wizardDialogParameters) const

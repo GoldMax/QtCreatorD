@@ -30,11 +30,11 @@ ProjectExplorer::Project *Manager::openProject(const QString &fileName, QString 
    *errorString = tr("Failed opening project '%1': Project is not a file").arg(fileName);
   return 0;
  }
+
  DProject* prj = new DProject(this, fileName);
 
- QString path = prj->rootProjectNode()->projectFilePath();
- if(path.endsWith(QLatin1String(".qcd")))
-  path.chop(path.length() - path.lastIndexOf(QDir::separator()));
+ QString path = prj->projectDirectory();
+ // TODO : Add directory from project settings imports table
  QcdAssist::sendAddImportToDCD(path);
 
  return prj;

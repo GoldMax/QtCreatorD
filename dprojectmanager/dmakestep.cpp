@@ -19,6 +19,8 @@
 #include <utils/qtcassert.h>
 #include <utils/qtcprocess.h>
 
+#include <QSettings>
+
 using namespace Core;
 using namespace ProjectExplorer;
 
@@ -29,13 +31,13 @@ const char D_MS_ID[] = "DProjectManager.DMakeStep";
 const char D_MS_DISPLAY_NAME[] = QT_TRANSLATE_NOOP("DProjectManager::Internal::DMakeStep",
                                                        "Make");
 
-const char BUILD_TARGETS_KEY[] = "DProjectManager.DMakeStep.BuildTargets";
-const char MAKE_ARGUMENTS_KEY[] = "DProjectManager.DMakeStep.MakeArguments";
-const char MAKE_COMMAND_KEY[] = "DProjectManager.DMakeStep.MakeCommand";
-const char TARGET_NAME_KEY[] = "DProjectManager.DMakeStep.TargetName";
-const char TARGET_DIRNAME_KEY[] = "DProjectManager.DMakeStep.TargetDirName";
-const char TARGET_TYPE_KEY[] = "DProjectManager.DMakeStep.TargetTypeName";
-const char OBJ_DIRNAME_KEY[] = "DProjectManager.DMakeStep.ObjDirName";
+const char BUILD_TARGETS_KEY[]  = "DProjectManager.DMakeStep.BuildTargets";
+const char MAKE_ARGUMENTS_KEY[] = "MakeArguments";
+const char MAKE_COMMAND_KEY[]   = "MakeCommand";
+const char TARGET_NAME_KEY[]    = "TargetName";
+const char TARGET_DIRNAME_KEY[] = "TargetDirName";
+const char TARGET_TYPE_KEY[]    = "TargetTypeName";
+const char OBJ_DIRNAME_KEY[]    = "ObjDirName";
 
 DMakeStep::DMakeStep(BuildStepList *parent) :
   AbstractProcessStep(parent, Id(D_MS_ID))
@@ -128,15 +130,19 @@ bool DMakeStep::init()
 
 QVariantMap DMakeStep::toMap() const
 {
- QVariantMap map(AbstractProcessStep::toMap());
+ QSettings projectFiles(this->project()->projectFilePath(), QSettings::IniFormat);
+ projectFiles.beginGroup(QLatin1String("BC.") + this->buildConfiguration()->displayName());
 
- map.insert(QLatin1String(MAKE_ARGUMENTS_KEY), m_makeArguments);
- map.insert(QLatin1String(MAKE_COMMAND_KEY), m_makeCommand);
- map.insert(QLatin1String(TARGET_NAME_KEY), m_targetName);
- map.insert(QLatin1String(TARGET_DIRNAME_KEY), m_targetDirName);
- map.insert(QLatin1String(TARGET_TYPE_KEY), m_targetType);
- map.insert(QLatin1String(OBJ_DIRNAME_KEY), m_objDirName);
- return map;
+ projectFiles.setValue(QLatin1String(MAKE_ARGUMENTS_KEY), m_makeArguments);
+ projectFiles.setValue(QLatin1String(MAKE_COMMAND_KEY), m_makeCommand);
+ projectFiles.setValue(QLatin1String(TARGET_NAME_KEY), m_targetName);
+ projectFiles.setValue(QLatin1String(TARGET_DIRNAME_KEY), m_targetDirName);
+ projectFiles.setValue(QLatin1String(TARGET_TYPE_KEY), m_targetType);
+ projectFiles.setValue(QLatin1String(OBJ_DIRNAME_KEY), m_objDirName);
+
+ projectFiles.sync();
+
+ return AbstractProcessStep::toMap();
 }
 
 void DMakeStep::setMakeArguments(const QString val)
@@ -146,14 +152,21 @@ void DMakeStep::setMakeArguments(const QString val)
 
 bool DMakeStep::fromMap(const QVariantMap &map)
 {
- m_makeArguments = map.value(QLatin1String(MAKE_ARGUMENTS_KEY)).toString();
- m_makeCommand = map.value(QLatin1String(MAKE_COMMAND_KEY)).toString();
- m_targetName = map.value(QLatin1String(TARGET_NAME_KEY)).toString();
- m_targetDirName = map.value(QLatin1String(TARGET_DIRNAME_KEY)).toString();
- m_objDirName = map.value(QLatin1String(OBJ_DIRNAME_KEY)).toString();
- m_targetType = (TargetType)map.value(QLatin1String(TARGET_TYPE_KEY)).toInt();
+ QSettings sets(this->project()->projectFilePath(), QSettings::IniFormat);
+ //QSettings* sets = map[QLatin1String("QSettings")].value<QSettings*>();
+ QString group = QLatin1String("BC.") + this->buildConfiguration()->displayName();
+ if(sets.childGroups().contains(group))
+ {
+  sets.beginGroup(group);
 
- return BuildStep::fromMap(map);
+  m_makeArguments = sets.value(QLatin1String(MAKE_ARGUMENTS_KEY),m_makeArguments).toString();
+  m_makeCommand = sets.value(QLatin1String(MAKE_COMMAND_KEY),m_makeCommand).toString();
+  m_targetName = sets.value(QLatin1String(TARGET_NAME_KEY),m_targetName).toString();
+  m_targetDirName = sets.value(QLatin1String(TARGET_DIRNAME_KEY),m_targetDirName).toString();
+  m_targetType = (TargetType)sets.value(QLatin1String(TARGET_TYPE_KEY),m_targetType).toInt();
+  m_objDirName = sets.value(QLatin1String(OBJ_DIRNAME_KEY),m_objDirName).toString();
+ }
+ return AbstractProcessStep::fromMap(map);
 }
 
 QString DMakeStep::allArguments() const

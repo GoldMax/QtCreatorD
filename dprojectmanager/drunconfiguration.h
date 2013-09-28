@@ -100,6 +100,8 @@ public:
  explicit DRunConfigurationFactory(QObject *parent = 0);
  ~DRunConfigurationFactory();
 
+ static DRunConfigurationFactory* instance() { return m_instance; }
+
  QList<Core::Id> availableCreationIds(ProjectExplorer::Target *parent) const;
  QString displayNameForId(const Core::Id id) const;
 
@@ -110,6 +112,7 @@ public:
                                           ProjectExplorer::RunConfiguration *source);
 
 private:
+ static DRunConfigurationFactory* m_instance;
  bool canHandle(ProjectExplorer::Target *parent) const;
 
  ProjectExplorer::RunConfiguration *doCreate(ProjectExplorer::Target *parent, const Core::Id id);
