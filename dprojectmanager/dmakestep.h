@@ -41,11 +41,12 @@ public:
  QString makeCommand(const Utils::Environment &environment) const;
 
  QVariantMap toMap() const;
- void setMakeArguments(const QString val);
+	bool fromMap(const QVariantMap &map);
 
  QString outFileName() const;
  QString targetDirName() const { return m_targetDirName; }
- bool fromMap(const QVariantMap &map);
+	void setMakeArguments(const QString val) { m_makeArguments = val; }
+
 protected:
  DMakeStep(ProjectExplorer::BuildStepList *parent, DMakeStep *bs);
  DMakeStep(ProjectExplorer::BuildStepList *parent, const Core::Id id);

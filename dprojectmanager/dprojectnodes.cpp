@@ -69,7 +69,7 @@ bool isEmpty(FolderNode* f)
 void DProjectNode::refresh()
 {
  //Core::MessageManager::write(QLatin1String("refresh"));
- const QSet<QString>& files = m_project->files();
+	const QHash<QString,QString>& files = m_project->files();
 
  QHash<QString,FileNode*> nodes;
  QStack<FolderNode*> stack;
@@ -82,15 +82,18 @@ void DProjectNode::refresh()
   foreach(FolderNode* i, n->subFolderNodes())
    stack.push(i);
  }
- QDir base(m_project->projectDirectory());
+
+	QDir base(m_project->projectDirectory());
 
  // adding
- foreach(QString filePath, files)
+	typedef QHash<QString,QString>::ConstIterator FilesKeyValue;
+	for (FilesKeyValue kv = files.constBegin(); kv != files.constEnd(); ++kv)
+	//foreach(QString filePath, files)
  {
-  if(nodes.contains(filePath))
+		if(nodes.contains(kv.key()))
    continue;
   FolderNode* folder = this;
-  QStringList parts = base.relativeFilePath(filePath).split(QDir::separator());
+		QStringList parts = kv.value().split(QDir::separator());
   QString absFolderPath = m_project->projectDirectory();
   parts.pop_back();
   foreach(QString part, parts)
@@ -115,7 +118,7 @@ void DProjectNode::refresh()
   }
   FileNode* node = 0;
   foreach(FileNode* n, folder->fileNodes())
-   if(n->path() == filePath)
+			if(n->path() == kv.key())
    {
     node = n;
     break;
@@ -123,7 +126,7 @@ void DProjectNode::refresh()
   if(node == 0)
   {
    QList<FileNode*> list;
-   list.append(new FileNode(filePath, SourceType, false));
+			list.append(new FileNode(kv.key(), SourceType, false));
    addFileNodes(list, folder);
   }
  }

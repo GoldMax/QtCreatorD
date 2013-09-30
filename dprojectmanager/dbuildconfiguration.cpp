@@ -3,6 +3,7 @@
 #include "dproject.h"
 #include "dmakestep.h"
 #include "drunconfiguration.h"
+#include "dprojectmanagerconstants.h"
 
 #include <projectexplorer/buildsteplist.h>
 #include <projectexplorer/kitinformation.h>
@@ -10,20 +11,20 @@
 #include <projectexplorer/toolchain.h>
 #include <utils/pathchooser.h>
 #include <utils/qtcassert.h>
+#include <coreplugin/mimedatabase.h>
 //#include <qtsupport/customexecutablerunconfiguration.h>
 
 #include <QFormLayout>
 #include <QInputDialog>
 
 using namespace ProjectExplorer;
+using namespace DProjectManager;
 
 namespace DProjectManager {
 namespace Internal {
 
-const char D_BC_ID[] = "DProjectManager.DBuildConfiguration";
-
 DBuildConfiguration::DBuildConfiguration(Target *parent)
- : BuildConfiguration(parent, Core::Id(D_BC_ID))
+	: BuildConfiguration(parent, Core::Id(Constants::D_BC_ID))
 {
 }
 
@@ -45,8 +46,8 @@ NamedWidget* DBuildConfiguration::createConfigWidget()
 
 bool DBuildConfiguration::fromMap(const QVariantMap &map)
 {
- if(map.contains(QLatin1String("BuildConfigurationName")))
-  this->setDisplayName(map[QLatin1String("BuildConfigurationName")].toString());
+	if(map.contains(QLatin1String(Constants::D_BC_NAME)))
+		this->setDisplayName(map[QLatin1String(Constants::D_BC_NAME)].toString());
 
  BuildStepList *buildSteps = this->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
  Q_ASSERT(buildSteps);
@@ -122,7 +123,7 @@ bool DBuildConfigurationFactory::canClone(const Target* parent, BuildConfigurati
 {
  if (!canHandle(parent))
   return false;
- return source->id() == D_BC_ID;
+	return source->id() == Constants::D_BC_ID;
 }
 
 BuildConfiguration* DBuildConfigurationFactory::clone(Target *parent, BuildConfiguration *source)
@@ -136,7 +137,7 @@ bool DBuildConfigurationFactory::canRestore(const Target *parent, const QVariant
 {
  if (!canHandle(parent))
   return false;
- return true; //ProjectExplorer::idFromMap(map) == D_BC_ID;
+	return map.contains(QLatin1String(Constants::D_BC_NAME));
 }
 
 BuildConfiguration* DBuildConfigurationFactory::restore(Target *parent, const QVariantMap &map)
@@ -157,6 +158,31 @@ bool DBuildConfigurationFactory::canHandle(const Target *t) const
  return qobject_cast<DProject *>(t->project());
 }
 
+bool DBuildConfigurationFactory::canSetup(const Kit *k, const QString &projectPath) const
+{
+	return k && Core::MimeDatabase::findByFile(QFileInfo(projectPath))
+			.matchesType(QLatin1String(Constants::D_BC_ID));
+}
+
+QList<BuildInfo *> DBuildConfigurationFactory::availableSetups(const Kit *k, const QString &projectPath) const
+{
+	QList<BuildInfo *> result;
+	QTC_ASSERT(canSetup(k, projectPath), return result);
+//	BuildInfo *info = createBuildInfo(k, Utils::FileName::fromString(ProjectExplorer::Project::projectDirectory(projectPath)));
+//	//: The name of the build configuration created by default for a generic project.
+//	info->displayName = tr("Default");
+//	result << info;
+//	return result;
+	BuildInfo* info = new BuildInfo(this);
+	info->displayName = tr("Debug");
+	info->typeName = tr("D Build");
+	info->buildDirectory = Utils::FileName::fromString(ProjectExplorer::Project::projectDirectory(projectPath));
+	info->kitId = k->id();
+	result << info;
+
+	return result;
+
+}
 ////////////////////////////////////////////////////////////////////////////////////
 // DBuildSettingsWidget
 ////////////////////////////////////////////////////////////////////////////////////

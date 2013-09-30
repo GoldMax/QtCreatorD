@@ -41,7 +41,7 @@ public:
  Core::IDocument *document() const;
  ProjectExplorer::IProjectManager *projectManager() const { return m_manager; }
  DProjectNode *rootProjectNode() const { return m_rootNode; }
- QStringList files(FilesMode ) const { return m_files.toList(); }
+	QStringList files(FilesMode ) const { return m_files.keys(); }
  bool setupTarget(ProjectExplorer::Target *t);
 
  bool addFiles(const QStringList &filePaths);
@@ -50,7 +50,7 @@ public:
 
  void refresh(RefreshOptions options);
 
- const QSet<QString>& files() { return m_files; }
+	const QHash<QString,QString>& files() { return m_files; }
 
 protected:
  QVariantMap toMap() const;
@@ -66,8 +66,9 @@ private:
  const QString m_projectFileName;
  DProjectFile* m_projectIDocument;
 
- //QHash<QString, QString> m_files;
- QSet<QString> m_files;
+	// absPath, relPath
+	QHash<QString,QString> m_files;
+	//QSet<QString> m_files;
 
  DProjectNode *m_rootNode;
  QFuture<void> m_codeModelFuture;

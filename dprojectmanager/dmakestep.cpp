@@ -145,11 +145,6 @@ QVariantMap DMakeStep::toMap() const
  return AbstractProcessStep::toMap();
 }
 
-void DMakeStep::setMakeArguments(const QString val)
-{
- m_makeArguments = val;
-}
-
 bool DMakeStep::fromMap(const QVariantMap &map)
 {
  QSettings sets(this->project()->projectFilePath(), QSettings::IniFormat);
@@ -196,9 +191,17 @@ QString DMakeStep::allArguments() const
   Utils::QtcProcess::addArgs(&args, QLatin1String("-of") + outFile);
  else
   Utils::QtcProcess::addArgs(&args, QLatin1String("-of") + m_targetDirName + QDir::separator() + outFile);
-
  Utils::QtcProcess::addArgs(&args, QLatin1String("-od") + m_objDirName);
- Utils::QtcProcess::addArgs(&args, QLatin1String(" @") + project()->displayName() + QLatin1String(".files"));
+
+	static QLatin1String dotd(".d");
+	static QLatin1String dotdi(".di");
+	static QLatin1String space(" ");
+	QString srcs = QLatin1String(" ");
+	const QHash<QString,QString>& files = static_cast<DProject*>(project())->files();
+	foreach(QString file, files.values())
+		if(file.endsWith(dotd) || file.endsWith(dotdi))
+			srcs.append(file).append(space);
+	Utils::QtcProcess::addArgs(&args, srcs);
  return args;
 }
 

@@ -16,10 +16,7 @@ namespace QcdAssist
  /// Port of DCD server
  //static quint16 dcdPort = 9166;
  QString dcdClient();
- //static QTcpSocket* dcdSocket = 0;
- //static int waitForConnectedTimeout = 1000;
- //static int waitForWriteTimeout = 5000;
- static int waitForReadyReadTimeout = 10000;
+
 
 // struct AutocompleteRequest
 // {

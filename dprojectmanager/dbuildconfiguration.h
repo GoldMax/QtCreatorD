@@ -48,6 +48,13 @@ public:
  QList<BuildInfo *> availableBuilds(const Target *parent) const;
  ProjectExplorer::BuildConfiguration *create(Target *parent, const BuildInfo *info) const;
 
+	// Used to see whether this factory can produce any BuildConfigurations for a kit when
+	// setting up the given project.
+	bool canSetup(const Kit *k, const QString &projectPath) const;
+	// List of build information that can be used to initially set up a new build configuration.
+	QList<BuildInfo *> availableSetups(const Kit *k, const QString &projectPath) const;
+
+
  bool canClone(const Target *parent, BuildConfiguration *source) const;
  BuildConfiguration *clone(Target *parent, BuildConfiguration *source);
  bool canRestore(const Target *parent, const QVariantMap &map) const;

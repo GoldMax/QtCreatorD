@@ -22,6 +22,10 @@ const char HIDE_FILE_FILTER_DEFAULT[] = "Makefile*; *.o; *.obj; *~; *.files; *.c
 const char SHOW_FILE_FILTER_SETTING[] = "DProject/ShowFileFilter";
 const char SHOW_FILE_FILTER_DEFAULT[] = "*.d; *.di;";
 
+// Build configuration
+const char D_BC_ID[] = "DProjectManager.DBuildConfiguration";
+const char D_BC_NAME[] = "BuildConfigurationName";
+
 } // namespace DProjectManager
 } // namespace Constants
 

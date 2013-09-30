@@ -86,11 +86,14 @@ bool DProject::addFiles(const QStringList& filePaths)
 
 bool DProject::removeFiles(const QStringList &filePaths)
 {
- QDir projDir(projectDirectory());
- QSettings projectFiles(m_projectFileName, QSettings::IniFormat);
+	QSettings projectFiles(m_projectFileName, QSettings::IniFormat);
  projectFiles.beginGroup(QLatin1String("Files"));
  foreach (const QString &filePath, filePaths)
-   projectFiles.remove(projDir.relativeFilePath(filePath));
+	{
+		QString rel = m_files.value(filePath);
+		if(rel.length() > 0)
+			projectFiles.remove(rel);
+	}
  return true;
 }
 
@@ -101,7 +104,7 @@ bool DProject::renameFile(const QString &filePath, const QString &newFilePath)
  QDir projDir(projectDirectory());
 
  projectFiles.remove(projDir.relativeFilePath(filePath));
- projectFiles.setValue(projDir.relativeFilePath(newFilePath), 0);
+	projectFiles.setValue(projDir.relativeFilePath(newFilePath), 0);
 
  return true;
 }
@@ -124,7 +127,7 @@ void DProject::parseProject(RefreshOptions options)
   foreach(QString rel, projectFiles.allKeys())
   {
    QString abs = projDir.absoluteFilePath(rel);
-   m_files << abs;
+			m_files[abs] = rel;
   }
   emit fileListChanged();
  }
@@ -157,7 +160,7 @@ bool DProject::setupTarget(Target* t)
   if(group.startsWith(QLatin1String("BC.")))
   {
    QVariantMap map;
-   map[QLatin1String("BuildConfigurationName")] = group.remove(0,3);
+			map[QLatin1String(DProjectManager::Constants::D_BC_NAME)] = group.remove(0,3);
    BuildConfiguration* bc = factory->restore(t,map); //create(t,info);
    if (!bc)
     return false;
