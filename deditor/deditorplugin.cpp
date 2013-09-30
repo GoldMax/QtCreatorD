@@ -5,7 +5,7 @@
 #include "dfilewizard.h"
 #include "dhoverhandler.h"
 #include "dcompletionassist.h"
-//#include "deditorhighlighter.h"
+#include "deditorhighlighter.h"
 #include "qcdassist.h"
 
 #include <coreplugin/icore.h>
@@ -76,7 +76,7 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
 
  addAutoReleasedObject(new DCompletionAssistProvider);
  addAutoReleasedObject(new DHoverHandler(this));
- //addAutoReleasedObject(new DEditorHighlighterFactory);
+	addAutoReleasedObject(new DEditorHighlighterFactory);
 
  QObject *core = ICore::instance();
  DFileWizard* wizard = new DFileWizard(DFileWizard::Source, core);

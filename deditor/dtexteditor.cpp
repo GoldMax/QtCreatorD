@@ -9,10 +9,9 @@
 #include <coreplugin/coreconstants.h>
 #include <coreplugin/icore.h>
 #include <coreplugin/mimedatabase.h>
-
+#include <extensionsystem/pluginmanager.h>
 #include <texteditor/basetextdocument.h>
 #include <texteditor/normalindenter.h>
-//#include <texteditor/generichighlighter/highlighterutils.h>
 
 #include <cpptools/cppqtstyleindenter.h>
 
@@ -51,7 +50,10 @@ bool DTextEditor::open(QString *errorString, const QString &fileName, const QStr
  return b;
 }
 
-
+TextEditor::CompletionAssistProvider* DTextEditor::completionAssistProvider()
+{
+	return ExtensionSystem::PluginManager::getObject<DCompletionAssistProvider>();
+}
 //-----------------------------
 //- DTextEditorWidget
 //-----------------------------
@@ -68,10 +70,8 @@ DTextEditorWidget::DTextEditorWidget(QWidget *parent)
  setIndenter(new CppTools::CppQtStyleIndenter);
  // Indenter вызывает исключения в стандартном hightlighter
  //setIndenter(new DIndenter());
- //setIndenter(new NormalIndenter);
 
- // Понадобится для подсветки пользовательских типов
- //new DEditorHighlighter(baseTextDocument().data());
+	new DEditorHighlighter(baseTextDocument().data());
 
  setMimeType(QLatin1String(DEditor::Constants::D_MIMETYPE_SRC));
  connect(editorDocument(), SIGNAL(changed()), this, SLOT(configure()));
@@ -116,13 +116,10 @@ void DTextEditorWidget::configure(const QString &mimeType)
 
 void DTextEditorWidget::configure(const MimeType &mimeType)
 {
- DEditorHighlighter *highlighter = new DEditorHighlighter();
- baseTextDocument()->setSyntaxHighlighter(highlighter);
+// DEditorHighlighter *highlighter = new DEditorHighlighter();
+// baseTextDocument()->setSyntaxHighlighter(highlighter);
 
- if(isParenthesesMatchingEnabled() == false)
-  setParenthesesMatchingEnabled(true);
-
- if (!mimeType.isNull())
+	if (!mimeType.isNull())
  {
   //setMimeTypeForHighlighter(highlighter, mimeType);
   const QString &type = mimeType.type();

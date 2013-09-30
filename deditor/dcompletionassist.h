@@ -28,6 +28,7 @@ public:
 //**************************************************************************************
 class DCompletionAssistProvider : public TextEditor::CompletionAssistProvider
 {
+	Q_OBJECT
 public:
     virtual bool supportsEditor(const Core::Id &editorId) const;
     virtual TextEditor::IAssistProcessor *createProcessor() const;
