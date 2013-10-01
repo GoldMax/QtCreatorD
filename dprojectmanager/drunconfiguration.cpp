@@ -1,6 +1,7 @@
 #include "drunconfiguration.h"
 #include "dmakestep.h"
 #include "dprojectnodes.h"
+#include "dprojectmanagerconstants.h"
 
 #include <qtsupport/qtkitinformation.h>
 
@@ -33,15 +34,6 @@
 
 using namespace DProjectManager;
 using namespace DProjectManager::Internal;
-
-namespace
-{
-const char BUILDRUN_CONFIG_ID[] = "ProjectExplorer.DRunConfiguration";
-const char EXECUTABLE_KEY[] = "ProjectExplorer.DRunConfiguration.Executable";
-const char ARGUMENTS_KEY[] = "ProjectExplorer.DRunConfiguration.Arguments";
-const char WORKING_DIRECTORY_KEY[] = "ProjectExplorer.DRunConfiguration.WorkingDirectory";
-const char USE_TERMINAL_KEY[] = "ProjectExplorer.DRunConfiguration.UseTerminal";
-}
 
 //-----------------------------------------------------------------------------
 //--- CustomExecutableDialog
@@ -100,7 +92,7 @@ void DRunConfiguration::ctor()
 }
 
 DRunConfiguration::DRunConfiguration(ProjectExplorer::Target *parent) :
-  ProjectExplorer::LocalApplicationRunConfiguration(parent, Core::Id(BUILDRUN_CONFIG_ID)),
+  ProjectExplorer::LocalApplicationRunConfiguration(parent, Core::Id(Constants::BUILDRUN_CONFIG_ID)),
   m_workingDirectory(QLatin1String(ProjectExplorer::Constants::DEFAULT_WORKING_DIR)),
   m_runMode(Gui)
 {
@@ -231,18 +223,18 @@ QVariantMap DRunConfiguration::toMap() const
 {
  QVariantMap map(LocalApplicationRunConfiguration::toMap());
  //map.insert(QLatin1String(EXECUTABLE_KEY), m_executable);
- map.insert(QLatin1String(ARGUMENTS_KEY), m_cmdArguments);
+ map.insert(QLatin1String(Constants::ARGUMENTS_KEY), m_cmdArguments);
  //map.insert(QLatin1String(WORKING_DIRECTORY_KEY), m_workingDirectory);
- map.insert(QLatin1String(USE_TERMINAL_KEY), m_runMode == Console);
+ map.insert(QLatin1String(Constants::USE_TERMINAL_KEY), m_runMode == Console);
  return map;
 }
 
 bool DRunConfiguration::fromMap(const QVariantMap &map)
 {
  //m_executable = map.value(QLatin1String(EXECUTABLE_KEY)).toString();
- m_cmdArguments = map.value(QLatin1String(ARGUMENTS_KEY)).toString();
+ m_cmdArguments = map.value(QLatin1String(Constants::ARGUMENTS_KEY)).toString();
  //m_workingDirectory = map.value(QLatin1String(WORKING_DIRECTORY_KEY)).toString();
- m_runMode = map.value(QLatin1String(USE_TERMINAL_KEY)).toBool() ? Console : Gui;
+ m_runMode = map.value(QLatin1String(Constants::USE_TERMINAL_KEY)).toBool() ? Console : Gui;
 
  setDefaultDisplayName(defaultDisplayName());
  return LocalApplicationRunConfiguration::fromMap(map);
@@ -328,7 +320,7 @@ bool DRunConfigurationFactory::canCreate(ProjectExplorer::Target *parent,
 {
  if (!canHandle(parent))
   return false;
- return id == BUILDRUN_CONFIG_ID;
+ return id == Constants::BUILDRUN_CONFIG_ID;
 }
 
 ProjectExplorer::RunConfiguration *
@@ -340,7 +332,7 @@ DRunConfigurationFactory::doCreate(ProjectExplorer::Target *parent, const Core::
  BuildConfiguration* build = parent->activeBuildConfiguration();
  if(build)
  {
-  BuildStepList* bsl = build->stepList(Constants::BUILDSTEPS_BUILD);
+  BuildStepList* bsl = build->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
   Q_ASSERT(bsl);
   DMakeStep *makeStep = new DMakeStep(bsl);
   if(makeStep)
@@ -392,12 +384,12 @@ QList<Core::Id> DRunConfigurationFactory::availableCreationIds(ProjectExplorer::
 {
  if (!canHandle(parent))
   return QList<Core::Id>();
- return QList<Core::Id>() << Core::Id(BUILDRUN_CONFIG_ID);
+ return QList<Core::Id>() << Core::Id(Constants::BUILDRUN_CONFIG_ID);
 }
 
 QString DRunConfigurationFactory::displayNameForId(const Core::Id id) const
 {
- if (id == BUILDRUN_CONFIG_ID)
+ if (id == Constants::BUILDRUN_CONFIG_ID)
   return tr("Build Run");
  return QString();
 }

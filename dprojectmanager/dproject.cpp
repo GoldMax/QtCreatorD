@@ -61,6 +61,12 @@ DProject::DProject(Manager *manager, const QString &fileName)
 	m_rootNode = new DProjectNode(this, m_projectIDocument);
  m_manager->registerProject(this);
 
+ QSettings sets(m_projectFileName, QSettings::IniFormat);
+ QString bds = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
+ Utils::FileName dir = Utils::FileName::fromString(projectDirectory());
+ if(bds.length() > 0 && bds != QLatin1String("."))
+  dir.appendPath(bds);
+ m_buildDir.setPath(dir.toString());
 
 }
 
@@ -104,7 +110,6 @@ bool DProject::renameFile(const QString &filePath, const QString &newFilePath)
  projectFiles.beginGroup(QLatin1String("Files"));
 	projectFiles.remove(m_buildDir.relativeFilePath(filePath));
 	projectFiles.setValue(m_buildDir.relativeFilePath(newFilePath), 0);
-
  return true;
 }
 
@@ -116,7 +121,10 @@ bool DProject::parseProject(RefreshOptions options)
 	bool needRebuild = false;
 	if (options & Configuration)
 	{
-		QString bds = sets.value(QLatin1String("SourceRoot")).toString();
+  m_libs = sets.value(QLatin1String(Constants::INI_LIBRARIES_KEY)).toString();
+  m_includes = sets.value(QLatin1String(Constants::INI_INCLUDES_KEY)).toString();
+
+  QString bds = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
 		Utils::FileName dir = Utils::FileName::fromString(projectDirectory());
 		if(bds.length() > 0 && bds != QLatin1String("."))
 			dir.appendPath(bds);
@@ -172,21 +180,22 @@ bool DProject::setupTarget(Target* t)
  Utils::FileName projectDir =
    Utils::FileName::fromString(t->project()->projectDirectory());
 
- QSettings sets(m_projectFileName, QSettings::IniFormat);
- QStringList groups = sets.childGroups();
- foreach(QString group, groups)
-  if(group.startsWith(QLatin1String("BC.")))
-  {
-   QVariantMap map;
-			map[QLatin1String(DProjectManager::Constants::D_BC_NAME)] = group.remove(0,3);
-   BuildConfiguration* bc = factory->restore(t,map); //create(t,info);
-   if (!bc)
-    return false;
-   t->addBuildConfiguration(bc);
-  }
+// XXXXX
+// QSettings sets(m_projectFileName, QSettings::IniFormat);
+// QStringList groups = sets.childGroups();
+// foreach(QString group, groups)
+//  if(group.startsWith(QLatin1String("BC.")))
+//  {
+//   QVariantMap map;
+//			map[QLatin1String(DProjectManager::Constants::D_BC_NAME)] = group.remove(0,3);
+//   BuildConfiguration* bc = factory->restore(t,map); //create(t,info);
+//   if (!bc)
+//    return false;
+//   t->addBuildConfiguration(bc);
+//  }
 
- if(t->buildConfigurations().length() > 0)
-  return true;
+// if(t->buildConfigurations().length() > 0)
+//  return true;
 
  BuildInfo* info = new BuildInfo(factory);
  info->displayName = tr("Debug");
@@ -198,6 +207,7 @@ bool DProject::setupTarget(Target* t)
  if (!bc)
   return false;
  t->addBuildConfiguration(bc);
+ t->setActiveBuildConfiguration(bc);
 
  info = new BuildInfo(factory);
  info->displayName = tr("Release");
@@ -221,29 +231,31 @@ bool DProject::setupTarget(Target* t)
   return false;
  t->addBuildConfiguration(bc);
 
+ RunConfiguration* run =
+   DRunConfigurationFactory::instance()->create(t, Core::Id(Constants::BUILDRUN_CONFIG_ID));
+ t->addRunConfiguration(run);
+ t->setActiveRunConfiguration(run);
+
+ setActiveTarget(t);
+
  return true;
 }
 QVariantMap DProject::toMap() const
 {
- QVariantMap map = Project::toMap();
- map.remove(QLatin1String(ACTIVE_TARGET_KEY));
- map.remove(QLatin1String(TARGET_COUNT_KEY));
- const QList<Target *> ts = targets();
- for (int i = 0; i < ts.size(); ++i)
-  map.remove(QString::fromLatin1(TARGET_KEY_PREFIX) + QString::number(i));
- return map;
+// XXXXX
+// QVariantMap map = Project::toMap();
+// map.remove(QLatin1String(ACTIVE_TARGET_KEY));
+// map.remove(QLatin1String(TARGET_COUNT_KEY));
+// const QList<Target *> ts = targets();
+// for (int i = 0; i < ts.size(); ++i)
+//  map.remove(QString::fromLatin1(TARGET_KEY_PREFIX) + QString::number(i));
+// return map;
+ return Project::toMap();
 }
 bool DProject::fromMap(const QVariantMap &map)
 {
  if (!Project::fromMap(map))
   return false;
-
-	QSettings sets(m_projectFileName, QSettings::IniFormat);
-	QString bds = sets.value(QLatin1String("SourceRoot")).toString();
-	Utils::FileName dir = Utils::FileName::fromString(projectDirectory());
-	if(bds.length() > 0 && bds != QLatin1String("."))
-		dir.appendPath(bds);
-	m_buildDir.setPath(dir.toString());
 
  Kit *defaultKit = KitManager::defaultKit();
  if (!activeTarget() && defaultKit)

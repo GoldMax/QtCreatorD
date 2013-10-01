@@ -52,6 +52,8 @@ public:
 
 	const QHash<QString,QString>& files() { return m_files; }
 	const QDir buildDirectory() const { return m_buildDir; }
+ const QString& libraries() const { return m_libs; }
+ const QString& includes() const { return m_includes; }
 protected:
  QVariantMap toMap() const;
  bool fromMap(const QVariantMap &map);
@@ -66,9 +68,10 @@ private:
  const QString m_projectFileName;
  DProjectFile* m_projectIDocument;
 	QDir m_buildDir;
-	// absPath, relPath
+
 	QHash<QString,QString> m_files;
-	//QSet<QString> m_files;
+ QString m_libs;
+ QString m_includes;
 
  DProjectNode *m_rootNode;
 	QFuture<void> m_codeModelFuture;

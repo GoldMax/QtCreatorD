@@ -48,22 +48,23 @@ NamedWidget* DBuildConfiguration::createConfigWidget()
 
 bool DBuildConfiguration::fromMap(const QVariantMap &map)
 {
-	if(map.contains(QLatin1String(Constants::D_BC_NAME)))
-		this->setDisplayName(map[QLatin1String(Constants::D_BC_NAME)].toString());
+ // XXXXX
+//	if(map.contains(QLatin1String(Constants::D_BC_NAME)))
+//		this->setDisplayName(map[QLatin1String(Constants::D_BC_NAME)].toString());
 
 	DProject* prj = static_cast<DProject*>(target()->project());
 	Utils::FileName fn = 	Utils::FileName::fromString(prj->buildDirectory().path());
 	setBuildDirectory(fn);
 
- BuildStepList *buildSteps = this->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
- Q_ASSERT(buildSteps);
- DMakeStep *makeStep = new DMakeStep(buildSteps);
- makeStep->fromMap(map);
- buildSteps->insertStep(0, makeStep);
+// BuildStepList *buildSteps = this->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
+// Q_ASSERT(buildSteps);
+// DMakeStep *makeStep = new DMakeStep(buildSteps);
+// makeStep->fromMap(map);
+// buildSteps->insertStep(0, makeStep);
 
  // TODO : configure clean step
 
- return true;
+ return BuildConfiguration::fromMap(map);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -104,7 +105,6 @@ BuildConfiguration* DBuildConfigurationFactory::create(Target *parent, const Bui
  QTC_ASSERT(info->kitId == parent->kit()->id(), return 0);
  QTC_ASSERT(!info->displayName.isEmpty(), return 0);
 
-
  DBuildConfiguration *bc = new DBuildConfiguration(parent);
  bc->setDisplayName(info->displayName);
  bc->setDefaultDisplayName(info->displayName);
@@ -143,7 +143,9 @@ bool DBuildConfigurationFactory::canRestore(const Target *parent, const QVariant
 {
  if (!canHandle(parent))
   return false;
-	return map.contains(QLatin1String(Constants::D_BC_NAME));
+ // XXXXX
+ //return map.contains(QLatin1String(Constants::D_BC_NAME));
+ return ProjectExplorer::idFromMap(map) == Constants::D_BC_ID;
 }
 
 BuildConfiguration* DBuildConfigurationFactory::restore(Target *parent, const QVariantMap &map)
@@ -206,7 +208,7 @@ DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
 	m_pathChooser->setBaseDirectory(bc->target()->project()->projectDirectory());
 	m_pathChooser->setEnvironment(bc->environment());
 	QSettings sets(m_buildConfiguration->target()->project()->projectFilePath(), QSettings::IniFormat);
-	QString root = sets.value(QLatin1String("/SourceRoot")).toString();
+ QString root = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
 	m_pathChooser->setPath(root);
 
 	fl->addRow(tr("Source root directory:"), m_pathChooser);
@@ -222,7 +224,7 @@ void DBuildSettingsWidget::buildDirectoryChanged()
 
 	m_pathChooser->setPath(rel);
 	QSettings sets(m_buildConfiguration->target()->project()->projectFilePath(), QSettings::IniFormat);
-	sets.setValue(QLatin1String("SourceRoot"), rel);
+ sets.setValue(QLatin1String(Constants::INI_SOURCE_ROOT_KEY), rel);
 	sets.sync();
 	static_cast<DProject*>(m_buildConfiguration->target()->project())->refresh(DProject::Everything);
 	m_buildConfiguration->setBuildDirectory(Utils::FileName::fromString(rel));

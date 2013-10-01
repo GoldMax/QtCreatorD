@@ -23,6 +23,7 @@
 
 using namespace Core;
 using namespace ProjectExplorer;
+using namespace DProjectManager;
 
 namespace DProjectManager {
 namespace Internal {
@@ -76,9 +77,7 @@ void DMakeStep::ctor()
  }
 }
 
-DMakeStep::~DMakeStep()
-{
-}
+DMakeStep::~DMakeStep() { }
 
 bool DMakeStep::init()
 {
@@ -118,38 +117,62 @@ bool DMakeStep::init()
 
 QVariantMap DMakeStep::toMap() const
 {
- QSettings projectFiles(this->project()->projectFilePath(), QSettings::IniFormat);
- projectFiles.beginGroup(QLatin1String("BC.") + this->buildConfiguration()->displayName());
+// QSettings projectFiles(this->project()->projectFilePath(), QSettings::IniFormat);
+// projectFiles.beginGroup(QLatin1String("BC.") + this->buildConfiguration()->displayName());
 
-	projectFiles.setValue(QLatin1String(Constants::MAKE_ARGUMENTS_KEY), m_makeArguments);
-	projectFiles.setValue(QLatin1String(Constants::MAKE_COMMAND_KEY), m_makeCommand);
-	projectFiles.setValue(QLatin1String(Constants::TARGET_NAME_KEY), m_targetName);
-	projectFiles.setValue(QLatin1String(Constants::TARGET_DIRNAME_KEY), m_targetDirName);
-	projectFiles.setValue(QLatin1String(Constants::TARGET_TYPE_KEY), m_targetType);
-	projectFiles.setValue(QLatin1String(Constants::OBJ_DIRNAME_KEY), m_objDirName);
+//	projectFiles.setValue(QLatin1String(Constants::INI_MAKE_ARGUMENTS_KEY), m_makeArguments);
+//	projectFiles.setValue(QLatin1String(Constants::INI_MAKE_COMMAND_KEY), m_makeCommand);
+//	projectFiles.setValue(QLatin1String(Constants::INI_TARGET_NAME_KEY), m_targetName);
+//	projectFiles.setValue(QLatin1String(Constants::INI_TARGET_DIRNAME_KEY), m_targetDirName);
+//	projectFiles.setValue(QLatin1String(Constants::INI_TARGET_TYPE_KEY), m_targetType);
+//	projectFiles.setValue(QLatin1String(Constants::INI_OBJ_DIRNAME_KEY), m_objDirName);
 
- projectFiles.sync();
+// projectFiles.sync();
 
- return AbstractProcessStep::toMap();
+// return AbstractProcessStep::toMap();
+
+ //XXXXX
+ QVariantMap map = AbstractProcessStep::toMap();
+
+ //if(buildConfiguration()->displayName().length() > 0)
+ {
+  map.insert(QLatin1String(Constants::INI_MAKE_ARGUMENTS_KEY), m_makeArguments);
+  map.insert(QLatin1String(Constants::INI_MAKE_COMMAND_KEY), m_makeCommand);
+  map.insert(QLatin1String(Constants::INI_TARGET_NAME_KEY), m_targetName);
+  map.insert(QLatin1String(Constants::INI_TARGET_DIRNAME_KEY), m_targetDirName);
+  map.insert(QLatin1String(Constants::INI_TARGET_TYPE_KEY), m_targetType);
+  map.insert(QLatin1String(Constants::INI_OBJ_DIRNAME_KEY), m_objDirName);
+ }
+ return map;
 }
 
 bool DMakeStep::fromMap(const QVariantMap &map)
 {
- QSettings sets(this->project()->projectFilePath(), QSettings::IniFormat);
- //QSettings* sets = map[QLatin1String("QSettings")].value<QSettings*>();
- QString group = QLatin1String("BC.") + this->buildConfiguration()->displayName();
- if(sets.childGroups().contains(group))
- {
-  sets.beginGroup(group);
+// QSettings sets(this->project()->projectFilePath(), QSettings::IniFormat);
+// //QSettings* sets = map[QLatin1String("QSettings")].value<QSettings*>();
+// QString group = QLatin1String("BC.") + this->buildConfiguration()->displayName();
+// if(sets.childGroups().contains(group))
+// {
+//  sets.beginGroup(group);
 
-		m_makeArguments = sets.value(QLatin1String(Constants::MAKE_ARGUMENTS_KEY),m_makeArguments).toString();
-		m_makeCommand = sets.value(QLatin1String(Constants::MAKE_COMMAND_KEY),m_makeCommand).toString();
-		m_targetName = sets.value(QLatin1String(Constants::TARGET_NAME_KEY),m_targetName).toString();
-		m_targetDirName = sets.value(QLatin1String(Constants::TARGET_DIRNAME_KEY),m_targetDirName).toString();
-		m_targetType = (TargetType)sets.value(QLatin1String(Constants::TARGET_TYPE_KEY),m_targetType).toInt();
-		m_objDirName = sets.value(QLatin1String(Constants::OBJ_DIRNAME_KEY),m_objDirName).toString();
- }
- return AbstractProcessStep::fromMap(map);
+//		m_makeArguments = sets.value(QLatin1String(Constants::INI_MAKE_ARGUMENTS_KEY),m_makeArguments).toString();
+//		m_makeCommand = sets.value(QLatin1String(Constants::INI_MAKE_COMMAND_KEY),m_makeCommand).toString();
+//		m_targetName = sets.value(QLatin1String(Constants::INI_TARGET_NAME_KEY),m_targetName).toString();
+//		m_targetDirName = sets.value(QLatin1String(Constants::INI_TARGET_DIRNAME_KEY),m_targetDirName).toString();
+//		m_targetType = (TargetType)sets.value(QLatin1String(Constants::INI_TARGET_TYPE_KEY),m_targetType).toInt();
+//		m_objDirName = sets.value(QLatin1String(Constants::INI_OBJ_DIRNAME_KEY),m_objDirName).toString();
+// }
+// return AbstractProcessStep::fromMap(map);
+
+ //XXXXX
+ m_makeArguments = map.value(QLatin1String(Constants::INI_MAKE_ARGUMENTS_KEY)).toString();
+ m_makeCommand = map.value(QLatin1String(Constants::INI_MAKE_COMMAND_KEY)).toString();
+ m_targetName = map.value(QLatin1String(Constants::INI_TARGET_NAME_KEY)).toString();
+ m_targetDirName = map.value(QLatin1String(Constants::INI_TARGET_DIRNAME_KEY)).toString();
+ m_objDirName = map.value(QLatin1String(Constants::INI_OBJ_DIRNAME_KEY)).toString();
+ m_targetType = (TargetType)map.value(QLatin1String(Constants::INI_TARGET_TYPE_KEY)).toInt();
+
+ return BuildStep::fromMap(map);
 }
 
 QString DMakeStep::allArguments() const
@@ -169,28 +192,41 @@ QString DMakeStep::allArguments() const
  else if(m_targetType == SharedLibrary)
   args += QLatin1String(" -shared -fPIC");
 
- //Utils::QtcProcess::addArgs(&args, QLatin1String("-m64"));
+ QDir buildDir(this->buildConfiguration()->buildDirectory().toString());
+ QString projDir = project()->projectDirectory();
+ QString relTargetDir = m_targetDirName;
+ if(QDir(m_targetDirName).isRelative())
+ relTargetDir = buildDir.relativeFilePath(projDir + QDir::separator() + m_targetDirName);
+ if(relTargetDir.length() == 0)
+  relTargetDir = QLatin1String(".");
+
  QString outFile = outFileName();
 	QString makargs = m_makeArguments;
-	makargs.replace(QLatin1String("%{TargetDir}"),m_targetDirName);
+ makargs.replace(QLatin1String("%{TargetDir}"),relTargetDir);
 	Utils::QtcProcess::addArgs(&args, makargs);
 
-	QDir buildDir(this->buildConfiguration()->buildDirectory().toString());
-	QString projDir = project()->projectDirectory();
-	if(QDir(m_targetDirName).isRelative())
-	{
-		QString relDir = buildDir.relativeFilePath(projDir + QDir::separator() + m_targetDirName);
-		if(relDir.length() == 0)
-			Utils::QtcProcess::addArgs(&args, QLatin1String("-of") + outFile);
-		else
-			Utils::QtcProcess::addArgs(&args, QLatin1String("-of") + relDir + QDir::separator() + outFile);
-	}
-	if(QDir(m_targetDirName).isRelative())
+ Utils::QtcProcess::addArgs(&args, QLatin1String("-of") + relTargetDir + QDir::separator() + outFile);
+ if(QDir(m_objDirName).isRelative())
 	{
 		QString relDir = buildDir.relativeFilePath(projDir + QDir::separator() + m_objDirName);
 		if(relDir.length() > 0)
 			Utils::QtcProcess::addArgs(&args, QLatin1String("-od") + relDir);
 	}
+
+ DProject* proj = static_cast<DProject*>(project());
+ QString libs = proj->libraries();
+ Utils::QtcProcess::addArgs(&args, libs.replace(QLatin1String("%{TargetDir}"),relTargetDir));
+ QString incs = proj->includes();
+ incs.replace(QLatin1Char(':'), QLatin1Char(' '));
+ foreach(QString s, incs.split(QLatin1Char(' ')))
+ {
+  s = s.replace(QLatin1String("%{TargetDir}"),relTargetDir);
+  if(s.startsWith(QLatin1String("-I")))
+   Utils::QtcProcess::addArgs(&args, s);
+  else
+   Utils::QtcProcess::addArgs(&args, QLatin1String("-I") + s);
+ }
+
 	static QLatin1String dotd(".d");
 	static QLatin1String dotdi(".di");
 	static QLatin1String space(" ");

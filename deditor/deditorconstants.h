@@ -22,6 +22,9 @@ const char D_MIMETYPE_HDR[] = "text/x-dhdr";
 const char WIZARD_CATEGORY_D[] = "A.D";
 const char WIZARD_TR_CATEGORY_D[] = QT_TRANSLATE_NOOP("DEditor", "D");
 
+// Settings
+const char INI_SOURCE_ROOT_KEY[]   = "SourceRoot";
+
 } // namespace DEditor
 } // namespace Constants
 

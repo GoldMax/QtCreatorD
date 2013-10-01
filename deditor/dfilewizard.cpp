@@ -62,7 +62,7 @@ Core::GeneratedFiles DFileWizard::generateFiles(const QWizard *w,
  else
  {
 		QSettings sets(modul, QSettings::IniFormat);
-		QString bds = sets.value(QLatin1String("SourceRoot")).toString();
+  QString bds = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
 		Utils::FileName dir = Utils::FileName::fromString(modul);
 		dir = dir.parentDir();
 		if(bds.length() > 0 && bds != QLatin1String("."))
