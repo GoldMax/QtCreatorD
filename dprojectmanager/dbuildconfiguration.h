@@ -28,12 +28,14 @@ public:
  NamedWidget *createConfigWidget();
  BuildType buildType() const { return Unknown; }
  bool fromMap(const QVariantMap &map);
-
+	//Target* target() const { return m_target; }
 protected:
  DBuildConfiguration(Target *parent, DBuildConfiguration *source);
  DBuildConfiguration(Target *parent, const Core::Id id);
 
  friend class DBuildSettingsWidget;
+	private:
+	//Target* m_target;
 };
 
 class DBuildConfigurationFactory : public ProjectExplorer::IBuildConfigurationFactory
@@ -75,6 +77,10 @@ public:
 
 private:
  DBuildConfiguration *m_buildConfiguration;
+	Utils::PathChooser *m_pathChooser;
+
+private slots:
+	void buildDirectoryChanged();
 };
 
 } // namespace Internal

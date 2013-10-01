@@ -37,7 +37,7 @@ public:
  QList<ProjectExplorer::ProjectNode::ProjectAction> supportedActions(Node *node) const;
  QList<ProjectExplorer::RunConfiguration *> runConfigurationsFor(Node *node);
 
- void refresh();
+	void refresh(bool needRebuild);
 
 private:
  DProject *m_project;

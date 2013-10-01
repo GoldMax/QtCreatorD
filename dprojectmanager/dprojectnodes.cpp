@@ -66,8 +66,14 @@ bool isEmpty(FolderNode* f)
  return f->fileNodes().length() + f->subFolderNodes().length() == 0;
 }
 
-void DProjectNode::refresh()
+void DProjectNode::refresh(bool needRebuild)
 {
+	if(needRebuild)
+	{
+		removeFileNodes(this->fileNodes(), this);
+		removeFolderNodes(this->subFolderNodes(), this);
+	}
+
  //Core::MessageManager::write(QLatin1String("refresh"));
 	const QHash<QString,QString>& files = m_project->files();
 
@@ -83,9 +89,7 @@ void DProjectNode::refresh()
    stack.push(i);
  }
 
-	QDir base(m_project->projectDirectory());
-
- // adding
+		// adding
 	typedef QHash<QString,QString>::ConstIterator FilesKeyValue;
 	for (FilesKeyValue kv = files.constBegin(); kv != files.constEnd(); ++kv)
 	//foreach(QString filePath, files)
@@ -94,7 +98,7 @@ void DProjectNode::refresh()
    continue;
   FolderNode* folder = this;
 		QStringList parts = kv.value().split(QDir::separator());
-  QString absFolderPath = m_project->projectDirectory();
+		QString absFolderPath = m_project->buildDirectory().path();
   parts.pop_back();
   foreach(QString part, parts)
   {

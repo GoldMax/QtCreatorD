@@ -105,7 +105,6 @@ Core::GeneratedFiles DProjectWizard::generateFiles(const QWizard *w,
 	const QString projectFileName = QFileInfo(dir, projectName + QLatin1String(".qcd")).absoluteFilePath();
 
 	Core::GeneratedFile generatedProjectFile(projectFileName);
-	generatedProjectFile.setContents(QLatin1String("[General]\n\n"));
 	generatedProjectFile.setContents(QLatin1String("[Files]\n"));
 	generatedProjectFile.setAttributes(Core::GeneratedFile::OpenProjectAttribute);
 

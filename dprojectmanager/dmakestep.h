@@ -73,6 +73,9 @@ public:
  QString displayName() const;
  QString summaryText() const;
 
+public slots:
+	void updateDetails();
+
 private slots:
  void targetTypeComboBoxSelectItem(int index);
  void makeLineEditTextEdited();
@@ -81,7 +84,6 @@ private slots:
  void targetDirNameLineEditTextEdited();
  void objDirLineEditTextEdited();
  void updateMakeOverrrideLabel();
- void updateDetails();
 
 private:
  Ui::DMakeStep *m_ui;

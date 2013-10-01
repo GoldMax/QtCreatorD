@@ -9,6 +9,7 @@
 #include <projectexplorer/kitinformation.h>
 #include <projectexplorer/projectexplorerconstants.h>
 #include <projectexplorer/toolchain.h>
+#include <utils/fancylineedit.h>
 #include <utils/pathchooser.h>
 #include <utils/qtcassert.h>
 #include <coreplugin/mimedatabase.h>
@@ -16,6 +17,7 @@
 
 #include <QFormLayout>
 #include <QInputDialog>
+#include <QSettings>
 
 using namespace ProjectExplorer;
 using namespace DProjectManager;
@@ -48,6 +50,10 @@ bool DBuildConfiguration::fromMap(const QVariantMap &map)
 {
 	if(map.contains(QLatin1String(Constants::D_BC_NAME)))
 		this->setDisplayName(map[QLatin1String(Constants::D_BC_NAME)].toString());
+
+	DProject* prj = static_cast<DProject*>(target()->project());
+	Utils::FileName fn = 	Utils::FileName::fromString(prj->buildDirectory().path());
+	setBuildDirectory(fn);
 
  BuildStepList *buildSteps = this->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
  Q_ASSERT(buildSteps);
@@ -168,11 +174,7 @@ QList<BuildInfo *> DBuildConfigurationFactory::availableSetups(const Kit *k, con
 {
 	QList<BuildInfo *> result;
 	QTC_ASSERT(canSetup(k, projectPath), return result);
-//	BuildInfo *info = createBuildInfo(k, Utils::FileName::fromString(ProjectExplorer::Project::projectDirectory(projectPath)));
-//	//: The name of the build configuration created by default for a generic project.
-//	info->displayName = tr("Default");
-//	result << info;
-//	return result;
+
 	BuildInfo* info = new BuildInfo(this);
 	info->displayName = tr("Debug");
 	info->typeName = tr("D Build");
@@ -188,15 +190,43 @@ QList<BuildInfo *> DBuildConfigurationFactory::availableSetups(const Kit *k, con
 ////////////////////////////////////////////////////////////////////////////////////
 
 DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
- : m_buildConfiguration(bc)
+	: m_buildConfiguration(bc)
 {
  QFormLayout *fl = new QFormLayout(this);
  fl->setContentsMargins(0, -1, 0, -1);
  fl->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
 
- setDisplayName(tr("D language Project Manager"));
-}
+	setDisplayName(tr("Project settings"));
 
+	// build directory
+	m_pathChooser = new Utils::PathChooser(this);
+	m_pathChooser->setEnabled(true);
+	m_pathChooser->lineEdit()->setReadOnly(true);
+	m_pathChooser->setExpectedKind(Utils::PathChooser::ExistingDirectory);
+	m_pathChooser->setBaseDirectory(bc->target()->project()->projectDirectory());
+	m_pathChooser->setEnvironment(bc->environment());
+	QSettings sets(m_buildConfiguration->target()->project()->projectFilePath(), QSettings::IniFormat);
+	QString root = sets.value(QLatin1String("/SourceRoot")).toString();
+	m_pathChooser->setPath(root);
+
+	fl->addRow(tr("Source root directory:"), m_pathChooser);
+	//connect(m_pathChooser, SIGNAL(pathChanged(QString)), this, SLOT(buildDirectoryChanged()));
+	connect(m_pathChooser, SIGNAL(changed(QString)), this, SLOT(buildDirectoryChanged()));
+
+
+}
+void DBuildSettingsWidget::buildDirectoryChanged()
+{
+	QDir d(m_buildConfiguration->target()->project()->projectDirectory());
+	QString rel = d.relativeFilePath(m_pathChooser->rawPath());
+
+	m_pathChooser->setPath(rel);
+	QSettings sets(m_buildConfiguration->target()->project()->projectFilePath(), QSettings::IniFormat);
+	sets.setValue(QLatin1String("SourceRoot"), rel);
+	sets.sync();
+	static_cast<DProject*>(m_buildConfiguration->target()->project())->refresh(DProject::Everything);
+	m_buildConfiguration->setBuildDirectory(Utils::FileName::fromString(rel));
+}
 
 } // namespace Internal
 } // namespace DProjectManager

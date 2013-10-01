@@ -51,13 +51,13 @@ public:
  void refresh(RefreshOptions options);
 
 	const QHash<QString,QString>& files() { return m_files; }
-
+	const QDir buildDirectory() const { return m_buildDir; }
 protected:
  QVariantMap toMap() const;
  bool fromMap(const QVariantMap &map);
 
 private:
- void parseProject(RefreshOptions options);
+	bool parseProject(RefreshOptions options);
  QStringList processEntries(const QStringList &paths,
                             QHash<QString, QString> *map = 0) const;
 
@@ -65,13 +65,13 @@ private:
  const QString m_projectName;
  const QString m_projectFileName;
  DProjectFile* m_projectIDocument;
-
+	QDir m_buildDir;
 	// absPath, relPath
 	QHash<QString,QString> m_files;
 	//QSet<QString> m_files;
 
  DProjectNode *m_rootNode;
- QFuture<void> m_codeModelFuture;
+	QFuture<void> m_codeModelFuture;
 };
 
 class DProjectFile : public Core::IDocument

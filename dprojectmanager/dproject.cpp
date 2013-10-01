@@ -60,6 +60,8 @@ DProject::DProject(Manager *manager, const QString &fileName)
 	DocumentManager::addDocument(m_projectIDocument);
 	m_rootNode = new DProjectNode(this, m_projectIDocument);
  m_manager->registerProject(this);
+
+
 }
 
 DProject::~DProject()
@@ -73,13 +75,12 @@ Core::IDocument* DProject::document() const { return m_projectIDocument; }
 
 bool DProject::addFiles(const QStringList& filePaths)
 {
- QDir projDir(projectDirectory());
  QSettings projectFiles(m_projectFileName, QSettings::IniFormat);
  projectFiles.beginGroup(QLatin1String("Files"));
  foreach (const QString &filePath, filePaths)
  {
   if(m_files.contains(filePath) == false)
-   projectFiles.setValue(projDir.relativeFilePath(filePath), 0);
+			projectFiles.setValue(m_buildDir.relativeFilePath(filePath), 0);
  }
  return true;
 }
@@ -101,44 +102,61 @@ bool DProject::renameFile(const QString &filePath, const QString &newFilePath)
 {
  QSettings projectFiles(m_projectFileName, QSettings::IniFormat);
  projectFiles.beginGroup(QLatin1String("Files"));
- QDir projDir(projectDirectory());
-
- projectFiles.remove(projDir.relativeFilePath(filePath));
-	projectFiles.setValue(projDir.relativeFilePath(newFilePath), 0);
+	projectFiles.remove(m_buildDir.relativeFilePath(filePath));
+	projectFiles.setValue(m_buildDir.relativeFilePath(newFilePath), 0);
 
  return true;
 }
 
-void DProject::parseProject(RefreshOptions options)
+bool DProject::parseProject(RefreshOptions options)
 {
- // if (options & Configuration)
- // {
- //  // TODO : Possibly load some configuration from the project file
- //  //QSettings projectInfo(m_projectFileName, QSettings::IniFormat);
- // }
+	QSettings sets(m_projectFileName, QSettings::IniFormat);
 
- if (options & Files)
+	QDir old;
+	bool needRebuild = false;
+	if (options & Configuration)
+	{
+		QString bds = sets.value(QLatin1String("SourceRoot")).toString();
+		Utils::FileName dir = Utils::FileName::fromString(projectDirectory());
+		if(bds.length() > 0 && bds != QLatin1String("."))
+			dir.appendPath(bds);
+		if((needRebuild = (dir.toString() != m_buildDir.path())))
+		{
+			old = m_buildDir;
+			m_buildDir.setPath(dir.toString());
+		}
+	}
+
+	if (needRebuild || (options & Files))
  {
   m_files.clear();
 
-  QDir projDir(projectDirectory());
-  QSettings projectFiles(m_projectFileName, QSettings::IniFormat);
-  projectFiles.beginGroup(QLatin1String("Files"));
-  foreach(QString rel, projectFiles.allKeys())
+		sets.beginGroup(QLatin1String("Files"));
+		foreach(QString rel, sets.allKeys())
   {
-   QString abs = projDir.absoluteFilePath(rel);
+			QString abs;
+			if(needRebuild)
+			{
+				abs = old.absoluteFilePath(rel);
+				sets.remove(rel);
+				rel = m_buildDir.relativeFilePath(abs);
+				sets.setValue(rel,0);
+			}
+			else
+				abs = m_buildDir.absoluteFilePath(rel);
 			m_files[abs] = rel;
   }
   emit fileListChanged();
  }
+	return needRebuild;
 }
 
 void DProject::refresh(RefreshOptions options)
 {
- parseProject(options);
+	bool needRebuildTree = parseProject(options);
 
- if (options & Files)
-  m_rootNode->refresh();
+	if (needRebuildTree || (options & Files))
+		m_rootNode->refresh(needRebuildTree);
 }
 
 //-------
@@ -205,7 +223,6 @@ bool DProject::setupTarget(Target* t)
 
  return true;
 }
-
 QVariantMap DProject::toMap() const
 {
  QVariantMap map = Project::toMap();
@@ -214,15 +231,6 @@ QVariantMap DProject::toMap() const
  const QList<Target *> ts = targets();
  for (int i = 0; i < ts.size(); ++i)
   map.remove(QString::fromLatin1(TARGET_KEY_PREFIX) + QString::number(i));
-// const QList<Target *> ts = targets();
-
-// QVariantMap map;
-//// map.insert(QLatin1String(ACTIVE_TARGET_KEY), ts.indexOf(d->m_activeTarget));
-// map.insert(QLatin1String(TARGET_COUNT_KEY), 0);
-//// for (int i = 0; i < ts.size(); ++i)
-////  map.insert(QString::fromLatin1(TARGET_KEY_PREFIX) + QString::number(i), ts.at(i)->toMap());
-
-// map.insert(QLatin1String(EDITOR_SETTINGS_KEY), editorConfiguration()->toMap());
  return map;
 }
 bool DProject::fromMap(const QVariantMap &map)
@@ -230,26 +238,12 @@ bool DProject::fromMap(const QVariantMap &map)
  if (!Project::fromMap(map))
   return false;
 
-
- /*QSettings sets(m_projectFileName, QSettings::IniFormat);
- QVariantMap map;
- // TODO send QSettings
- // map[QLatin1String("QSettings")] = QVariant(sets;
-
- QStringList groups = sets.childGroups();
- foreach(QString group, groups)
-  if(group.startsWith(QLatin1String("BC.")))
-  {
-   map[QLatin1String("Name")] = group.remove(0,3);
-   BuildConfiguration* bc = factory->restore(t,map);
-   if (!bc)
-    return false;
-   t->addBuildConfiguration(bc);
-  }
-
- if(t->buildConfigurations().length() > 0)
-  return true;
-*/
+	QSettings sets(m_projectFileName, QSettings::IniFormat);
+	QString bds = sets.value(QLatin1String("SourceRoot")).toString();
+	Utils::FileName dir = Utils::FileName::fromString(projectDirectory());
+	if(bds.length() > 0 && bds != QLatin1String("."))
+		dir.appendPath(bds);
+	m_buildDir.setPath(dir.toString());
 
  Kit *defaultKit = KitManager::defaultKit();
  if (!activeTarget() && defaultKit)

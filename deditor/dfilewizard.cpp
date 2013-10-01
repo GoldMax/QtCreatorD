@@ -4,12 +4,14 @@
 #include <projectexplorer/projectexplorerconstants.h>
 #include <utils/filewizarddialog.h>
 #include <utils/qtcassert.h>
+#include <utils/fileutils.h>
 
 #include <QFileInfo>
 #include <QTextStream>
 #include <QWizard>
 #include <QPushButton>
 #include <QDir>
+#include <QSettings>
 
 namespace {
 class DFileWizardDialog : public Utils::FileWizardDialog
@@ -53,28 +55,33 @@ Core::GeneratedFiles DFileWizard::generateFiles(const QWizard *w,
  Core::GeneratedFile file(fileName);
  file.setAttributes(Core::GeneratedFile::OpenEditorAttribute);
 
- QString contents = QLatin1String("module ");
- QString module = wizardDialog->m_projFile;
- if(module.length() == 0)
-  module = name;
+	QString contents = QLatin1String("module ");
+	QString modul = wizardDialog->m_projFile;
+	if(modul.length() == 0)
+		modul = name;
  else
  {
-  module = QDir::cleanPath(module);
-  module.truncate(module.lastIndexOf(QDir::separator()));
-  QString p = wizardDialog->path();
-  module = p.replace(module, QString());
-  if(module.length() > 0)
+		QSettings sets(modul, QSettings::IniFormat);
+		QString bds = sets.value(QLatin1String("SourceRoot")).toString();
+		Utils::FileName dir = Utils::FileName::fromString(modul);
+		dir = dir.parentDir();
+		if(bds.length() > 0 && bds != QLatin1String("."))
+			dir.appendPath(bds);
+
+		QDir buildDir(dir.toString());
+		modul = buildDir.relativeFilePath(wizardDialog->path());
+		if(modul.length() > 0)
   {
-   if(module.at(0) == QDir::separator())
-    module = module.remove(0,1);
-   if(module.endsWith(QDir::separator()))
-    module.chop(1);
-   module = module.replace(QDir::separator(), QChar::fromLatin1('.'));
-   module.append(QChar::fromAscii('.'));
+			if(modul.at(0) == QDir::separator())
+				modul = modul.remove(0,1);
+			if(modul.endsWith(QDir::separator()))
+				modul.chop(1);
+			modul = modul.replace(QDir::separator(), QChar::fromLatin1('.'));
+			modul.append(QChar::fromAscii('.'));
   }
-  module.append(name);
+		modul.append(name);
  }
- contents.append(module);
+	contents.append(modul);
  contents.append(QLatin1String(";\n"));
  //switch(m_fileType) {}
  file.setContents(contents);

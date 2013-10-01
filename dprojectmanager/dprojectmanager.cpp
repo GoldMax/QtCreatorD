@@ -33,8 +33,7 @@ ProjectExplorer::Project *Manager::openProject(const QString &fileName, QString 
 
  DProject* prj = new DProject(this, fileName);
 
- QString path = prj->projectDirectory();
- // TODO : Add directory from project settings imports table
+	QString path = prj->buildDirectory().path();
  QcdAssist::sendAddImportToDCD(path);
 
  return prj;

@@ -27,20 +27,8 @@ using namespace ProjectExplorer;
 namespace DProjectManager {
 namespace Internal {
 
-const char D_MS_ID[] = "DProjectManager.DMakeStep";
-const char D_MS_DISPLAY_NAME[] = QT_TRANSLATE_NOOP("DProjectManager::Internal::DMakeStep",
-                                                       "Make");
-
-const char BUILD_TARGETS_KEY[]  = "DProjectManager.DMakeStep.BuildTargets";
-const char MAKE_ARGUMENTS_KEY[] = "MakeArguments";
-const char MAKE_COMMAND_KEY[]   = "MakeCommand";
-const char TARGET_NAME_KEY[]    = "TargetName";
-const char TARGET_DIRNAME_KEY[] = "TargetDirName";
-const char TARGET_TYPE_KEY[]    = "TargetTypeName";
-const char OBJ_DIRNAME_KEY[]    = "ObjDirName";
-
 DMakeStep::DMakeStep(BuildStepList *parent) :
-  AbstractProcessStep(parent, Id(D_MS_ID))
+		AbstractProcessStep(parent, Id(Constants::D_MS_ID))
 {
  ctor();
 }
@@ -66,7 +54,7 @@ DMakeStep::DMakeStep(BuildStepList *parent, DMakeStep *bs) :
 void DMakeStep::ctor()
 {
  setDefaultDisplayName(QCoreApplication::translate("DProjectManager::Internal::DMakeStep",
-                                                   D_MS_DISPLAY_NAME));
+																																																			Constants::D_MS_DISPLAY_NAME));
 
  m_targetType = Executable;
 
@@ -133,12 +121,12 @@ QVariantMap DMakeStep::toMap() const
  QSettings projectFiles(this->project()->projectFilePath(), QSettings::IniFormat);
  projectFiles.beginGroup(QLatin1String("BC.") + this->buildConfiguration()->displayName());
 
- projectFiles.setValue(QLatin1String(MAKE_ARGUMENTS_KEY), m_makeArguments);
- projectFiles.setValue(QLatin1String(MAKE_COMMAND_KEY), m_makeCommand);
- projectFiles.setValue(QLatin1String(TARGET_NAME_KEY), m_targetName);
- projectFiles.setValue(QLatin1String(TARGET_DIRNAME_KEY), m_targetDirName);
- projectFiles.setValue(QLatin1String(TARGET_TYPE_KEY), m_targetType);
- projectFiles.setValue(QLatin1String(OBJ_DIRNAME_KEY), m_objDirName);
+	projectFiles.setValue(QLatin1String(Constants::MAKE_ARGUMENTS_KEY), m_makeArguments);
+	projectFiles.setValue(QLatin1String(Constants::MAKE_COMMAND_KEY), m_makeCommand);
+	projectFiles.setValue(QLatin1String(Constants::TARGET_NAME_KEY), m_targetName);
+	projectFiles.setValue(QLatin1String(Constants::TARGET_DIRNAME_KEY), m_targetDirName);
+	projectFiles.setValue(QLatin1String(Constants::TARGET_TYPE_KEY), m_targetType);
+	projectFiles.setValue(QLatin1String(Constants::OBJ_DIRNAME_KEY), m_objDirName);
 
  projectFiles.sync();
 
@@ -154,19 +142,18 @@ bool DMakeStep::fromMap(const QVariantMap &map)
  {
   sets.beginGroup(group);
 
-  m_makeArguments = sets.value(QLatin1String(MAKE_ARGUMENTS_KEY),m_makeArguments).toString();
-  m_makeCommand = sets.value(QLatin1String(MAKE_COMMAND_KEY),m_makeCommand).toString();
-  m_targetName = sets.value(QLatin1String(TARGET_NAME_KEY),m_targetName).toString();
-  m_targetDirName = sets.value(QLatin1String(TARGET_DIRNAME_KEY),m_targetDirName).toString();
-  m_targetType = (TargetType)sets.value(QLatin1String(TARGET_TYPE_KEY),m_targetType).toInt();
-  m_objDirName = sets.value(QLatin1String(OBJ_DIRNAME_KEY),m_objDirName).toString();
+		m_makeArguments = sets.value(QLatin1String(Constants::MAKE_ARGUMENTS_KEY),m_makeArguments).toString();
+		m_makeCommand = sets.value(QLatin1String(Constants::MAKE_COMMAND_KEY),m_makeCommand).toString();
+		m_targetName = sets.value(QLatin1String(Constants::TARGET_NAME_KEY),m_targetName).toString();
+		m_targetDirName = sets.value(QLatin1String(Constants::TARGET_DIRNAME_KEY),m_targetDirName).toString();
+		m_targetType = (TargetType)sets.value(QLatin1String(Constants::TARGET_TYPE_KEY),m_targetType).toInt();
+		m_objDirName = sets.value(QLatin1String(Constants::OBJ_DIRNAME_KEY),m_objDirName).toString();
  }
  return AbstractProcessStep::fromMap(map);
 }
 
 QString DMakeStep::allArguments() const
 {
- QString sep(QDir::separator());
  QString bname = this->buildConfiguration()->displayName().toLower();
 
  QString args;
@@ -185,14 +172,25 @@ QString DMakeStep::allArguments() const
  //Utils::QtcProcess::addArgs(&args, QLatin1String("-m64"));
  QString outFile = outFileName();
 	QString makargs = m_makeArguments;
-	makargs.replace(QLatin1String("$TargetDir$"),m_targetDirName);
+	makargs.replace(QLatin1String("%{TargetDir}"),m_targetDirName);
 	Utils::QtcProcess::addArgs(&args, makargs);
- if(m_targetDirName.length() == 0)
-  Utils::QtcProcess::addArgs(&args, QLatin1String("-of") + outFile);
- else
-  Utils::QtcProcess::addArgs(&args, QLatin1String("-of") + m_targetDirName + QDir::separator() + outFile);
- Utils::QtcProcess::addArgs(&args, QLatin1String("-od") + m_objDirName);
 
+	QDir buildDir(this->buildConfiguration()->buildDirectory().toString());
+	QString projDir = project()->projectDirectory();
+	if(QDir(m_targetDirName).isRelative())
+	{
+		QString relDir = buildDir.relativeFilePath(projDir + QDir::separator() + m_targetDirName);
+		if(relDir.length() == 0)
+			Utils::QtcProcess::addArgs(&args, QLatin1String("-of") + outFile);
+		else
+			Utils::QtcProcess::addArgs(&args, QLatin1String("-of") + relDir + QDir::separator() + outFile);
+	}
+	if(QDir(m_targetDirName).isRelative())
+	{
+		QString relDir = buildDir.relativeFilePath(projDir + QDir::separator() + m_objDirName);
+		if(relDir.length() > 0)
+			Utils::QtcProcess::addArgs(&args, QLatin1String("-od") + relDir);
+	}
 	static QLatin1String dotd(".d");
 	static QLatin1String dotdi(".di");
 	static QLatin1String space(" ");
@@ -276,7 +274,7 @@ bool DMakeStep::immutable() const
 DMakeStepConfigWidget::DMakeStepConfigWidget(DMakeStep *makeStep)
  : m_makeStep(makeStep)
 {
- DProject *pro = static_cast<DProject *>(m_makeStep->target()->project());
+	Project *pro = m_makeStep->target()->project();
  m_ui = new Ui::DMakeStep;
  m_ui->setupUi(this);
 
@@ -317,8 +315,11 @@ DMakeStepConfigWidget::DMakeStepConfigWidget(DMakeStep *makeStep)
 
  connect(pro, SIGNAL(environmentChanged()),
          this, SLOT(updateMakeOverrrideLabel()));
- connect(pro, SIGNAL(environmentChanged()),
-         this, SLOT(updateDetails()));
+	connect(pro, SIGNAL(environmentChanged()),
+									this, SLOT(updateDetails()));
+	connect(m_makeStep->buildConfiguration(), SIGNAL(buildDirectoryChanged()),
+									this, SLOT(updateDetails()));
+
 }
 
 DMakeStepConfigWidget::~DMakeStepConfigWidget()
@@ -413,7 +414,7 @@ DMakeStepFactory::DMakeStepFactory(QObject *parent) :
 bool DMakeStepFactory::canCreate(BuildStepList *parent, const Id id) const
 {
  if (parent->target()->project()->id() == Constants::DPROJECT_ID)
-  return id == D_MS_ID;
+		return id == Constants::D_MS_ID;
  return false;
 }
 
@@ -458,15 +459,15 @@ BuildStep *DMakeStepFactory::restore(BuildStepList *parent, const QVariantMap &m
 QList<Id> DMakeStepFactory::availableCreationIds(BuildStepList *parent) const
 {
  if (parent->target()->project()->id() == Constants::DPROJECT_ID)
-  return QList<Id>() << Id(D_MS_ID);
+		return QList<Id>() << Id(Constants::D_MS_ID);
  return QList<Id>();
 }
 
 QString DMakeStepFactory::displayNameForId(const Id id) const
 {
- if (id == D_MS_ID)
+	if (id == Constants::D_MS_ID)
   return QCoreApplication::translate("DProjectManager::Internal::DMakeStep",
-                                     D_MS_DISPLAY_NAME);
+																																					Constants::D_MS_DISPLAY_NAME);
  return QString();
 }
 
