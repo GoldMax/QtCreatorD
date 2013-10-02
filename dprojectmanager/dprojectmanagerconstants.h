@@ -41,15 +41,16 @@ const char USE_TERMINAL_KEY[] = "ProjectExplorer.DRunConfiguration.UseTerminal";
 
 // Settings
 const char INI_SOURCE_ROOT_KEY[]   = "SourceRoot";
-const char INI_LIBRARIES_KEY[]   = "Libs";
 const char INI_INCLUDES_KEY[]   = "Includes";
+const char INI_LIBRARIES_KEY[]   = "Libs";
 
-const char INI_MAKE_ARGUMENTS_KEY[] = "MakeArguments";
-const char INI_MAKE_COMMAND_KEY[]   = "MakeCommand";
+//const char INI_MAKE_COMMAND_KEY[]   = "MakeCommand";
+const char INI_BUILD_PRESET_KEY[]   = "BuildPreset";
+const char INI_TARGET_TYPE_KEY[]    = "TargetTypeName";
 const char INI_TARGET_NAME_KEY[]    = "TargetName";
 const char INI_TARGET_DIRNAME_KEY[] = "TargetDirName";
-const char INI_TARGET_TYPE_KEY[]    = "TargetTypeName";
 const char INI_OBJ_DIRNAME_KEY[]    = "ObjDirName";
+const char INI_MAKE_ARGUMENTS_KEY[] = "MakeArguments";
 
 } // namespace DProjectManager
 } // namespace Constants

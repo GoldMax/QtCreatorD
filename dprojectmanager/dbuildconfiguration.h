@@ -6,6 +6,9 @@
 #include <projectexplorer/buildinfo.h>
 #include <projectexplorer/target.h>
 
+//#include <QPlainTextEdit>
+#include <QLineEdit>
+
 namespace Utils { class PathChooser; }
 
 using namespace ProjectExplorer;
@@ -28,14 +31,15 @@ public:
  NamedWidget *createConfigWidget();
  BuildType buildType() const { return Unknown; }
  bool fromMap(const QVariantMap &map);
-	//Target* target() const { return m_target; }
+
+signals:
+	void configurationChanged();
+
 protected:
  DBuildConfiguration(Target *parent, DBuildConfiguration *source);
  DBuildConfiguration(Target *parent, const Core::Id id);
 
  friend class DBuildSettingsWidget;
-	private:
-	//Target* m_target;
 };
 
 class DBuildConfigurationFactory : public ProjectExplorer::IBuildConfigurationFactory
@@ -78,9 +82,16 @@ public:
 private:
  DBuildConfiguration *m_buildConfiguration;
 	Utils::PathChooser *m_pathChooser;
+//	QPlainTextEdit* editIncludes;
+//	QPlainTextEdit* editLibs;
+	QLineEdit* editIncludes;
+	QLineEdit* editLibs;
 
 private slots:
 	void buildDirectoryChanged();
+	void editsTextChanged();
+	void editsEditingFinished();
+
 };
 
 } // namespace Internal

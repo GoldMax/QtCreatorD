@@ -29,13 +29,15 @@ namespace DProjectManager {
 namespace Internal {
 
 DMakeStep::DMakeStep(BuildStepList *parent) :
-		AbstractProcessStep(parent, Id(Constants::D_MS_ID))
+		AbstractProcessStep(parent, Id(Constants::D_MS_ID)),
+		m_targetType(Executable), m_buildPreset(Debug)
 {
  ctor();
 }
 
 DMakeStep::DMakeStep(BuildStepList *parent, const Id id) :
-  AbstractProcessStep(parent, id)
+		AbstractProcessStep(parent, id),
+		m_targetType(Executable), m_buildPreset(Debug)
 {
  ctor();
 }
@@ -43,8 +45,8 @@ DMakeStep::DMakeStep(BuildStepList *parent, const Id id) :
 DMakeStep::DMakeStep(BuildStepList *parent, DMakeStep *bs) :
   AbstractProcessStep(parent, bs),
   m_targetType(bs->m_targetType),
+		m_buildPreset(bs->m_buildPreset),
   m_makeArguments(bs->m_makeArguments),
-  m_makeCommand(bs->m_makeCommand),
   m_targetName(bs->m_targetName),
   m_targetDirName(bs->m_targetDirName),
   m_objDirName(bs->m_objDirName)
@@ -56,8 +58,6 @@ void DMakeStep::ctor()
 {
  setDefaultDisplayName(QCoreApplication::translate("DProjectManager::Internal::DMakeStep",
 																																																			Constants::D_MS_DISPLAY_NAME));
-
- m_targetType = Executable;
 
  if(m_targetName.length() == 0)
   m_targetName =  project()->displayName();
@@ -117,62 +117,34 @@ bool DMakeStep::init()
 
 QVariantMap DMakeStep::toMap() const
 {
-// QSettings projectFiles(this->project()->projectFilePath(), QSettings::IniFormat);
-// projectFiles.beginGroup(QLatin1String("BC.") + this->buildConfiguration()->displayName());
-
-//	projectFiles.setValue(QLatin1String(Constants::INI_MAKE_ARGUMENTS_KEY), m_makeArguments);
-//	projectFiles.setValue(QLatin1String(Constants::INI_MAKE_COMMAND_KEY), m_makeCommand);
-//	projectFiles.setValue(QLatin1String(Constants::INI_TARGET_NAME_KEY), m_targetName);
-//	projectFiles.setValue(QLatin1String(Constants::INI_TARGET_DIRNAME_KEY), m_targetDirName);
-//	projectFiles.setValue(QLatin1String(Constants::INI_TARGET_TYPE_KEY), m_targetType);
-//	projectFiles.setValue(QLatin1String(Constants::INI_OBJ_DIRNAME_KEY), m_objDirName);
-
-// projectFiles.sync();
-
-// return AbstractProcessStep::toMap();
-
- //XXXXX
  QVariantMap map = AbstractProcessStep::toMap();
-
- //if(buildConfiguration()->displayName().length() > 0)
- {
-  map.insert(QLatin1String(Constants::INI_MAKE_ARGUMENTS_KEY), m_makeArguments);
-  map.insert(QLatin1String(Constants::INI_MAKE_COMMAND_KEY), m_makeCommand);
-  map.insert(QLatin1String(Constants::INI_TARGET_NAME_KEY), m_targetName);
-  map.insert(QLatin1String(Constants::INI_TARGET_DIRNAME_KEY), m_targetDirName);
-  map.insert(QLatin1String(Constants::INI_TARGET_TYPE_KEY), m_targetType);
-  map.insert(QLatin1String(Constants::INI_OBJ_DIRNAME_KEY), m_objDirName);
- }
+	map.insert(QLatin1String(Constants::INI_TARGET_TYPE_KEY), m_targetType);
+	map.insert(QLatin1String(Constants::INI_BUILD_PRESET_KEY), m_buildPreset);
+	map.insert(QLatin1String(Constants::INI_TARGET_NAME_KEY), m_targetName);
+	map.insert(QLatin1String(Constants::INI_TARGET_DIRNAME_KEY), m_targetDirName);
+	map.insert(QLatin1String(Constants::INI_OBJ_DIRNAME_KEY), m_objDirName);
+	map.insert(QLatin1String(Constants::INI_MAKE_ARGUMENTS_KEY), m_makeArguments);
  return map;
 }
 
 bool DMakeStep::fromMap(const QVariantMap &map)
 {
-// QSettings sets(this->project()->projectFilePath(), QSettings::IniFormat);
-// //QSettings* sets = map[QLatin1String("QSettings")].value<QSettings*>();
-// QString group = QLatin1String("BC.") + this->buildConfiguration()->displayName();
-// if(sets.childGroups().contains(group))
-// {
-//  sets.beginGroup(group);
-
-//		m_makeArguments = sets.value(QLatin1String(Constants::INI_MAKE_ARGUMENTS_KEY),m_makeArguments).toString();
-//		m_makeCommand = sets.value(QLatin1String(Constants::INI_MAKE_COMMAND_KEY),m_makeCommand).toString();
-//		m_targetName = sets.value(QLatin1String(Constants::INI_TARGET_NAME_KEY),m_targetName).toString();
-//		m_targetDirName = sets.value(QLatin1String(Constants::INI_TARGET_DIRNAME_KEY),m_targetDirName).toString();
-//		m_targetType = (TargetType)sets.value(QLatin1String(Constants::INI_TARGET_TYPE_KEY),m_targetType).toInt();
-//		m_objDirName = sets.value(QLatin1String(Constants::INI_OBJ_DIRNAME_KEY),m_objDirName).toString();
-// }
-// return AbstractProcessStep::fromMap(map);
-
- //XXXXX
- m_makeArguments = map.value(QLatin1String(Constants::INI_MAKE_ARGUMENTS_KEY)).toString();
- m_makeCommand = map.value(QLatin1String(Constants::INI_MAKE_COMMAND_KEY)).toString();
+	m_targetType = (TargetType)map.value(QLatin1String(Constants::INI_TARGET_TYPE_KEY)).toInt();
+	m_buildPreset = (BuildPreset)map.value(QLatin1String(Constants::INI_BUILD_PRESET_KEY)).toInt();
  m_targetName = map.value(QLatin1String(Constants::INI_TARGET_NAME_KEY)).toString();
  m_targetDirName = map.value(QLatin1String(Constants::INI_TARGET_DIRNAME_KEY)).toString();
  m_objDirName = map.value(QLatin1String(Constants::INI_OBJ_DIRNAME_KEY)).toString();
- m_targetType = (TargetType)map.value(QLatin1String(Constants::INI_TARGET_TYPE_KEY)).toInt();
-
+	m_makeArguments = map.value(QLatin1String(Constants::INI_MAKE_ARGUMENTS_KEY)).toString();
  return BuildStep::fromMap(map);
+}
+
+QString DMakeStep::makeCommand(const Utils::Environment &environment) const
+{
+	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit());
+	if (tc)
+		return tc->makeCommand(environment);
+	else
+		return QLatin1String("dmd");
 }
 
 QString DMakeStep::allArguments() const
@@ -180,11 +152,12 @@ QString DMakeStep::allArguments() const
  QString bname = this->buildConfiguration()->displayName().toLower();
 
  QString args;
- if(bname == QLatin1String("debug"))
+
+	if(m_buildPreset == Debug)
   args += QLatin1String("-debug -gc");
- else if(bname == QLatin1String("unittest"))
+	else if(m_buildPreset == Unittest)
   args += QLatin1String("-debug -gc -unittest");
- else if(bname == QLatin1String("release"))
+	else if(m_buildPreset == Release)
   args += QLatin1String(" -release -O -inline");
 
  if(m_targetType == StaticLibrary)
@@ -214,8 +187,18 @@ QString DMakeStep::allArguments() const
 	}
 
  DProject* proj = static_cast<DProject*>(project());
+	// Libs
  QString libs = proj->libraries();
- Utils::QtcProcess::addArgs(&args, libs.replace(QLatin1String("%{TargetDir}"),relTargetDir));
+	libs.replace(QLatin1Char(':'), QLatin1Char(' '));
+	foreach(QString s, libs.split(QLatin1Char(' ')))
+	{
+		s = s.replace(QLatin1String("%{TargetDir}"),relTargetDir);
+		if(s.startsWith(QLatin1String("-L")))
+			Utils::QtcProcess::addArgs(&args, s);
+		else
+			Utils::QtcProcess::addArgs(&args, QLatin1String("-L-l") + s);
+	}
+	// Includes
  QString incs = proj->includes();
  incs.replace(QLatin1Char(':'), QLatin1Char(' '));
  foreach(QString s, incs.split(QLatin1Char(' ')))
@@ -226,7 +209,7 @@ QString DMakeStep::allArguments() const
   else
    Utils::QtcProcess::addArgs(&args, QLatin1String("-I") + s);
  }
-
+	// Files
 	static QLatin1String dotd(".d");
 	static QLatin1String dotdi(".di");
 	static QLatin1String space(" ");
@@ -260,19 +243,6 @@ QString DMakeStep::outFileName() const
  return outName;
 }
 
-QString DMakeStep::makeCommand(const Utils::Environment &environment) const
-{
- QString command = m_makeCommand;
- if (command.isEmpty()) {
-  ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit());
-  if (tc)
-   command = tc->makeCommand(environment);
-  else
-   command = QLatin1String("dmd");
- }
- return command;
-}
-
 void DMakeStep::run(QFutureInterface<bool> &fi)
 {
  bool canContinue = true;
@@ -302,10 +272,9 @@ bool DMakeStep::immutable() const
  return false;
 }
 
-
-//
-// DMakeStepConfigWidget
-//
+//-------------------------------------------------------------------------
+//-- DMakeStepConfigWidget
+//-------------------------------------------------------------------------
 
 DMakeStepConfigWidget::DMakeStepConfigWidget(DMakeStep *makeStep)
  : m_makeStep(makeStep)
@@ -318,44 +287,41 @@ DMakeStepConfigWidget::DMakeStepConfigWidget(DMakeStep *makeStep)
  m_ui->targetTypeComboBox->addItem(QLatin1String("Static Library"));
  m_ui->targetTypeComboBox->addItem(QLatin1String("Shared Library"));
 
+	m_ui->buildPresetComboBox->addItem(QLatin1String("Debug"));
+	m_ui->buildPresetComboBox->addItem(QLatin1String("Release"));
+	m_ui->buildPresetComboBox->addItem(QLatin1String("Unittest"));
+	m_ui->buildPresetComboBox->addItem(QLatin1String("None"));
+
  m_ui->targetTypeComboBox->setCurrentIndex((int)m_makeStep->m_targetType);
- m_ui->makeLineEdit->setText(m_makeStep->m_makeCommand);
- m_ui->makeArgumentsLineEdit->setText(m_makeStep->m_makeArguments);
+	m_ui->buildPresetComboBox->setCurrentIndex((int)m_makeStep->m_buildPreset);
+	m_ui->makeArgumentsLineEdit->setPlainText(m_makeStep->m_makeArguments);
  m_ui->targetNameLineEdit->setText(m_makeStep->m_targetName);
  m_ui->targetDirLineEdit->setText(m_makeStep->m_targetDirName);
  m_ui->objDirLineEdit->setText(m_makeStep->m_objDirName);
- updateMakeOverrrideLabel();
- updateDetails();
+
+	updateDetails();
 
  connect(m_ui->targetTypeComboBox, SIGNAL(currentIndexChanged (int)),
          this, SLOT(targetTypeComboBoxSelectItem(int)));
-
- connect(m_ui->makeLineEdit, SIGNAL(textEdited(QString)),
-         this, SLOT(makeLineEditTextEdited()));
- connect(m_ui->makeArgumentsLineEdit, SIGNAL(textEdited(QString)),
-         this, SLOT(makeArgumentsLineEditTextEdited()));
+	connect(m_ui->buildPresetComboBox, SIGNAL(currentIndexChanged (int)),
+									this, SLOT(buildPresetComboBoxSelectItem(int)));
  connect(m_ui->targetNameLineEdit, SIGNAL(textEdited(QString)),
          this, SLOT(targetNameLineEditTextEdited()));
  connect(m_ui->targetDirLineEdit, SIGNAL(textEdited(QString)),
          this, SLOT(targetDirNameLineEditTextEdited()));
  connect(m_ui->objDirLineEdit, SIGNAL(textEdited(QString)),
          this, SLOT(objDirLineEditTextEdited()));
+	connect(m_ui->makeArgumentsLineEdit, SIGNAL(textChanged()),
+									this, SLOT(makeArgumentsLineEditTextEdited()));
 
- connect(ProjectExplorerPlugin::instance(), SIGNAL(settingsChanged()),
-         this, SLOT(updateMakeOverrrideLabel()));
  connect(ProjectExplorerPlugin::instance(), SIGNAL(settingsChanged()),
          this, SLOT(updateDetails()));
-
- connect(m_makeStep->target(), SIGNAL(kitChanged()),
-         this, SLOT(updateMakeOverrrideLabel()));
-
- connect(pro, SIGNAL(environmentChanged()),
-         this, SLOT(updateMakeOverrrideLabel()));
 	connect(pro, SIGNAL(environmentChanged()),
 									this, SLOT(updateDetails()));
 	connect(m_makeStep->buildConfiguration(), SIGNAL(buildDirectoryChanged()),
 									this, SLOT(updateDetails()));
-
+	connect(m_makeStep->buildConfiguration(), SIGNAL(configurationChanged()),
+									this, SLOT(updateDetails()));
 }
 
 DMakeStepConfigWidget::~DMakeStepConfigWidget()
@@ -365,16 +331,7 @@ DMakeStepConfigWidget::~DMakeStepConfigWidget()
 
 QString DMakeStepConfigWidget::displayName() const
 {
- return tr("Make", "DMakestep display name.");
-}
-
-void DMakeStepConfigWidget::updateMakeOverrrideLabel()
-{
- BuildConfiguration *bc = m_makeStep->buildConfiguration();
- if (!bc)
-  bc = m_makeStep->target()->activeBuildConfiguration();
-
- m_ui->makeLabel->setText(tr("Override %1:").arg(m_makeStep->makeCommand(bc->environment())));
+	return tr("Make", "D Makestep");
 }
 
 void DMakeStepConfigWidget::updateDetails()
@@ -392,7 +349,6 @@ void DMakeStepConfigWidget::updateDetails()
  m_summaryText = param.summary(displayName());
  emit updateSummary();
 
- //QList<RunConfiguration*> list = m_makeStep->target()->runConfigurations();
  foreach(RunConfiguration* rc, m_makeStep->target()->runConfigurations())
  {
   DRunConfiguration * brc = dynamic_cast<DRunConfiguration *>(rc);
@@ -408,19 +364,17 @@ QString DMakeStepConfigWidget::summaryText() const
 
 void DMakeStepConfigWidget::targetTypeComboBoxSelectItem(int index)
 {
- m_makeStep->m_targetType = (TargetType)index;
+	m_makeStep->m_targetType = (DMakeStep::TargetType)index;
  updateDetails();
 }
-
-void DMakeStepConfigWidget::makeLineEditTextEdited()
+void DMakeStepConfigWidget::buildPresetComboBoxSelectItem(int index)
 {
- m_makeStep->m_makeCommand = m_ui->makeLineEdit->text();
- updateDetails();
+	m_makeStep->m_buildPreset = (DMakeStep::BuildPreset)index;
+	updateDetails();
 }
-
 void DMakeStepConfigWidget::makeArgumentsLineEditTextEdited()
 {
- m_makeStep->m_makeArguments = m_ui->makeArgumentsLineEdit->text();
+	m_makeStep->m_makeArguments = m_ui->makeArgumentsLineEdit->toPlainText();
  updateDetails();
 }
 void DMakeStepConfigWidget::targetNameLineEditTextEdited()
@@ -438,10 +392,10 @@ void DMakeStepConfigWidget::objDirLineEditTextEdited()
  m_makeStep->m_objDirName = m_ui->objDirLineEdit->text();
  updateDetails();
 }
-//
-// DMakeStepFactory
-//
 
+//--------------------------------------------------------------------------
+//-- DMakeStepFactory
+//--------------------------------------------------------------------------
 DMakeStepFactory::DMakeStepFactory(QObject *parent) :
   IBuildStepFactory(parent)
 {

@@ -18,6 +18,7 @@
 #include <QFormLayout>
 #include <QInputDialog>
 #include <QSettings>
+#include <QPlainTextEdit>
 
 using namespace ProjectExplorer;
 using namespace DProjectManager;
@@ -112,7 +113,13 @@ BuildConfiguration* DBuildConfigurationFactory::create(Target *parent, const Bui
  BuildStepList *buildSteps = bc->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
  Q_ASSERT(buildSteps);
  DMakeStep *makeStep = new DMakeStep(buildSteps);
- buildSteps->insertStep(0, makeStep);
+	if(info->displayName == QLatin1String("Debug"))
+		makeStep->setBuildPreset(DMakeStep::Debug);
+	else if(info->displayName == QLatin1String("Release"))
+		makeStep->setBuildPreset(DMakeStep::Release);
+	else if(info->displayName == QLatin1String("Unittest"))
+		makeStep->setBuildPreset(DMakeStep::Unittest);
+	buildSteps->insertStep(0, makeStep);
 
  // TODO : configure clean step
  //    BuildStepList *cleanSteps = bc->stepList(ProjectExplorer::Constants::BUILDSTEPS_CLEAN);
@@ -210,10 +217,25 @@ DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
 	QSettings sets(m_buildConfiguration->target()->project()->projectFilePath(), QSettings::IniFormat);
  QString root = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
 	m_pathChooser->setPath(root);
-
-	fl->addRow(tr("Source root directory:"), m_pathChooser);
-	//connect(m_pathChooser, SIGNAL(pathChanged(QString)), this, SLOT(buildDirectoryChanged()));
 	connect(m_pathChooser, SIGNAL(changed(QString)), this, SLOT(buildDirectoryChanged()));
+	fl->addRow(tr("Source directory:"), m_pathChooser);
+
+	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
+	Q_ASSERT(proj);
+
+	// Includes
+	editIncludes = new QLineEdit(this);
+	editIncludes->setText(proj->includes());
+	connect(editIncludes, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
+	connect(editIncludes, SIGNAL(editingFinished()),	this, SLOT(editsEditingFinished()));
+	fl->addRow(tr("Include paths:"), editIncludes);
+
+	// Libs
+	editLibs = new QLineEdit(this);
+	editLibs->setText(proj->libraries());
+	connect(editLibs, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
+	connect(editLibs, SIGNAL(editingFinished()),	this, SLOT(editsEditingFinished()));
+	fl->addRow(tr("Libraries:"), editLibs);
 
 
 }
@@ -230,5 +252,22 @@ void DBuildSettingsWidget::buildDirectoryChanged()
 	m_buildConfiguration->setBuildDirectory(Utils::FileName::fromString(rel));
 }
 
+void DBuildSettingsWidget::editsTextChanged()
+{
+	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
+	Q_ASSERT(proj);
+	proj->setIncludes(editIncludes->text());
+	proj->setLibraries(editLibs->text());
+	m_buildConfiguration->configurationChanged();
+}
+void DBuildSettingsWidget::editsEditingFinished()
+{
+	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
+	Q_ASSERT(proj);
+	QSettings sets(m_buildConfiguration->target()->project()->projectFilePath(), QSettings::IniFormat);
+	sets.setValue(QLatin1String(Constants::INI_INCLUDES_KEY), editIncludes->text());
+	sets.setValue(QLatin1String(Constants::INI_LIBRARIES_KEY), editLibs->text());
+	sets.sync();
+}
 } // namespace Internal
 } // namespace DProjectManager

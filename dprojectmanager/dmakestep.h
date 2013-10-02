@@ -14,12 +14,7 @@ class DMakeStepConfigWidget;
 class DMakeStepFactory;
 namespace Ui { class DMakeStep; }
 
-enum TargetType
-{
- Executable = 0,
- StaticLibrary = 1,
- SharedLibrary = 2
-};
+
 
 class DMakeStep : public ProjectExplorer::AbstractProcessStep
 {
@@ -29,23 +24,37 @@ class DMakeStep : public ProjectExplorer::AbstractProcessStep
  friend class DMakeStepFactory;
 
 public:
+	enum TargetType
+	{
+		Executable = 0,
+		StaticLibrary = 1,
+		SharedLibrary = 2
+	};
+	enum BuildPreset
+	{
+		Debug = 0,
+		Release = 1,
+		Unittest = 2,
+		None = 3
+	};
+
+public:
  DMakeStep(ProjectExplorer::BuildStepList *parent);
  ~DMakeStep();
 
  bool init();
  void run(QFutureInterface<bool> &fi);
-
  ProjectExplorer::BuildStepConfigWidget *createConfigWidget();
  bool immutable() const;
- QString allArguments() const;
- QString makeCommand(const Utils::Environment &environment) const;
-
  QVariantMap toMap() const;
 	bool fromMap(const QVariantMap &map);
 
- QString outFileName() const;
+	QString allArguments() const;
+	QString outFileName() const;
  QString targetDirName() const { return m_targetDirName; }
+	QString makeCommand(const Utils::Environment &environment) const;
 	void setMakeArguments(const QString val) { m_makeArguments = val; }
+	void setBuildPreset(BuildPreset pres) { m_buildPreset = pres; }
 
 protected:
  DMakeStep(ProjectExplorer::BuildStepList *parent, DMakeStep *bs);
@@ -55,8 +64,8 @@ private:
  void ctor();
 
  TargetType m_targetType;
+	BuildPreset m_buildPreset;
  QString m_makeArguments;
- QString m_makeCommand;
  QString m_targetName;
  QString m_targetDirName;
  QString m_objDirName;
@@ -78,12 +87,11 @@ public slots:
 
 private slots:
  void targetTypeComboBoxSelectItem(int index);
- void makeLineEditTextEdited();
+	void buildPresetComboBoxSelectItem(int index);
  void makeArgumentsLineEditTextEdited();
  void targetNameLineEditTextEdited();
  void targetDirNameLineEditTextEdited();
  void objDirLineEditTextEdited();
- void updateMakeOverrrideLabel();
 
 private:
  Ui::DMakeStep *m_ui;

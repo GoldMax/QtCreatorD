@@ -53,7 +53,10 @@ public:
 	const QHash<QString,QString>& files() { return m_files; }
 	const QDir buildDirectory() const { return m_buildDir; }
  const QString& libraries() const { return m_libs; }
+	void setLibraries(QString value) { m_libs = value; }
  const QString& includes() const { return m_includes; }
+	void setIncludes(QString value) { m_includes = value; }
+
 protected:
  QVariantMap toMap() const;
  bool fromMap(const QVariantMap &map);
