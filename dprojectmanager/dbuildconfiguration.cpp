@@ -262,8 +262,6 @@ void DBuildSettingsWidget::editsTextChanged()
 }
 void DBuildSettingsWidget::editsEditingFinished()
 {
-	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
-	Q_ASSERT(proj);
 	QSettings sets(m_buildConfiguration->target()->project()->projectFilePath(), QSettings::IniFormat);
 	sets.setValue(QLatin1String(Constants::INI_INCLUDES_KEY), editIncludes->text());
 	sets.setValue(QLatin1String(Constants::INI_LIBRARIES_KEY), editLibs->text());

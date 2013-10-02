@@ -188,9 +188,8 @@ QString DMakeStep::allArguments() const
 
  DProject* proj = static_cast<DProject*>(project());
 	// Libs
- QString libs = proj->libraries();
-	libs.replace(QLatin1Char(':'), QLatin1Char(' '));
-	foreach(QString s, libs.split(QLatin1Char(' ')))
+	QStringList libs = proj->libraries().split(QLatin1Char(' '), QString::SkipEmptyParts);
+		foreach(QString s, libs)
 	{
 		s = s.replace(QLatin1String("%{TargetDir}"),relTargetDir);
 		if(s.startsWith(QLatin1String("-L")))
@@ -199,9 +198,8 @@ QString DMakeStep::allArguments() const
 			Utils::QtcProcess::addArgs(&args, QLatin1String("-L-l") + s);
 	}
 	// Includes
- QString incs = proj->includes();
- incs.replace(QLatin1Char(':'), QLatin1Char(' '));
- foreach(QString s, incs.split(QLatin1Char(' ')))
+	QStringList incs = proj->includes().split(QLatin1Char(' '), QString::SkipEmptyParts);
+	foreach(QString s, incs)
  {
   s = s.replace(QLatin1String("%{TargetDir}"),relTargetDir);
   if(s.startsWith(QLatin1String("-I")))
