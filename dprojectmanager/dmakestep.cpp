@@ -169,7 +169,7 @@ QString DMakeStep::allArguments() const
  QString projDir = project()->projectDirectory();
  QString relTargetDir = m_targetDirName;
  if(QDir(m_targetDirName).isRelative())
- relTargetDir = buildDir.relativeFilePath(projDir + QDir::separator() + m_targetDirName);
+		relTargetDir = buildDir.relativeFilePath(projDir + QDir::separator() + m_targetDirName);
  if(relTargetDir.length() == 0)
   relTargetDir = QLatin1String(".");
 

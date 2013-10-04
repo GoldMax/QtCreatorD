@@ -49,23 +49,12 @@ NamedWidget* DBuildConfiguration::createConfigWidget()
 
 bool DBuildConfiguration::fromMap(const QVariantMap &map)
 {
- // XXXXX
-//	if(map.contains(QLatin1String(Constants::D_BC_NAME)))
-//		this->setDisplayName(map[QLatin1String(Constants::D_BC_NAME)].toString());
-
+	if(BuildConfiguration::fromMap(map) == false)
+		return false;
 	DProject* prj = static_cast<DProject*>(target()->project());
 	Utils::FileName fn = 	Utils::FileName::fromString(prj->buildDirectory().path());
 	setBuildDirectory(fn);
-
-// BuildStepList *buildSteps = this->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
-// Q_ASSERT(buildSteps);
-// DMakeStep *makeStep = new DMakeStep(buildSteps);
-// makeStep->fromMap(map);
-// buildSteps->insertStep(0, makeStep);
-
- // TODO : configure clean step
-
- return BuildConfiguration::fromMap(map);
+	return true;
 }
 
 //------------------------------------------------------------------------------------------------
@@ -162,7 +151,7 @@ BuildConfiguration* DBuildConfigurationFactory::restore(Target *parent, const QV
  DBuildConfiguration *bc(new DBuildConfiguration(parent));
  if (bc->fromMap(map))
   return bc;
- delete bc;
+	delete bc;
  return 0;
 }
 

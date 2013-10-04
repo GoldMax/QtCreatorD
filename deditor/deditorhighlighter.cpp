@@ -264,50 +264,17 @@ void DEditorHighlighter::highlightBlock(const QString &text)
  setCurrentBlockState((braceDepth << 8) | tokenize.state());
 }
 
-
 bool DEditorHighlighter::isPPKeyword(const QStringRef &text) const
 {
  switch (text.length())
  {
- case 2:
-  if (text.at(0) == QLatin1Char('i') && text.at(1) == QLatin1Char('f'))
-   return true;
-  break;
-
- case 4:
-  if (text.at(0) == QLatin1Char('e')
-      && (text == QLatin1String("elif") || text == QLatin1String("else")))
-   return true;
-  break;
-
- case 5:
-  switch (text.at(0).toLatin1()) {
-  case 'i':
-   if (text == QLatin1String("ifdef"))
-    return true;
-   break;
-  case 'u':
-   if (text == QLatin1String("undef"))
-    return true;
-   break;
-  case 'e':
-   if (text == QLatin1String("endif") || text == QLatin1String("error"))
-    return true;
-   break;
-  }
-  break;
-
  case 6:
   switch (text.at(0).toLatin1()) {
   case 'i':
-   if (text == QLatin1String("ifndef") || text == QLatin1String("import"))
+			if (text == QLatin1String("import"))
     return true;
    break;
-  case 'd':
-   if (text == QLatin1String("define"))
-    return true;
-   break;
-  case 'p':
+			case 'p':
    if (text == QLatin1String("pragma"))
     return true;
    break;
@@ -320,22 +287,19 @@ bool DEditorHighlighter::isPPKeyword(const QStringRef &text) const
 
  case 7:
   switch (text.at(0).toLatin1()) {
-  case 'i':
-   if (text == QLatin1String("include"))
-    return true;
-   break;
-  case 'w':
-   if (text == QLatin1String("warning"))
+		case 'v':
+			if (text == QLatin1String("version"))
     return true;
    break;
   }
   break;
 
- case 12:
-  if (text.at(0) == QLatin1Char('i') && text == QLatin1String("include_next"))
-   return true;
-  break;
-
+		case 8:
+			switch (text.at(0).toLatin1())
+			{
+				case 'u': if (text == QLatin1String("unittest")) return true;
+			}
+			break;
  default:
   break;
  }
@@ -371,7 +335,8 @@ void DEditorHighlighter::highlightWord(QStringRef word, int position, int length
 {
  // try to highlight Qt 'identifiers' like QObject and Q_PROPERTY
 
- if (word.length() > 2 && word.at(0) == QLatin1Char('Q')) {
+	if (word.length() > 2 && word.at(0) == QLatin1Char('Q'))
+	{
   if (word.at(1) == QLatin1Char('_') // Q_
       || (word.at(1) == QLatin1Char('T') && word.at(2) == QLatin1Char('_'))) { // QT_
    for (int i = 1; i < word.length(); ++i) {
@@ -383,6 +348,8 @@ void DEditorHighlighter::highlightWord(QStringRef word, int position, int length
    setFormat(position, length, formatForCategory(CppTypeFormat));
   }
  }
+	else if(word.length() > 0 && word.at(0).isUpper())
+			setFormat(position, length, formatForCategory(CppTypeFormat));
 }
 
 void DEditorHighlighter::highlightDoxygenComment(const QString &text, int position, int)
@@ -437,12 +404,14 @@ void DEditorHighlighter::correctTokens(QList<Token>& tokens, const QString & tex
 			QStringRef name = text.midRef(t.begin(),t.length());
 			if(name == QLatin1String("string") || name == QLatin1String("dstring") ||
 					name == QLatin1String("wstring") || name == QLatin1String("byte") ||
-					name == QLatin1String("ubyte"))
+					name == QLatin1String("ubyte") || name == QLatin1String("ushort") ||
+					name == QLatin1String("ulong") || name == QLatin1String("uint"))
 				kind = (unsigned)T_INT;
 			else if(name == QLatin1String("immutable") || name == QLatin1String("package") ||
 							name == QLatin1String("override")  || name == QLatin1String("null") ||
 							name == QLatin1String("interface") || name == QLatin1String("nothrow") ||
-							name == QLatin1String("cast"))
+							name == QLatin1String("cast") || name == QLatin1String("ref") ||
+							name == QLatin1String("alias")|| name == QLatin1String("assert") )
 				kind = (unsigned)T_FIRST_KEYWORD;
 		}
 		if(kind > 0)
