@@ -46,10 +46,14 @@
 namespace Debugger {
 namespace Internal {
 
+static QList<WatchData> _list;
+
 void GdbEngine::updateLocalsPython(const UpdateParameters &params)
 {
+ Q_ASSERT(_list.length() == 0);
+
     PRECONDITION;
-    //m_pendingWatchRequests = 0;
+    m_pendingWatchRequests = 0;
     m_pendingBreakpointRequests = 0;
     m_processedNames.clear();
 
@@ -125,6 +129,8 @@ void GdbEngine::updateLocalsPython(const UpdateParameters &params)
     if (!m_resultVarName.isEmpty())
         resultVar = "resultvarname:" + m_resultVarName + ' ';
 
+    m_pendingWatchRequests++;
+
     postCommand("bb options:" + options + " vars:" + params.varList + ' '
             + resultVar + expanded + " watchers:" + watchers.toHex(),
         Discardable, CB(handleStackFramePython), QVariant(params.tryPartial));
@@ -133,6 +139,7 @@ void GdbEngine::updateLocalsPython(const UpdateParameters &params)
 void GdbEngine::handleStackFramePython(const GdbResponse &response)
 {
     PRECONDITION;
+    m_pendingWatchRequests--;
     if (response.resultClass == GdbResultDone) {
         const bool partial = response.cookie.toBool();
         QByteArray out = response.consoleStreamOutput;
@@ -149,12 +156,11 @@ void GdbEngine::handleStackFramePython(const GdbResponse &response)
         GdbMi data = all["data"];
 
         WatchHandler *handler = watchHandler();
-        QList<WatchData> list;
 
         if (!partial) {
-            list.append(*handler->findData("local"));
-            list.append(*handler->findData("watch"));
-            list.append(*handler->findData("return"));
+            _list.append(*handler->findData("local"));
+            _list.append(*handler->findData("watch"));
+            _list.append(*handler->findData("return"));
         }
 
         foreach (const GdbMi &child, data.children())
@@ -170,7 +176,7 @@ void GdbEngine::handleStackFramePython(const GdbResponse &response)
             } else {
                 dummy.name = _(child["name"].data());
             }
-            parseWatchData(handler->expandedINames(), dummy, child, &list);
+            parseWatchData(handler->expandedINames(), dummy, child, &_list);
         }
         const GdbMi typeInfo = all["typeinfo"];
         if (typeInfo.type() == GdbMi::List) {
@@ -182,24 +188,25 @@ void GdbEngine::handleStackFramePython(const GdbResponse &response)
                                            TypeInfo(size.data().toUInt()));
             }
         }
-        for (int i = 0; i != list.size(); ++i)
+        for (int i = 0; i != _list.size(); ++i)
         {
-         WatchData& wd = list[i];
-         updateDTypes(wd);
-            const TypeInfo ti = m_typeInfoCache.value(list.at(i).type);
+         updateDTypes(i);
+            const TypeInfo ti = m_typeInfoCache.value(_list.at(i).type);
             if (ti.size)
-                list[i].size = ti.size;
+                _list[i].size = ti.size;
         }
 
-        handler->insertData(list);
 
         //PENDING_DEBUG("AFTER handleStackFrame()");
         // FIXME: This should only be used when updateLocals() was
         // triggered by expanding an item in the view.
-        //if (m_pendingWatchRequests <= 0) {
+        if (m_pendingWatchRequests <= 0)
+        {
             //PENDING_DEBUG("\n\n ....  AND TRIGGERS MODEL UPDATE\n");
-            rebuildWatchModel();
-        //}
+         handler->insertData(_list);
+         rebuildWatchModel();
+         _list.clear();
+        }
         if (!partial)
             emit stackFrameCompleted();
     } else {
@@ -207,8 +214,9 @@ void GdbEngine::handleStackFramePython(const GdbResponse &response)
     }
 }
 
-void GdbEngine::updateDTypes(WatchData& wd)
+void GdbEngine::updateDTypes(int i)
 {
+ WatchData& wd = _list[i];
  bool needValue = false;
  if((needValue = (QLatin1String(wd.type) == QLatin1String("_Array_char"))))
  {
@@ -227,9 +235,6 @@ void GdbEngine::updateDTypes(WatchData& wd)
  }
  if(needValue)
  {
-  if(wd.value  == QLatin1String("<not accessible>"))
-   wd.setValue(QLatin1String("<click me...>"));
-
   QString n = QString::fromLatin1(wd.iname);
   if(n.startsWith(QLatin1String("local.")))
    n.remove(0,6);
@@ -239,33 +244,33 @@ void GdbEngine::updateDTypes(WatchData& wd)
 
   const QByteArray arr2 =
    QString(QLatin1String("print ") + n + QLatin1String("\r\n")).toUtf8();
+  m_pendingWatchRequests++;
   postCommand(arr2,
              NeedsStop | Discardable | Immediate,
              CB(updateDTypesResponse),// "updateDTypesResponse",
-             QVariant(wd.iname));
+             QVariant(i));
  }
 }
 
-
 void GdbEngine::updateDTypesResponse(const GdbResponse &response)
 {
+ m_pendingWatchRequests--;
+ WatchHandler* handler = watchHandler();
  if (response.resultClass == GdbResultDone)
  {
-  QByteArray iname = response.cookie.toByteArray();
-  WatchHandler* handler = watchHandler();
-  const QModelIndex ix = handler->watchDataIndex(iname);
-  WatchData* wd = (WatchData*)handler->watchData(ix);
+  int i = response.cookie.toInt();
+  WatchData& wd = _list[i];
   QByteArray out = response.consoleStreamOutput;
   while (out.endsWith(' ') || out.endsWith('\n'))
    out.chop(1);
-  if(QLatin1String(wd->type) == QLatin1String("string"))
+  if(QLatin1String(wd.type) == QLatin1String("string"))
   {
    QString res = QString::fromUtf8(out);
    if(res.contains(QLatin1Char('"')))
     res = res.remove(0, res.indexOf(QLatin1Char('"')));
-   wd->setValue(res);
+   wd.setValue(res);
   }
-  else if(QLatin1String(wd->type) == QLatin1String("dstring"))
+  else if(QLatin1String(wd.type) == QLatin1String("dstring"))
   {
    // $2 = {100, 100, 100, 1103}
    QString res = QString::fromUtf8(out);
@@ -280,10 +285,10 @@ void GdbEngine::updateDTypesResponse(const GdbResponse &response)
      arr[i] = l[i].toShort();
     res = QString::fromUtf16(arr,l.length());
     res = QLatin1String("\"") + res + QLatin1String("\"");
-    wd->setValue(res);
+    wd.setValue(res);
    }
   }
-  else if(QLatin1String(wd->type) == QLatin1String("wstring"))
+  else if(QLatin1String(wd.type) == QLatin1String("wstring"))
   {
    //$3 = {7798903, 72286327, 0, 0}
    QString res = QString::fromUtf8(out);
@@ -297,10 +302,15 @@ void GdbEngine::updateDTypesResponse(const GdbResponse &response)
 //    for(int i = 0; i < l.length(); i++)
 //     arr[i] = l[i].toUInt();
 //    res = QString::fromWCharArray(arr,l.length());
-    wd->setValue(res);
+    wd.setValue(res);
    }
   }
-  handler->model()->dataChanged(ix,ix);
+ }
+ if (m_pendingWatchRequests <= 0)
+ {
+  handler->insertData(_list);
+  rebuildWatchModel();
+  _list.clear();
  }
 }
 

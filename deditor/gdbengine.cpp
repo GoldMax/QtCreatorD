@@ -236,6 +236,7 @@ GdbEngine::GdbEngine(const DebuggerStartParameters &startParameters)
     m_nonDiscardableCount = 0;
     m_outputCodec = QTextCodec::codecForLocale();
     m_pendingBreakpointRequests = 0;
+    m_pendingWatchRequests = 0;
     m_commandsDoneCallback = 0;
     m_stackNeeded = false;
     m_preparedForQmlBreak = false;

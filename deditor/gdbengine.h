@@ -350,6 +350,7 @@ private:
     int m_nonDiscardableCount;
 
     int m_pendingBreakpointRequests; // Watch updating commands in flight
+    int m_pendingWatchRequests;
 
     typedef void (GdbEngine::*CommandsDoneCallback)();
     // This function is called after all previous responses have been received.
@@ -427,7 +428,7 @@ private: ////////// Inferior Management //////////
     void handleInfoProc(const GdbResponse &response);
 
 private: ////////// View & Data Stuff //////////
-    void updateDTypes(WatchData& wd);
+    void updateDTypes(int i);
     void updateDTypesResponse(const GdbResponse& response);
 protected:
 
