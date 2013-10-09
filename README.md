@@ -7,11 +7,5 @@ Setup
 -----
 Custom Parser error message capture pattern <BR/>
 <code>(.\*)\[(\](\d+)\[)\]: Error: (.\*)$</code>
-or<BR/>
+or
 <code>(.\*)\[(\](\d+)\[)\]: (.\*)$</code>
-
-old
-
-<code><pre>(.*)[(](\d+)[)]: Error: (.*)$</pre></code><BR/>
-or<BR/>
-<code><pre>(.*)[(](\d+)[)]: (.*)$</pre></code>
