@@ -268,40 +268,53 @@ bool DEditorHighlighter::isPPKeyword(const QStringRef &text) const
 {
 	switch (text.length())
 	{
-	case 6:
-		switch (text.at(0).toLatin1()) {
-		case 'i':
-			if (text == QLatin1String("import"))
-				return true;
-			break;
+		case 6: switch (text.at(0).toLatin1())
+		{
+			case 'i':
+				if (text == QLatin1String("import")) return true;
+				break;
 			case 'p':
-			if (text == QLatin1String("pragma"))
-				return true;
-			break;
-		case 'm':
-			if (text == QLatin1String("module"))
-				return true;
-			break;
-		}
-		break;
-
-	case 7:
-		switch (text.at(0).toLatin1()) {
-		case 'v':
-			if (text == QLatin1String("version"))
-				return true;
-			break;
-		}
-		break;
-
-		case 8:
-			switch (text.at(0).toLatin1())
-			{
-				case 'u': if (text == QLatin1String("unittest")) return true;
-			}
-			break;
-	default:
-		break;
+				if (text == QLatin1String("pragma")) return true;
+				break;
+			case 'm':
+				if (text == QLatin1String("module")) return true;
+				break;
+		} break;
+		case 7: switch (text.at(0).toLatin1())
+		{
+			case 'v':
+				if (text == QLatin1String("version"))	return true;
+				break;
+		}	break;
+		case 8: switch (text.at(0).toLatin1())
+		{
+			case 'u':
+				if (text == QLatin1String("unittest")) return true;
+				break;
+			case '_':
+				if (text == QLatin1String("__FILE__")) return true;
+				if (text == QLatin1String("__LINE__")) return true;
+				break;
+		}	break;
+		case 10: switch (text.at(0).toLatin1())
+		{
+			case '_':
+				if (text == QLatin1String("__MODULE__"))	return true;
+				break;
+		}	break;
+		case 12: switch (text.at(0).toLatin1())
+		{
+			case '_':
+				if (text == QLatin1String("__FUNCTION__"))	return true;
+				break;
+		}	break;
+		case 19: switch (text.at(0).toLatin1())
+		{
+			case '_':
+				if (text == QLatin1String("__PRETTY_FUNCTION__"))	return true;
+				break;
+		}	break;
+		default:	break;
 	}
 
 	return false;
@@ -338,7 +351,8 @@ void DEditorHighlighter::highlightWord(QStringRef word, int position, int length
 	if (word.length() > 2 && word.at(0) == QLatin1Char('Q'))
 	{
 		if (word.at(1) == QLatin1Char('_') // Q_
-						|| (word.at(1) == QLatin1Char('T') && word.at(2) == QLatin1Char('_'))) { // QT_
+						|| (word.at(1) == QLatin1Char('T') && word.at(2) == QLatin1Char('_'))) // QT_
+		{
 			for (int i = 1; i < word.length(); ++i) {
 				const QChar &ch = word.at(i);
 				if (!(ch.isUpper() || ch == QLatin1Char('_')))
@@ -346,10 +360,11 @@ void DEditorHighlighter::highlightWord(QStringRef word, int position, int length
 			}
 
 			setFormat(position, length, formatForCategory(CppTypeFormat));
+			return;
 		}
 	}
-	else if(word.length() > 0 && word.at(0).isUpper())
-			setFormat(position, length, formatForCategory(CppTypeFormat));
+	if(word.length() > 0 && word.at(0).isUpper())
+		setFormat(position, length, formatForCategory(CppTypeFormat));
 }
 
 void DEditorHighlighter::highlightDoxygenComment(const QString &text, int position, int)
@@ -402,18 +417,150 @@ void DEditorHighlighter::correctTokens(QList<Token>& tokens, const QString & tex
 			else if(t.f.kind != T_IDENTIFIER)
 				continue;
 			QStringRef name = text.midRef(t.begin(),t.length());
-			if(name == QLatin1String("string") || name == QLatin1String("dstring") ||
-					name == QLatin1String("wstring") || name == QLatin1String("byte") ||
-					name == QLatin1String("ubyte") || name == QLatin1String("ushort") ||
-					name == QLatin1String("ulong") || name == QLatin1String("uint"))
-				kind = (unsigned)T_INT;
-			else if(name == QLatin1String("immutable") || name == QLatin1String("package") ||
-							name == QLatin1String("override")  || name == QLatin1String("null") ||
-							name == QLatin1String("interface") || name == QLatin1String("nothrow") ||
-							name == QLatin1String("cast") || name == QLatin1String("ref") ||
-							name == QLatin1String("alias")|| name == QLatin1String("assert") ||
-							name == QLatin1String("is") )
-				kind = (unsigned)T_FIRST_KEYWORD;
+			switch (name.length())
+			{
+				case 2: switch(name.at(0).toLatin1())
+				{
+					case 'i':
+						if (name.at(1).toLatin1() == 'n') kind = (unsigned)T_FIRST_KEYWORD;
+						else if (name.at(1).toLatin1() == 's') kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+				} break;
+				case 3: switch(name.at(0).toLatin1())
+				{
+					case 'r':
+						if (name == QLatin1String("ref")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+					case 'o':
+						if (name == QLatin1String("out")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+				} break;
+				case 4: switch(name.at(0).toLatin1())
+				{
+					case 'b':
+						if (name == QLatin1String("byte")) kind = (unsigned)T_INT;
+						break;
+					case 'c':
+						if (name == QLatin1String("cast")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+					case 'u':
+						if (name == QLatin1String("uint")) kind = (unsigned)T_INT;
+					break;
+					case 'r':
+						if (name == QLatin1String("real")) kind = (unsigned)T_INT;
+					break;
+					case 'l':
+						if (name == QLatin1String("lazy")) kind = (unsigned)T_FIRST_KEYWORD;
+					break;
+					case 'n':
+						if (name == QLatin1String("null")) kind = (unsigned)T_FIRST_KEYWORD;
+					break;
+					case 'p':
+						if (name == QLatin1String("pure")) kind = (unsigned)T_FIRST_KEYWORD;
+					break;
+				} break;
+				case 5: switch(name.at(0).toLatin1())
+				{
+					case 'a':
+						if (name == QLatin1String("alias")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+					case 'c':
+						if (name == QLatin1String("creal")) kind = (unsigned)T_INT;
+						break;
+					case 'd':
+						if (name == QLatin1String("dchar")) kind = (unsigned)T_INT;
+						break;
+					case 'f':
+						if (name == QLatin1String("final")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+					case 'i':
+						if (name == QLatin1String("inout")) kind = (unsigned)T_FIRST_KEYWORD;
+						else if (name == QLatin1String("ireal")) kind = (unsigned)T_INT;
+						break;
+					case 's':
+						if (name == QLatin1String("scope")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+					case 'w':
+						if (name == QLatin1String("wchar")) kind = (unsigned)T_INT;
+						break;
+					case 'u':
+						if (name == QLatin1String("ubyte")) kind = (unsigned)T_INT;
+						else if (name == QLatin1String("ulong")) kind = (unsigned)T_INT;
+						break;
+				} break;
+				case 6: switch (name.at(0).toLatin1())
+				{
+					case 'a':
+						if (name == QLatin1String("assert")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+					case 's':
+						if (name == QLatin1String("string")) kind = (unsigned)T_INT;
+						else if (name == QLatin1String("shared")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+					case 'c':
+						if (name == QLatin1String("cfloat")) kind = (unsigned)T_INT;
+						break;
+					case 'i':
+						if (name == QLatin1String("ifloat")) kind = (unsigned)T_INT;
+						break;
+					case 'u':
+						if (name == QLatin1String("ushort")) kind = (unsigned)T_INT;
+						break;
+				} break;
+				case 7: switch (name.at(0).toLatin1())
+				{
+					case 'd':
+						if (name == QLatin1String("dstring")) kind = (unsigned)T_INT;
+						break;
+					case 'c':
+						if (name == QLatin1String("cdouble")) kind = (unsigned)T_INT;
+						break;
+					case 'i':
+						if (name == QLatin1String("idouble")) kind = (unsigned)T_INT;
+						break;
+					case 'w':
+						if (name == QLatin1String("wstring")) kind = (unsigned)T_INT;
+						break;
+					case 'p':
+						if (name == QLatin1String("package")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+					case 'n':
+						if (name == QLatin1String("nothrow")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+				} break;
+				case 8: switch (name.at(0).toLatin1())
+				{
+					case 'd':
+						if (name == QLatin1String("delegate")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+					case 'f':
+						if (name == QLatin1String("function")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+					case 'o':
+						if (name == QLatin1String("override")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+				} break;
+				case 9: switch (name.at(0).toLatin1())
+				{
+					case 'i':
+						if (name == QLatin1String("immutable")) kind = (unsigned)T_FIRST_KEYWORD;
+						else if (name == QLatin1String("interface")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+				} break;
+				case 10: switch (name.at(0).toLatin1())
+				{
+					case 'd':
+						if (name == QLatin1String("deprecated")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+				} break;
+				case 12: switch (name.at(0).toLatin1())
+				{
+					case 's':
+						if (name == QLatin1String("synchronized")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+				} break;
+				default: break;
+			}
 		}
 		if(kind > 0)
 		{
