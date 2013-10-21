@@ -53,6 +53,6 @@
 /plugins.pro
 /plugins.qbs
 /QtcPlugin.qbs
-
 /tes/
 /baremetal/
+/.git/

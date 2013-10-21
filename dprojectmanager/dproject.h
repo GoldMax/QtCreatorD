@@ -56,6 +56,8 @@ public:
 	void setLibraries(QString value) { m_libs = value; }
  const QString& includes() const { return m_includes; }
 	void setIncludes(QString value) { m_includes = value; }
+ const QString& extraArgs() const { return m_extraArgs; }
+ void setExtraArgs(QString value) { m_extraArgs = value; }
 
 protected:
  QVariantMap toMap() const;
@@ -75,6 +77,8 @@ private:
 	QHash<QString,QString> m_files;
  QString m_libs;
  QString m_includes;
+ QString m_extraArgs;
+
 
  DProjectNode *m_rootNode;
 	QFuture<void> m_codeModelFuture;

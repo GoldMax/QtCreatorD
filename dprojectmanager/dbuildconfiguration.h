@@ -86,6 +86,7 @@ private:
 //	QPlainTextEdit* editLibs;
 	QLineEdit* editIncludes;
 	QLineEdit* editLibs;
+ QLineEdit* editExtra;
 
 private slots:
 	void buildDirectoryChanged();

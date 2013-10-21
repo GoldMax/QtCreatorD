@@ -226,6 +226,13 @@ DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
 	connect(editLibs, SIGNAL(editingFinished()),	this, SLOT(editsEditingFinished()));
 	fl->addRow(tr("Libraries:"), editLibs);
 
+ // ExtraArgs
+ editExtra = new QLineEdit(this);
+ editExtra->setText(proj->extraArgs());
+ connect(editExtra, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
+ connect(editExtra, SIGNAL(editingFinished()),	this, SLOT(editsEditingFinished()));
+ fl->addRow(tr("Extra args:"), editExtra);
+
 
 }
 void DBuildSettingsWidget::buildDirectoryChanged()
@@ -247,14 +254,16 @@ void DBuildSettingsWidget::editsTextChanged()
 	Q_ASSERT(proj);
 	proj->setIncludes(editIncludes->text());
 	proj->setLibraries(editLibs->text());
-	m_buildConfiguration->configurationChanged();
+ proj->setExtraArgs(editExtra->text());
+ m_buildConfiguration->configurationChanged();
 }
 void DBuildSettingsWidget::editsEditingFinished()
 {
 	QSettings sets(m_buildConfiguration->target()->project()->projectFilePath(), QSettings::IniFormat);
 	sets.setValue(QLatin1String(Constants::INI_INCLUDES_KEY), editIncludes->text());
 	sets.setValue(QLatin1String(Constants::INI_LIBRARIES_KEY), editLibs->text());
-	sets.sync();
+ sets.setValue(QLatin1String(Constants::INI_EXTRA_ARGS_KEY), editExtra->text());
+ sets.sync();
 }
 } // namespace Internal
 } // namespace DProjectManager

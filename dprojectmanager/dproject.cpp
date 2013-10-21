@@ -123,6 +123,7 @@ bool DProject::parseProject(RefreshOptions options)
 	{
   m_libs = sets.value(QLatin1String(Constants::INI_LIBRARIES_KEY)).toString();
   m_includes = sets.value(QLatin1String(Constants::INI_INCLUDES_KEY)).toString();
+  m_extraArgs = sets.value(QLatin1String(Constants::INI_EXTRA_ARGS_KEY)).toString();
 
   QString bds = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
 		Utils::FileName dir = Utils::FileName::fromString(projectDirectory());
