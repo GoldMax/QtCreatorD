@@ -268,6 +268,12 @@ bool DEditorHighlighter::isPPKeyword(const QStringRef &text) const
 {
 	switch (text.length())
 	{
+		case 5: switch (text.at(0).toLatin1())
+		{
+			case 'd':
+				if (text == QLatin1String("debug")) return true;
+				break;
+		} break;
 		case 6: switch (text.at(0).toLatin1())
 		{
 			case 'i':
