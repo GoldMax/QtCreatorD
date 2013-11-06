@@ -207,7 +207,9 @@ QString DMakeStep::allArguments() const
 		else
 			Utils::QtcProcess::addArgs(&args, QLatin1String("-I") + s);
 	}
-	Utils::QtcProcess::addArgs(&args, proj->extraArgs());
+	// Extra Args
+	makargs = proj->extraArgs();
+	Utils::QtcProcess::addArgs(&args, makargs.replace(QLatin1String("%{TargetDir}"),relTargetDir));
 	// Files
 	static QLatin1String dotd(".d");
 	static QLatin1String dotdi(".di");

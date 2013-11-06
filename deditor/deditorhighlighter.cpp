@@ -536,6 +536,9 @@ void DEditorHighlighter::correctTokens(QList<Token>& tokens, const QString & tex
 				} break;
 				case 8: switch (name.at(0).toLatin1())
 				{
+					case 'a':
+						if (name == QLatin1String("abstract")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
 					case 'd':
 						if (name == QLatin1String("delegate")) kind = (unsigned)T_FIRST_KEYWORD;
 						break;
