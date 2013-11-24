@@ -212,6 +212,45 @@ private:
 };
 
 ///////////////////////////////////////////////////////////////////////
+// D lang helpers
+QString ddemangle(const QString line)
+{
+ QString res = line;
+ try
+ {
+  QProcess proc;
+  proc.setProcessChannelMode(QProcess::MergedChannels);
+  proc.start(QLatin1String("ddemangle"));
+  if (!proc.waitForStarted(10000))
+   return line;
+  proc.write(line.toUtf8());
+  proc.closeWriteChannel();
+  if(!proc.waitForFinished(2000))
+  {
+   proc.close();
+   return line;
+  }
+  else if(proc.exitCode() != 0)
+  {
+   proc.close();
+   return line;
+  }
+  else
+  {
+   res = QString::fromUtf8(proc.readAllStandardOutput());
+   proc.close();
+  }
+ }
+ catch(...){}
+ res = res.trimmed();
+ res = res.replace(QLatin1String("immutable(char)[]"), QLatin1String("string"));
+ res = res.replace(QLatin1String("immutable(dchar)[]"), QLatin1String("dstring"));
+ res = res.replace(QLatin1String("immutable(wchar)[]"), QLatin1String("wstring"));
+ return res;
+}
+
+
+///////////////////////////////////////////////////////////////////////
 //
 // GdbEngine
 //
@@ -2471,7 +2510,7 @@ void GdbEngine::updateResponse(BreakpointResponse &response, const GdbMi &bkpt)
         if (child.hasName("number")) {
             response.id = BreakpointResponseId(child.data());
         } else if (child.hasName("func")) {
-            response.functionName = _(child.data());
+            response.functionName = ddemangle(_(child.data()));
         } else if (child.hasName("addr")) {
             // <MULTIPLE> happens in constructors, inline functions, and
             // at other places like 'foreach' lines. In this case there are
@@ -3664,7 +3703,7 @@ StackFrame GdbEngine::parseStackFrame(const GdbMi &frameMi, int level)
         frame.file = cleanupFullName(QFile::decodeName(fullName.data()));
     else
         frame.file = QFile::decodeName(frameMi["file"].data());
-    frame.function = _(frameMi["func"].data());
+    frame.function = ddemangle(_(frameMi["func"].data()));
     frame.from = _(frameMi["from"].data());
     frame.line = frameMi["line"].toInt();
     frame.address = frameMi["addr"].toAddress();

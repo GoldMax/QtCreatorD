@@ -262,36 +262,45 @@ void DMakeStep::run(QFutureInterface<bool> &fi)
 	//processParameters()->setWorkingDirectory(project()->projectDirectory());
 	AbstractProcessStep::run(fi);
 }
-
+QString ddemangle(const QString& line)
+{
+ QString res = line;
+ try
+ {
+  QProcess proc;
+  proc.setProcessChannelMode(QProcess::MergedChannels);
+  proc.start(QLatin1String("ddemangle"));
+  if (!proc.waitForStarted(10000))
+   return line;
+  proc.write(line.toUtf8());
+  proc.closeWriteChannel();
+  if(!proc.waitForFinished(2000))
+  {
+   proc.close();
+   return line;
+  }
+  else if(proc.exitCode() != 0)
+  {
+   proc.close();
+   return line;
+  }
+  else
+  {
+   res = QString::fromUtf8(proc.readAllStandardOutput());
+   proc.close();
+  }
+ }
+ catch(...){}
+ return res;
+}
+void DMakeStep::stdOutput(const QString &line)
+{
+ QString res = ddemangle(line);
+ AbstractProcessStep::stdError(res);
+}
 void DMakeStep::stdError(const QString &line)
 {
-	QString res = line;
-	try
-	{
-		QProcess proc;
-		proc.setProcessChannelMode(QProcess::MergedChannels);
-		proc.start(QLatin1String("ddemangle"));
-		if (!proc.waitForStarted(10000))
-			return;
-		proc.write(line.toUtf8());
-		proc.closeWriteChannel();
-		if(!proc.waitForFinished(2000))
-		{
-			proc.close();
-			return;
-		}
-		else if(proc.exitCode() != 0)
-		{
-			proc.close();
-			return;
-		}
-		else
-		{
-			res = QString::fromUtf8(proc.readAllStandardOutput());
-			proc.close();
-		}
-	}
-	catch(...){}
+ QString res = ddemangle(line);
 	AbstractProcessStep::stdError(res);
 }
 

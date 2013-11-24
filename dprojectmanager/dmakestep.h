@@ -49,6 +49,7 @@ public:
 	QVariantMap toMap() const;
 	bool fromMap(const QVariantMap &map);
 	void stdError(const QString &line);
+ void stdOutput(const QString &line);
 
 	QString allArguments() const;
 	QString outFileName() const;
