@@ -31,21 +31,23 @@ ProjectExplorer::Project *Manager::openProject(const QString &fileName, QString 
    *errorString = tr("Failed opening project '%1': Project is not a file").arg(fileName);
   return 0;
  }
-
  DProject* prj = new DProject(this, fileName);
 
-	QString path = prj->buildDirectory().path();
- QcdAssist::sendAddImportToDCD(path);
-	QDir dir(path);
-	foreach(QString s, prj->includes().split(QLatin1Char(' '), QString::SkipEmptyParts))
-	{
-		if(s.startsWith(QLatin1String("-I")))
-			s = s.remove(0,2);
-		if(QDir::isAbsolutePath(s))
-			QcdAssist::sendAddImportToDCD(path);
-		else
-			QcdAssist::sendAddImportToDCD(dir.absoluteFilePath(s));
-	}
+ if(QcdAssist::isDCDEnabled())
+ {
+  QString path = prj->buildDirectory().path();
+  QcdAssist::sendAddImportToDCD(path);
+  QDir dir(path);
+  foreach(QString s, prj->includes().split(QLatin1Char(' '), QString::SkipEmptyParts))
+  {
+   if(s.startsWith(QLatin1String("-I")))
+    s = s.remove(0,2);
+   if(QDir::isAbsolutePath(s))
+    QcdAssist::sendAddImportToDCD(path);
+   else
+    QcdAssist::sendAddImportToDCD(dir.absoluteFilePath(s));
+  }
+ }
  return prj;
 }
 

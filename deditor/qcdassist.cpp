@@ -8,7 +8,9 @@
 #include <QProcess>
 //#include <msgpack.hpp>
 
-namespace QcdAssist {
+namespace QcdAssist
+{
+ static bool _DCDEnabled = true;
 //static QTcpSocket* dcdSocket = 0;
 //static int waitForConnectedTimeout = 1000;
 //static int waitForWriteTimeout = 5000;
@@ -16,6 +18,9 @@ static int waitForReadyReadTimeout = 10000;
 }
 
 using namespace QcdAssist;
+
+bool QcdAssist::isDCDEnabled() { return _DCDEnabled; }
+void QcdAssist::isDCDEnabled(bool value) { _DCDEnabled = value; }
 
 QString QcdAssist::dcdClient()
 {

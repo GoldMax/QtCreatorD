@@ -13,7 +13,9 @@
 
 namespace QcdAssist
 {
- /// Port of DCD server
+ DEDITORSHARED_EXPORT bool isDCDEnabled();
+ void isDCDEnabled(bool value);
+  /// Port of DCD server
  //static quint16 dcdPort = 9166;
  QString dcdClient();
 

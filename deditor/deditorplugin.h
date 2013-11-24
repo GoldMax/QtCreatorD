@@ -37,6 +37,7 @@ public:
 
 private slots:
  void updateSearchResultsFont(const TextEditor::FontSettings &);
+ void toggleDCDAction();
  void clearAssistCacheAction();
 
 private:

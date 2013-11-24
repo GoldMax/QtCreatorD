@@ -103,16 +103,24 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
  //*** Tools submenu *****************
  Core::ActionContainer *menu = Core::ActionManager::createMenu(Constants::M_TOOLS_D);
  menu->menu()->setTitle(tr("D"));
+ //-- Enable/disable DCD
+ action = new QAction(tr("Enable DCD"), this);
+ cmd = Core::ActionManager::registerAction(action, Constants::D_ACTION_TOGGLE_DCD_ID,
+                                           Core::Context(Core::Constants::C_GLOBAL));
+ action->setCheckable(true);
+ action->setChecked(true);
+ connect(action, SIGNAL(triggered()), this, SLOT(toggleDCDAction()));
+ menu->addAction(cmd);
  //-- Clear code assist cache
- action = new QAction(tr("Clear code assist cache"), this);
+ action = new QAction(tr("Clear DCD cache"), this);
  cmd = Core::ActionManager::registerAction(action, Constants::D_ACTION_CLEARASSISTCACHE_ID,
                                            Core::Context(Core::Constants::C_GLOBAL));
  connect(action, SIGNAL(triggered()), this, SLOT(clearAssistCacheAction()));
  menu->addAction(cmd);
  //--
  Core::ActionManager::actionContainer(Core::Constants::M_TOOLS)->addMenu(menu);
-
  //*** Tools submenu *****************
+
  //Context context(Constants::C_DEDITOR_ID);
  ActionContainer *contextMenu =
    ActionManager::createMenu(Constants::M_CONTEXT);
@@ -135,6 +143,10 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
  return true;
 }
 
+void DEditorPlugin::toggleDCDAction()
+{
+ QcdAssist::isDCDEnabled(!QcdAssist::isDCDEnabled());
+}
 void DEditorPlugin::clearAssistCacheAction()
 {
  QcdAssist::sendClearChache();

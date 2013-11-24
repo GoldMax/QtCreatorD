@@ -183,6 +183,9 @@ IAssistProposal *DCompletionAssistProcessor::perform(const IAssistInterface *int
  using namespace QcdAssist;
  m_interface.reset(static_cast<const DCompletionAssistInterface *>(interface));
 
+ if(QcdAssist::isDCDEnabled() == false)
+  return 0;
+
  AssistReason reason = interface->reason();
  int pos = interface->position();
  if(pos == 0)
