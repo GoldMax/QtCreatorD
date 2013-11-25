@@ -273,6 +273,9 @@ bool DEditorHighlighter::isPPKeyword(const QStringRef &text) const
 			case 'd':
 				if (text == QLatin1String("debug")) return true;
 				break;
+			case 'm':
+				if (text == QLatin1String("mixin")) return true;
+				break;
 		} break;
 		case 6: switch (text.at(0).toLatin1())
 		{
@@ -296,6 +299,9 @@ bool DEditorHighlighter::isPPKeyword(const QStringRef &text) const
 		{
 			case 'u':
 				if (text == QLatin1String("unittest")) return true;
+				break;
+			case 't':
+				if (text == QLatin1String("template")) return true;
 				break;
 			case '_':
 				if (text == QLatin1String("__FILE__")) return true;
