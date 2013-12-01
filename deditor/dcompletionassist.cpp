@@ -166,15 +166,22 @@ int DFunctionHintProposalModel::activeArgument(const QString &prefix) const
 // DCompletionAssistProcessor
 // ----------------------------------------------------------------------------
 DCompletionAssistProcessor::DCompletionAssistProcessor()
- : m_startPosition(0)
- , m_keywordIcon(QLatin1String(":/deditor/images/keyword.png"))
- , m_varIcon(QLatin1String(":/deditor/images/var.png"))
- , m_functionIcon(QLatin1String(":/deditor/images/func.png"))
- , m_classIcon(QLatin1String(":/deditor/images/class.png"))
- , m_namespaceIcon(QLatin1String(":/deditor/images/namespace.png"))
- , m_enumIcon(QLatin1String(":/deditor/images/enum.png"))
- , m_enumMemberIcon(QLatin1String(":/deditor/images/enumerator.png"))
- , m_dIcon(QLatin1String(":/deditor/images/d.png"))
+ : m_startPosition(0),
+ i_ClassName(QLatin1String(":/deditor/images/class.png")),
+ i_InterfaceName(QLatin1String(":/deditor/images/interface.png")),
+ i_StructName(QLatin1String(":/deditor/images/struct.png")),
+ i_UnionName(QLatin1String(":/deditor/images/union.png")),
+ i_VariableName(QLatin1String(":/deditor/images/variable.png")),
+ i_MemberVariableName(QLatin1String(":/deditor/images/field.png")),
+ i_Keyword(QLatin1String(":/deditor/images/keyword.png")),
+ i_FunctionName(QLatin1String(":/deditor/images/method.png")),
+ i_EnumName(QLatin1String(":/deditor/images/enum.png")),
+ i_PackageName(QLatin1String(":/deditor/images/package.png")),
+ i_ModuleName(QLatin1String(":/deditor/images/module.png")),
+ i_Array(QLatin1String(":/deditor/images/array.png")),
+ i_AssociativeArray(QLatin1String(":/deditor/images/asarray.png")),
+ i_AliasName(QLatin1String(":/deditor/images/alias.png")),
+ i_dIcon(QLatin1String(":/deditor/images/d.png"))
 {}
 
 DCompletionAssistProcessor::~DCompletionAssistProcessor(){}
@@ -215,20 +222,23 @@ IAssistProposal *DCompletionAssistProcessor::perform(const IAssistInterface *int
   QIcon icon;
   switch(i.type)
   {
-   case Calltip: icon = m_functionIcon; break;
-   case ClassName: icon = m_classIcon; break;
-   case InterfaceName: icon = m_classIcon; break;
-   case StructName: icon = m_classIcon; break;
-   case UnionName: icon = m_classIcon; break;
-   case VariableName: icon = m_varIcon; break;
-   case MemberVariableName: icon = m_varIcon; break;
-   case Keyword: icon = m_keywordIcon; break;
-   case FunctionName: icon = m_functionIcon; break;
-   case EnumName: icon = m_enumIcon; break;
-   case EnumMember: icon = m_enumMemberIcon; break;
-   case PackageName: icon = m_namespaceIcon; break;
-   case ModuleName: icon = m_namespaceIcon; break;
-   default: icon = m_dIcon;
+   case Calltip: icon = i_FunctionName; break;
+   case ClassName: icon = i_ClassName; break;
+   case InterfaceName: icon = i_InterfaceName; break;
+   case StructName: icon = i_StructName; break;
+   case UnionName: icon = i_UnionName; break;
+   case VariableName: icon = i_VariableName; break;
+   case MemberVariableName: icon = i_MemberVariableName; break;
+   case Keyword: icon = i_Keyword; break;
+   case FunctionName: icon = i_FunctionName; break;
+   case EnumName: icon = i_EnumName; break;
+   case EnumMember: icon = i_EnumName; break;
+   case PackageName: icon = i_PackageName; break;
+   case ModuleName: icon = i_ModuleName; break;
+   case Array: icon = i_Array; break;
+   case AssociativeArray: icon = i_AssociativeArray; break;
+   case AliasName: icon = i_AliasName; break;
+   default: icon = i_dIcon;
   }
   addCompletion(i.name,icon);
  }

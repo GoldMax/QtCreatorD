@@ -5,10 +5,19 @@
         <file>images/di.png</file>
         <file>images/class.png</file>
         <file>images/enum.png</file>
-        <file>images/enumerator.png</file>
-        <file>images/func.png</file>
         <file>images/keyword.png</file>
-        <file>images/namespace.png</file>
-        <file>images/var.png</file>
+        <file>images/alias.png</file>
+        <file>images/array.png</file>
+        <file>images/asarray.png</file>
+        <file>images/field.png</file>
+        <file>images/function.png</file>
+        <file>images/interface.png</file>
+        <file>images/method.png</file>
+        <file>images/module.png</file>
+        <file>images/package.png</file>
+        <file>images/pointcut.png</file>
+        <file>images/struct.png</file>
+        <file>images/union.png</file>
+        <file>images/variable.png</file>
     </qresource>
 </RCC>

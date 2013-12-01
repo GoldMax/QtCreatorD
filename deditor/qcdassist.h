@@ -60,7 +60,10 @@ namespace QcdAssist
   EnumName            = 'g',
   EnumMember          = 'e',
   PackageName         = 'P',
-  ModuleName          = 'M'
+  ModuleName          = 'M',
+  Array               = 'a',
+  AssociativeArray    = 'A',
+  AliasName           = 'l'
  };
  struct DCDCompletionItem
  {

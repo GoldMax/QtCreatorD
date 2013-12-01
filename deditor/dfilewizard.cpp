@@ -77,9 +77,11 @@ Core::GeneratedFiles DFileWizard::generateFiles(const QWizard *w,
 			if(modul.endsWith(QDir::separator()))
 				modul.chop(1);
 			modul = modul.replace(QDir::separator(), QChar::fromLatin1('.'));
-			modul.append(QChar::fromAscii('.'));
+   if(name != QLatin1String("package"))
+    modul.append(QChar::fromAscii('.'));
   }
-		modul.append(name);
+  if(name != QLatin1String("package"))
+   modul.append(name);
  }
 	contents.append(modul);
  contents.append(QLatin1String(";\n"));

@@ -57,14 +57,10 @@ private:
     QScopedPointer<const DCompletionAssistInterface> m_interface;
     QList<TextEditor::BasicProposalItem *> m_completions;
 
-    QIcon m_keywordIcon;
-    QIcon m_varIcon;
-    QIcon m_functionIcon;
-    QIcon m_classIcon;
-    QIcon m_namespaceIcon;
-    QIcon m_enumIcon;
-    QIcon m_enumMemberIcon;
-    QIcon m_dIcon;
+    QIcon i_ClassName, i_InterfaceName, i_StructName, i_UnionName,
+          i_VariableName, i_MemberVariableName, i_Keyword, i_FunctionName,
+          i_EnumName, i_PackageName, i_ModuleName, i_Array,
+          i_AssociativeArray, i_AliasName, i_dIcon;
 
 };
 //**************************************************************************************
