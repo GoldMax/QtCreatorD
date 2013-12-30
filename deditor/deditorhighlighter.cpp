@@ -65,9 +65,9 @@ void DEditorHighlighter::highlightBlock(const QString &text)
 	int braceDepth = initialBraceDepth;
 
 	SimpleLexer tokenize;
-	tokenize.setQtMocRunEnabled(false);
-	tokenize.setObjCEnabled(false);
-	tokenize.setCxx0xEnabled(true);
+//	tokenize.setQtMocRunEnabled(false);
+//	tokenize.setObjCEnabled(false);
+//	tokenize.setCxx0xEnabled(true);
 
 	int initialState = state;
 	QList<Token> tokens = tokenize(text, initialState);

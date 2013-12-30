@@ -1,0 +1,10 @@
+<plugin name=\"BuildAllButton\" version=\"0.0.1\" compatVersion=\"$$QTCREATOR_VERSION\">
+				<vendor>GoldMax</vendor>
+				<copyright>(C) 2013 Max Goldaev</copyright>
+				<license>GPL v3</license>
+				<description>Add BuildAll button</description>
+				<category>D Language</category>
+				<url></url>
+				$$dependencyList
+</plugin>
+

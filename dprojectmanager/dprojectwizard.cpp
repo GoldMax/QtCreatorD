@@ -26,32 +26,32 @@ namespace Internal {
 //----------------------------------------------------------------------------
 
 DProjectWizardDialog::DProjectWizardDialog(QWidget *parent)
-    : Utils::Wizard(parent)
+				: Utils::Wizard(parent)
 {
- setWindowTitle(tr("Create a D language Project"));
+	setWindowTitle(tr("Create a D language Project"));
 
- // first page
- m_firstPage = new Utils::FileWizardPage;
- m_firstPage->setTitle(tr("Project Name and Location"));
- m_firstPage->setFileNameLabel(tr("Project name:"));
- m_firstPage->setPathLabel(tr("Location:"));
+	// first page
+	m_firstPage = new Utils::FileWizardPage;
+	m_firstPage->setTitle(tr("Project Name and Location"));
+	m_firstPage->setFileNameLabel(tr("Project name:"));
+	m_firstPage->setPathLabel(tr("Location:"));
 	const int firstPageId = addPage(m_firstPage);
- wizardProgress()->item(firstPageId)->setTitle(tr("Location"));
+	wizardProgress()->item(firstPageId)->setTitle(tr("Location"));
 }
 
 QString DProjectWizardDialog::path() const
 {
- return m_firstPage->path();
+	return m_firstPage->path();
 }
 
 void DProjectWizardDialog::setPath(const QString &path)
 {
- m_firstPage->setPath(path);
+	m_firstPage->setPath(path);
 }
 
 QString DProjectWizardDialog::projectName() const
 {
- return m_firstPage->fileName();
+	return m_firstPage->fileName();
 }
 
 //----------------------------------------------------------------------------
@@ -61,45 +61,45 @@ QString DProjectWizardDialog::projectName() const
 //----------------------------------------------------------------------------
 
 DProjectWizard::DProjectWizard()
-    : Core::BaseFileWizard()
+				: Core::BaseFileWizard()
 {
- setWizardKind(ProjectWizard);
- setId(QLatin1String("A.DProject"));
- setDisplayName(tr("D Project"));
- setDescription(tr("Create a D language project."));
- setCategory(QLatin1String(ProjectExplorer::Constants::PROJECT_WIZARD_CATEGORY));
- setDisplayCategory(QLatin1String(ProjectExplorer::Constants::PROJECT_WIZARD_CATEGORY_DISPLAY));
- setIcon(QIcon(QLatin1String(":/dprojectmanager/dproj.png")));
- setFlags(Core::IWizard::PlatformIndependent);
+	setWizardKind(ProjectWizard);
+	setId(QLatin1String("A.DProject"));
+	setDisplayName(tr("D Project"));
+	setDescription(tr("Create a D language project."));
+	setCategory(QLatin1String(ProjectExplorer::Constants::QT_PROJECT_WIZARD_CATEGORY));
+	setDisplayCategory(QLatin1String(ProjectExplorer::Constants::QT_PROJECT_WIZARD_CATEGORY_DISPLAY));
+	setIcon(QIcon(QLatin1String(":/dprojectmanager/dproj.png")));
+	setFlags(Core::IWizard::PlatformIndependent);
 }
 
 Core::FeatureSet DProjectWizard::requiredFeatures() const
 {
- return Core::FeatureSet();
+	return Core::FeatureSet();
 }
 
 
 QWizard *DProjectWizard::createWizardDialog(QWidget *parent,
-                                                  const Core::WizardDialogParameters &wizardDialogParameters) const
+																																																		const Core::WizardDialogParameters &wizardDialogParameters) const
 {
- DProjectWizardDialog *wizard = new DProjectWizardDialog(parent);
- setupWizard(wizard);
+	DProjectWizardDialog *wizard = new DProjectWizardDialog(parent);
+	//setupWizard(wizard);
 
- wizard->setPath(wizardDialogParameters.defaultPath());
+	wizard->setPath(wizardDialogParameters.defaultPath());
 
- foreach (QWizardPage *p, wizardDialogParameters.extensionPages())
-  BaseFileWizard::applyExtensionPageShortTitle(wizard, wizard->addPage(p));
+	foreach (QWizardPage *p, wizardDialogParameters.extensionPages())
+		BaseFileWizard::applyExtensionPageShortTitle(wizard, wizard->addPage(p));
 
- return wizard;
+	return wizard;
 }
 
 Core::GeneratedFiles DProjectWizard::generateFiles(const QWizard *w,
-                                                         QString *errorMessage) const
+																																																									QString *errorMessage) const
 {
- Q_UNUSED(errorMessage)
+	Q_UNUSED(errorMessage)
 
- const DProjectWizardDialog *wizard = qobject_cast<const DProjectWizardDialog *>(w);
- const QString projectName = wizard->projectName();
+	const DProjectWizardDialog *wizard = qobject_cast<const DProjectWizardDialog *>(w);
+	const QString projectName = wizard->projectName();
 	const QDir dir(wizard->path());
 
 	const QString projectFileName = QFileInfo(dir, projectName + QLatin1String(".qcd")).absoluteFilePath();
@@ -112,13 +112,13 @@ Core::GeneratedFiles DProjectWizard::generateFiles(const QWizard *w,
 	Core::GeneratedFiles files;
 	files.append(generatedProjectFile);
 
- return files;
+	return files;
 }
 
 bool DProjectWizard::postGenerateFiles(const QWizard *w, const Core::GeneratedFiles &l, QString *errorMessage)
 {
- Q_UNUSED(w);
- return ProjectExplorer::CustomProjectWizard::postGenerateOpen(l, errorMessage);
+	Q_UNUSED(w);
+	return ProjectExplorer::CustomProjectWizard::postGenerateOpen(l, errorMessage);
 }
 
 } // namespace Internal
