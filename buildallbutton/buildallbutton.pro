@@ -13,8 +13,8 @@ QTCREATOR_SOURCES = $$(QTC_SOURCE)
 isEmpty(QTCREATOR_SOURCES):QTCREATOR_SOURCES=/opt/Qt/src/qt-creator
 
 ## set the QTC_BUILD environment variable to override the setting here
-IDE_BUILD_TREE = $$(QTC_BUILD)
-isEmpty(IDE_BUILD_TREE):IDE_BUILD_TREE=/opt/Qt/src/build-qtcreator-Debug
+#IDE_BUILD_TREE = $$(QTC_BUILD)
+#isEmpty(IDE_BUILD_TREE):IDE_BUILD_TREE=/opt/Qt/src/build-qtcreator-Debug
 
 ## uncomment to build plugin into user config directory
 ## <localappdata>/plugins/<ideversion>
@@ -24,7 +24,7 @@ isEmpty(IDE_BUILD_TREE):IDE_BUILD_TREE=/opt/Qt/src/build-qtcreator-Debug
 ##    "~/Library/Application Support/QtProject/Qt Creator" on Mac
 # USE_USER_DESTDIR = yes
 
-PROVIDER = MaxGold
+PROVIDER = GoldMax
 
 ###### If the plugin can be depended upon by other plugins, this code needs to be outsourced to
 ###### <dirname>_dependencies.pri, where <dirname> is the name of the directory containing the
@@ -32,13 +32,13 @@ PROVIDER = MaxGold
 
 QTC_PLUGIN_NAME = BuildAllButton
 QTC_LIB_DEPENDS += \
-    # nothing here at this time
+				# nothing here at this time
 
 QTC_PLUGIN_DEPENDS += \
-    coreplugin
+				coreplugin
 
 QTC_PLUGIN_RECOMMENDS += \
-    # optional plugin dependencies. nothing here at this time
+				# optional plugin dependencies. nothing here at this time
 
 ###### End _dependencies.pri contents ######
 
