@@ -105,6 +105,25 @@ def qdump__Eigen__Matrix(d, value):
 #
 #######################################################################
 
+def encodeDArray(d, p, innerType, suffix, length):
+    t = d.lookupType(innerType)
+    p = p.cast(t.pointer())
+    #limit = self.findFirstZero(p, self.stringCutOff)
+    s = d.readMemory(p, length * t.sizeof)
+    #if limit > self.stringCutOff:
+    #    s += suffix
+    return s
+
+def encodeDCharArray(d, p, length):
+    return encodeDArray(d, p, "unsigned char", "2e2e2e", length)
+
+def encodeDChar2Array(d, p, length):
+    return encodeDArray(d, p, "unsigned short", "2e002e002e00", length)
+
+def encodeDChar4Array(d, p, length):
+    return encodeDArray(d, p, "unsigned int", "2e0000002e0000002e000000", length)
+
+
 def cleanDType(type):
     return stripClassTag(str(type)).replace("uns long long", "string")
 
@@ -118,7 +137,7 @@ def qdump__Array_char(d, value):
         else:
             d.putValue("<empty>")
     else:
-        d.putValue(d.encodeCharArray(p), Hex2EncodedUtf8)
+        d.putValue(encodeDCharArray(d,p,n), Hex2EncodedUtf8)
     d.putNumChild(2)
     if d.isExpanded():
       with Children(d):
@@ -151,7 +170,7 @@ def qdump__Array_dchar(d, value):
         else:
             d.putValue("<empty>")
     else:
-        d.putValue(d.encodeChar4Array(p), Hex8EncodedLittleEndian)
+        d.putValue(encodeDChar4Array(d,p,n), Hex8EncodedLittleEndian)
     d.putNumChild(2)
     if d.isExpanded():
       with Children(d):
@@ -183,7 +202,7 @@ def qdump__Array_wchar_t(d, value):
         else:
             d.putValue("<empty>")
     else:
-        d.putValue(d.encodeChar2Array(p), Hex4EncodedLittleEndian)
+        d.putValue(encodeDChar2Array(d,p,n), Hex4EncodedLittleEndian)
     d.putNumChild(2)
     if d.isExpanded():
       with Children(d):
