@@ -125,8 +125,8 @@ void DTextEditorWidget::configure(const MimeType &mimeType)
   const QString &type = mimeType.type();
   setMimeType(type);
  }
-
- setFontSettings(TextEditorSettings::instance()->fontSettings());
+ // вызывает красную линию
+ //setFontSettings(TextEditorSettings::instance()->fontSettings());
 
  emit configured(editor());
 }
