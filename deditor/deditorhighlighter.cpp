@@ -491,6 +491,7 @@ void DEditorHighlighter::correctTokens(QList<Token>& tokens, const QString & tex
 						break;
 					case 's':
 						if (name == QLatin1String("scope")) kind = (unsigned)T_FIRST_KEYWORD;
+						else if (name == QLatin1String("super")) kind = (unsigned)T_FIRST_KEYWORD;
 						break;
 					case 'w':
 						if (name == QLatin1String("wchar")) kind = (unsigned)T_INT;
