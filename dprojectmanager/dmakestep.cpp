@@ -170,21 +170,23 @@ QString DMakeStep::allArguments() const
 	QString relTargetDir = m_targetDirName;
 	if(QDir(m_targetDirName).isRelative())
 		relTargetDir = buildDir.relativeFilePath(projDir + QDir::separator() + m_targetDirName);
-	if(relTargetDir.length() == 0)
-		relTargetDir = QLatin1String(".");
+	//if(relTargetDir.length() == 0)
+	//	relTargetDir = QLatin1String(".");
 
 	QString outFile = outFileName();
 	QString makargs = m_makeArguments;
 	makargs.replace(QLatin1String("%{TargetDir}"),relTargetDir);
 	Utils::QtcProcess::addArgs(&args, makargs);
 
-	Utils::QtcProcess::addArgs(&args, QLatin1String("-of") + relTargetDir + QDir::separator() + outFile);
-	if(QDir(m_objDirName).isRelative())
-	{
-		QString relDir = buildDir.relativeFilePath(projDir + QDir::separator() + m_objDirName);
-		if(relDir.length() > 0)
-			Utils::QtcProcess::addArgs(&args, QLatin1String("-od") + relDir);
-	}
+	if(relTargetDir.length() > 0)
+		Utils::QtcProcess::addArgs(&args, QLatin1String("-of") + relTargetDir + QDir::separator() + outFile);
+	if(m_objDirName.length() > 0)
+		if(QDir(m_objDirName).isRelative())
+		{
+			QString relDir = buildDir.relativeFilePath(projDir + QDir::separator() + m_objDirName);
+			if(relDir.length() > 0)
+				Utils::QtcProcess::addArgs(&args, QLatin1String("-od") + relDir);
+		}
 
 	DProject* proj = static_cast<DProject*>(project());
 	// Libs
