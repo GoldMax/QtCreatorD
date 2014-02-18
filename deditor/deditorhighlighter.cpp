@@ -279,6 +279,9 @@ bool DEditorHighlighter::isPPKeyword(const QStringRef &text) const
 		} break;
 		case 6: switch (text.at(0).toLatin1())
 		{
+			case 'a':
+				if (text == QLatin1String("assert")) return true;
+				break;
 			case 'i':
 				if (text == QLatin1String("import")) return true;
 				break;
@@ -293,6 +296,9 @@ bool DEditorHighlighter::isPPKeyword(const QStringRef &text) const
 		{
 			case 'v':
 				if (text == QLatin1String("version"))	return true;
+				break;
+			case 'e':
+				if (text == QLatin1String("enforce"))	return true;
 				break;
 		}	break;
 		case 8: switch (text.at(0).toLatin1())
@@ -503,9 +509,9 @@ void DEditorHighlighter::correctTokens(QList<Token>& tokens, const QString & tex
 				} break;
 				case 6: switch (name.at(0).toLatin1())
 				{
-					case 'a':
-						if (name == QLatin1String("assert")) kind = (unsigned)T_FIRST_KEYWORD;
-						break;
+//					case 'a':
+//						if (name == QLatin1String("assert")) kind = (unsigned)T_FIRST_KEYWORD;
+//						break;
 					case 's':
 						if (name == QLatin1String("string")) kind = (unsigned)T_INT;
 						else if (name == QLatin1String("shared")) kind = (unsigned)T_FIRST_KEYWORD;

@@ -154,9 +154,9 @@ QString DMakeStep::allArguments() const
 	QString args;
 
 	if(m_buildPreset == Debug)
-		args += QLatin1String("-debug -gc");
+		args += QLatin1String("-debug -g");
 	else if(m_buildPreset == Unittest)
-		args += QLatin1String("-debug -gc -unittest");
+		args += QLatin1String("-debug -g -unittest");
 	else if(m_buildPreset == Release)
 		args += QLatin1String(" -release -O -inline");
 
@@ -264,43 +264,43 @@ void DMakeStep::run(QFutureInterface<bool> &fi)
 }
 QString ddemangle(const QString& line)
 {
- QString res = line;
- try
- {
-  QProcess proc;
-  proc.setProcessChannelMode(QProcess::MergedChannels);
-  proc.start(QLatin1String("ddemangle"));
-  if (!proc.waitForStarted(10000))
-   return line;
-  proc.write(line.toUtf8());
-  proc.closeWriteChannel();
-  if(!proc.waitForFinished(2000))
-  {
-   proc.close();
-   return line;
-  }
-  else if(proc.exitCode() != 0)
-  {
-   proc.close();
-   return line;
-  }
-  else
-  {
-   res = QString::fromUtf8(proc.readAllStandardOutput());
-   proc.close();
-  }
- }
- catch(...){}
- return res;
+	QString res = line;
+	try
+	{
+		QProcess proc;
+		proc.setProcessChannelMode(QProcess::MergedChannels);
+		proc.start(QLatin1String("ddemangle"));
+		if (!proc.waitForStarted(10000))
+			return line;
+		proc.write(line.toUtf8());
+		proc.closeWriteChannel();
+		if(!proc.waitForFinished(2000))
+		{
+			proc.close();
+			return line;
+		}
+		else if(proc.exitCode() != 0)
+		{
+			proc.close();
+			return line;
+		}
+		else
+		{
+			res = QString::fromUtf8(proc.readAllStandardOutput());
+			proc.close();
+		}
+	}
+	catch(...){}
+	return res;
 }
 void DMakeStep::stdOutput(const QString &line)
 {
- QString res = ddemangle(line);
- AbstractProcessStep::stdError(res);
+	QString res = ddemangle(line);
+	AbstractProcessStep::stdError(res);
 }
 void DMakeStep::stdError(const QString &line)
 {
- QString res = ddemangle(line);
+	QString res = ddemangle(line);
 	AbstractProcessStep::stdError(res);
 }
 

@@ -58,3 +58,8 @@
 /.git/
 /qmakeprojectmanager/
 /ios/
+/_hacks/
+/buildallbutton/
+/deditor/
+/dprojectmanager/
+/clangcodemodel/
