@@ -112,6 +112,7 @@ bool DProject::renameFile(const QString &filePath, const QString &newFilePath)
 	projectFiles.beginGroup(QLatin1String("Files"));
 	projectFiles.remove(m_buildDir.relativeFilePath(filePath));
 	projectFiles.setValue(m_buildDir.relativeFilePath(newFilePath), 0);
+	refresh(Files);
 	return true;
 }
 

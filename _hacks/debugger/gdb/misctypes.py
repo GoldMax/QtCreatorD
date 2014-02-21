@@ -145,8 +145,7 @@ def qdump__Array_char(d, value):
             d.putItem(n)
         with SubItem(d, "ptr"):
             d.putType("char*")
-            # TODO: действительно ли здесь должны отображать 0x0?
-            if d.isNull(p):
+             if d.isNull(p):
                 d.putValue("0x0");
             else:
                 d.putValue("@%s" % p.address)
