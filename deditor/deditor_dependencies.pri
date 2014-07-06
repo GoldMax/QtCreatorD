@@ -1,6 +1,6 @@
 QTC_PLUGIN_NAME = DEditor
 QTC_LIB_DEPENDS += \
-				utils
+				utils \
 				cplusplus
 QTC_PLUGIN_DEPENDS += \
     coreplugin \

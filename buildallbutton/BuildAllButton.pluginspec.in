@@ -1,4 +1,4 @@
-<plugin name=\"BuildAllButton\" version=\"0.0.1\" compatVersion=\"$$QTCREATOR_VERSION\">
+<plugin name=\"BuildAllButton\" version=\"0.1.0\">
 				<vendor>GoldMax</vendor>
 				<copyright>(C) 2013 Max Goldaev</copyright>
 				<license>GPL v3</license>

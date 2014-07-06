@@ -26,7 +26,7 @@ HEADERS += dprojectmanagerplugin.h \
 
 ## set the QTC_SOURCE environment variable to override the setting here
 QTCREATOR_SOURCES = $$(QTC_SOURCE)
-isEmpty(QTCREATOR_SOURCES):QTCREATOR_SOURCES=/opt/Qt/src/qt-creator
+isEmpty(QTCREATOR_SOURCES):QTCREATOR_SOURCES=../../../
 
 ## set the QTC_BUILD environment variable to override the setting here
 #IDE_BUILD_TREE = $$(QTC_BUILD)

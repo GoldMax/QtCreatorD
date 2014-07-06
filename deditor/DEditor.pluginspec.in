@@ -1,4 +1,4 @@
-<plugin name=\"DEditor\" version=\"$$QTCREATOR_VERSION\" compatVersion=\"$$QTCREATOR_COMPAT_VERSION\">
+<plugin name=\"DEditor\" version=\"0.1.0\">
     <vendor>GoldMax</vendor>
     <copyright>(C) 2013 Max Goldaev</copyright>
     <license>GPL v3</license>
