@@ -1,11 +1,8 @@
 QtCreatorD
 ==========
 
-Qt Creator plugin for D language support
+Qt Creator plugin for D language support.
 
-Setup
------
-Custom Parser error message capture pattern <BR/>
-<code>(.\*)\[(\](\d+)\[)\]: Error: (.\*)$</code>
-or
-<code>(.\*)\[(\](\d+)\[)\]: (.\*)$</code>
+Installation
+------------
+See [Installation](https://github.com/GoldMax/QtCreatorD/wiki/Installation) and [After install](https://github.com/GoldMax/QtCreatorD/wiki/Setup)
