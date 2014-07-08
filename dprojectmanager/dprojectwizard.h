@@ -7,7 +7,6 @@
 namespace Utils { class FileWizardPage; }
 
 namespace DProjectManager {
-namespace Internal {
 
 class DProjectWizardDialog : public Utils::Wizard
 {
@@ -39,7 +38,6 @@ protected:
     bool postGenerateFiles(const QWizard *w, const Core::GeneratedFiles &l, QString *errorMessage);
 };
 
-} // namespace Internal
 } // namespace DProjectManager
 
 #endif // DPROJECTWIZARD_H

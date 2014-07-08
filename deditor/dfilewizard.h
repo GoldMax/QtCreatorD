@@ -15,8 +15,7 @@ public:
 
  enum FileType { Source, Header };
 
- explicit DFileWizard(//const BaseFileWizardParameters &parameters,
-                          FileType fileType, QObject *parent = 0);
+ explicit DFileWizard(FileType fileType);
 
  virtual Core::FeatureSet requiredFeatures() const;
  virtual WizardFlags flags() const;

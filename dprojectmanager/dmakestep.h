@@ -8,13 +8,10 @@ class QListWidgetItem;
 QT_END_NAMESPACE
 
 namespace DProjectManager {
-namespace Internal {
 
 class DMakeStepConfigWidget;
 class DMakeStepFactory;
-namespace Ui { class DMakeStep; }
-
-
+namespace Ui { class DMakeStepUi; }
 
 class DMakeStep : public ProjectExplorer::AbstractProcessStep
 {
@@ -96,7 +93,7 @@ private slots:
 	void objDirLineEditTextEdited();
 
 private:
-	Ui::DMakeStep *m_ui;
+ Ui::DMakeStepUi *m_ui;
 	DMakeStep *m_makeStep;
 	QString m_summaryText;
 };
@@ -122,7 +119,6 @@ public:
 	QString displayNameForId(const Core::Id id) const;
 };
 
-} // namespace Internal
 } // namespace DProjectManager
 
 #endif // DMAKESTEP_H

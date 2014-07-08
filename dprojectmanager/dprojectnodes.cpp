@@ -15,7 +15,6 @@
 using namespace ProjectExplorer;
 
 namespace DProjectManager {
-namespace Internal {
 
 DProjectNode::DProjectNode(DProject *project, Core::IDocument *projectFile)
 	: ProjectNode(projectFile->filePath()), m_project(project), m_projectFile(projectFile)
@@ -47,7 +46,7 @@ bool DProjectNode::renameFile(const QString &filePath, const QString &newFilePat
 	return m_project->renameFile(filePath, newFilePath);
 }
 
-QList<ProjectNode::ProjectAction> DProjectNode::supportedActions(Node *node) const
+QList<ProjectAction> DProjectNode::supportedActions(Node *node) const
 {
 	Q_UNUSED(node);
 	return QList<ProjectAction>()
@@ -72,11 +71,10 @@ void DProjectNode::refresh(bool needRebuild)
 {
 	if(needRebuild)
 	{
-		removeFileNodes(this->fileNodes(), this);
-		removeFolderNodes(this->subFolderNodes(), this);
+  this->removeFileNodes(this->fileNodes());
+  this->removeFolderNodes(this->subFolderNodes());
 	}
 
-	//Core::MessageManager::write(QLatin1String("refresh"));
 	const QHash<QString,QString>& files = m_project->files();
 
 	QHash<QString,FileNode*> nodes;
@@ -91,10 +89,9 @@ void DProjectNode::refresh(bool needRebuild)
 			stack.push(i);
 	}
 
-		// adding
+ // adding
 	typedef QHash<QString,QString>::ConstIterator FilesKeyValue;
 	for (FilesKeyValue kv = files.constBegin(); kv != files.constEnd(); ++kv)
-	//foreach(QString filePath, files)
 	{
 		if(nodes.contains(kv.key()))
 			continue;
@@ -118,7 +115,7 @@ void DProjectNode::refresh(bool needRebuild)
 				QList<FolderNode*> list;
 				list.append(fn = new FolderNode(absFolderPath));
 				fn->setDisplayName(part);
-				addFolderNodes(list, folder);
+    folder->addFolderNodes(list);
 			}
 			folder = fn;
 		}
@@ -133,7 +130,7 @@ void DProjectNode::refresh(bool needRebuild)
 		{
 			QList<FileNode*> list;
 			list.append(new FileNode(kv.key(), SourceType, false));
-			addFileNodes(list, folder);
+   folder->addFileNodes(list);
 		}
 	}
 
@@ -146,7 +143,7 @@ void DProjectNode::refresh(bool needRebuild)
 		QList<FileNode*> list;
 		list.append(kv.value());
 		FolderNode* parent = kv.value()->parentFolderNode();
-		removeFileNodes(list, parent);
+  parent->removeFileNodes(list);
 
 		while(parent != this)
 			if(isEmpty(parent))
@@ -154,12 +151,12 @@ void DProjectNode::refresh(bool needRebuild)
 				FolderNode* p = parent->parentFolderNode();
 				QList<FolderNode*> list;
 				list.append(parent);
-				removeFolderNodes(list, p);
+    p->removeFolderNodes(list);
 				parent = p;
 			}
 		else
 				break;
 	}
 }
-} // namespace Internal
+
 } // namespace DProjectManager

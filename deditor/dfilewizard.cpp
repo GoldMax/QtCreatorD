@@ -2,6 +2,7 @@
 #include "dfilewizard.h"
 
 #include <projectexplorer/projectexplorerconstants.h>
+#include <projectexplorer/projectnodes.h>
 #include <utils/filewizarddialog.h>
 #include <utils/qtcassert.h>
 #include <utils/fileutils.h>
@@ -28,9 +29,8 @@ public:
 
 using namespace DEditor::Internal;
 
-DFileWizard::DFileWizard(//const BaseFileWizardParameters &parameters,
-																																	FileType fileType, QObject *parent):
-		Core::BaseFileWizard(/*parameters,*/ parent), m_fileType(fileType)
+DFileWizard::DFileWizard(FileType fileType):
+  Core::BaseFileWizard(), m_fileType(fileType)
 {
 }
 
@@ -95,9 +95,15 @@ QWizard *DFileWizard::createWizardDialog(QWidget *parent,
 																																													const Core::WizardDialogParameters &wizardDialogParameters) const
 {
 	QLatin1String key(ProjectExplorer::Constants::PREFERED_PROJECT_NODE);
-	QString projFile = wizardDialogParameters.extraValues().value(key).toString();
+ QString projFile;
+ QVariant qnode = wizardDialogParameters.extraValues().value(key);
+ if(qnode.isNull() == false)
+ {
+  ProjectExplorer::Node* node = qnode.value<ProjectExplorer::Node*>();
+  projFile =  node->projectNode()->path() ;
+ }
 
-	DFileWizardDialog *wizardDialog = new DFileWizardDialog(parent, projFile);
+ DFileWizardDialog *wizardDialog = new DFileWizardDialog(parent, projFile);
 	wizardDialog->setWindowTitle(tr("New %1").arg(displayName()));
 	//setupWizard(wizardDialog);
 	wizardDialog->setPath(wizardDialogParameters.defaultPath());

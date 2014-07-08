@@ -4,7 +4,6 @@
 #include <projectexplorer/iprojectmanager.h>
 
 namespace DProjectManager {
-namespace Internal {
 
 class DProject;
 
@@ -25,7 +24,6 @@ private:
  QList<DProject *> m_projects;
 };
 
-} // namespace Internal
 } // namespace DProjectManager
 
 #endif // DPROJECTMANAGER_H

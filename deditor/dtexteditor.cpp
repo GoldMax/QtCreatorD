@@ -25,29 +25,26 @@ using namespace TextEditor::Internal;
 DTextEditor::DTextEditor(DTextEditorWidget* editor)
  : BaseTextEditor(editor)
 {
+ setId(DEditor::Constants::C_DEDITOR_ID);
  setContext(Core::Context(DEditor::Constants::C_DEDITOR_ID,
                           TextEditor::Constants::C_TEXTEDITOR));
 }
 
-Core::IEditor* DTextEditor::duplicate(QWidget *parent)
+Core::IEditor* DTextEditor::duplicate()
 {
- DTextEditorWidget *newWidget = new DTextEditorWidget(parent);
- newWidget->duplicateFrom(editorWidget());
+ DTextEditorWidget *newWidget = new DTextEditorWidget(
+   qobject_cast<DTextEditorWidget*>(editorWidget()));
  DEditorPlugin::instance()->initializeEditor(newWidget);
  return newWidget->editor();
-}
-
-Core::Id DTextEditor::id() const
-{
- //return Core::Constants::K_DEFAULT_TEXT_EDITOR_ID;
- return DEditor::Constants::C_DEDITOR_ID;
+ //return NULL;
 }
 
 bool DTextEditor::open(QString *errorString, const QString &fileName, const QString &realFileName)
 {
- editorWidget()->setMimeType(Core::MimeDatabase::findByFile(QFileInfo(fileName)).type());
+ baseTextDocument()->setMimeType(Core::MimeDatabase::findByFile(QFileInfo(fileName)).type());
  bool b = TextEditor::BaseTextEditor::open(errorString, fileName, realFileName);
  return b;
+ //return false;
 }
 
 TextEditor::CompletionAssistProvider* DTextEditor::completionAssistProvider()
@@ -67,15 +64,13 @@ DTextEditorWidget::DTextEditorWidget(QWidget *parent)
  setParenthesesMatchingEnabled(true);
  setCodeFoldingSupported(true);
 
- setIndenter(new CppTools::CppQtStyleIndenter);
+ baseTextDocument()->setIndenter(new CppTools::CppQtStyleIndenter);
  // Indenter вызывает исключения в стандартном hightlighter
  //setIndenter(new DIndenter());
 
-	new DEditorHighlighter(baseTextDocument().data());
+ new DEditorHighlighter(baseTextDocument());
 
- setMimeType(QLatin1String(DEditor::Constants::D_MIMETYPE_SRC));
- connect(editorDocument(), SIGNAL(changed()), this, SLOT(configure()));
-
+ baseTextDocument()->setMimeType(QLatin1String(DEditor::Constants::D_MIMETYPE_SRC));
 }
 
 TextEditor::IAssistInterface* DTextEditorWidget::createAssistInterface(
@@ -99,35 +94,5 @@ TextEditor::BaseTextEditor* DTextEditorWidget::createEditor()
 void DTextEditorWidget::unCommentSelection()
 {
  Utils::unCommentSelection(this);
-}
-
-void DTextEditorWidget::configure()
-{
- MimeType mimeType;
- if (editorDocument())
-  mimeType = MimeDatabase::findByFile(editorDocument()->filePath());
- configure(mimeType);
-}
-
-void DTextEditorWidget::configure(const QString &mimeType)
-{
- configure(MimeDatabase::findByType(mimeType));
-}
-
-void DTextEditorWidget::configure(const MimeType &mimeType)
-{
-// DEditorHighlighter *highlighter = new DEditorHighlighter();
-// baseTextDocument()->setSyntaxHighlighter(highlighter);
-
-	if (!mimeType.isNull())
- {
-  //setMimeTypeForHighlighter(highlighter, mimeType);
-  const QString &type = mimeType.type();
-  setMimeType(type);
- }
- // вызывает красную линию
- //setFontSettings(TextEditorSettings::instance()->fontSettings());
-
- emit configured(editor());
 }
 

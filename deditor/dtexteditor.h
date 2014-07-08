@@ -22,8 +22,7 @@ public:
  DTextEditor(DTextEditorWidget* );
 
  bool duplicateSupported() const { return true; }
- Core::IEditor *duplicate(QWidget *parent);
- Core::Id id() const;
+ Core::IEditor *duplicate();
  bool open(QString *errorString, const QString &fileName, const QString &realFileName);
 	TextEditor::CompletionAssistProvider *completionAssistProvider();
 };
@@ -33,20 +32,11 @@ class DTextEditorWidget : public TextEditor::BaseTextEditorWidget
  Q_OBJECT
 
 public:
- DTextEditorWidget(QWidget* parent);
+ DTextEditorWidget(QWidget* parent =0);
  TextEditor::IAssistInterface *createAssistInterface(TextEditor::AssistKind assistKind,
                                                      TextEditor::AssistReason reason) const;
- void configure(const QString& mimeType);
- void configure(const Core::MimeType &mimeType);
-
 public slots:
  virtual void unCommentSelection();
-
-private slots:
- void configure();
-
-signals:
- void configured(Core::IEditor *editor);
 
 protected:
  TextEditor::BaseTextEditor *createEditor();

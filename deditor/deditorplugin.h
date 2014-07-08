@@ -7,7 +7,6 @@
 #include <texteditor/texteditorsettings.h>
 #include <texteditor/fontsettings.h>
 #include <texteditor/texteditoractionhandler.h>
-#include <find/searchresultwindow.h>
 
 namespace DEditor {
 namespace Internal {
@@ -33,20 +32,15 @@ public:
 
  void initializeEditor(DTextEditorWidget *editor);
  DEditorFactory *editorFactory() { return m_editorFactory; }
- TextEditor::TextEditorActionHandler *actionHandler() const { return m_actionHandler; }
 
 private slots:
- void updateSearchResultsFont(const TextEditor::FontSettings &);
  void toggleDCDAction();
  void clearAssistCacheAction();
 
 private:
  static DEditorPlugin* m_instance;
  DEditorFactory* m_editorFactory;
- TextEditor::TextEditorActionHandler *m_actionHandler;
-
  TextEditor::TextEditorSettings* m_settings;
- Find::SearchResultWindow *m_searchResultWindow;
 };
 
 } // namespace Internal

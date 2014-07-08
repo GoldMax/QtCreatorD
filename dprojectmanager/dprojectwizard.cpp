@@ -17,7 +17,6 @@
 #include <QCheckBox>
 
 namespace DProjectManager {
-namespace Internal {
 
 //----------------------------------------------------------------------------
 //
@@ -83,8 +82,6 @@ QWizard *DProjectWizard::createWizardDialog(QWidget *parent,
 																																																		const Core::WizardDialogParameters &wizardDialogParameters) const
 {
 	DProjectWizardDialog *wizard = new DProjectWizardDialog(parent);
-	//setupWizard(wizard);
-
 	wizard->setPath(wizardDialogParameters.defaultPath());
 
 	foreach (QWizardPage *p, wizardDialogParameters.extensionPages())
@@ -121,5 +118,4 @@ bool DProjectWizard::postGenerateFiles(const QWizard *w, const Core::GeneratedFi
 	return ProjectExplorer::CustomProjectWizard::postGenerateOpen(l, errorMessage);
 }
 
-} // namespace Internal
 } // namespace DProjectManager

@@ -26,7 +26,6 @@ using namespace ProjectExplorer;
 using namespace DProjectManager;
 
 namespace DProjectManager {
-namespace Internal {
 
 DMakeStep::DMakeStep(BuildStepList *parent) :
 		AbstractProcessStep(parent, Id(Constants::D_MS_ID)),
@@ -170,8 +169,6 @@ QString DMakeStep::allArguments() const
 	QString relTargetDir = m_targetDirName;
 	if(QDir(m_targetDirName).isRelative())
 		relTargetDir = buildDir.relativeFilePath(projDir + QDir::separator() + m_targetDirName);
-	//if(relTargetDir.length() == 0)
-	//	relTargetDir = QLatin1String(".");
 
 	QString outFile = outFileName();
 	QString makargs = m_makeArguments;
@@ -261,7 +258,6 @@ void DMakeStep::run(QFutureInterface<bool> &fi)
 		emit finished();
 		return;
 	}
-	//processParameters()->setWorkingDirectory(project()->projectDirectory());
 	AbstractProcessStep::run(fi);
 }
 QString ddemangle(const QString& line)
@@ -324,7 +320,7 @@ DMakeStepConfigWidget::DMakeStepConfigWidget(DMakeStep *makeStep)
 	: m_makeStep(makeStep)
 {
 	Project *pro = m_makeStep->target()->project();
-	m_ui = new Ui::DMakeStep;
+ m_ui = new DProjectManager::Ui::DMakeStepUi;
 	m_ui->setupUi(this);
 
 	m_ui->targetTypeComboBox->addItem(QLatin1String("Executable"));
@@ -505,5 +501,4 @@ QString DMakeStepFactory::displayNameForId(const Id id) const
 	return QString();
 }
 
-} // namespace Internal
 } // namespace DProjectManager

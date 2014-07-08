@@ -39,15 +39,17 @@ DEditorPlugin *DEditorPlugin::m_instance = 0;
 
 DEditorPlugin::DEditorPlugin()
  : m_editorFactory(0),
-   m_settings(0),
-   m_searchResultWindow(0)
+   m_settings(0)
 {
  QTC_ASSERT(!m_instance, return);
  m_instance = this;
 }
 DEditorPlugin::~DEditorPlugin()
 {
- delete m_actionHandler;
+ removeObject(m_editorFactory);
+ removeObject(m_settings);
+
+ //delete m_actionHandler;
  m_instance = 0;
 }
 
@@ -72,14 +74,14 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
   m_settings = new TextEditorSettings(this);
 
  m_editorFactory = new DEditorFactory(this);
- addAutoReleasedObject(m_editorFactory);
+ addObject(m_editorFactory);
 
  addAutoReleasedObject(new DCompletionAssistProvider);
  addAutoReleasedObject(new DHoverHandler(this));
 	addAutoReleasedObject(new DEditorHighlighterFactory);
 
- QObject *core = ICore::instance();
- DFileWizard* wizard = new DFileWizard(DFileWizard::Source, core);
+ //QObject *core = ICore::instance();
+ DFileWizard* wizard = new DFileWizard(DFileWizard::Source);
  wizard->setWizardKind(IWizard::FileWizard);
  wizard->setCategory(QLatin1String(Constants::WIZARD_CATEGORY_D));
  wizard->setDisplayCategory(QCoreApplication::translate("DEditor", Constants::WIZARD_TR_CATEGORY_D));
@@ -88,7 +90,7 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
  wizard->setId(QLatin1String("A.Source"));
  addAutoReleasedObject(wizard);
 
- wizard = new DFileWizard(DFileWizard::Header, core);
+ wizard = new DFileWizard(DFileWizard::Header);
  wizard->setWizardKind(IWizard::FileWizard);
  wizard->setCategory(QLatin1String(Constants::WIZARD_CATEGORY_D));
  wizard->setDisplayCategory(QCoreApplication::translate("DEditor", Constants::WIZARD_TR_CATEGORY_D));
@@ -132,13 +134,6 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
  contextMenu->addAction(cmd);
  //***
 
- m_actionHandler = new TextEditorActionHandler(
-    Constants::C_DEDITOR_ID,
-    TextEditorActionHandler::Format |
-    TextEditorActionHandler::UnCommentSelection |
-    TextEditorActionHandler::UnCollapseAll);
- m_actionHandler->initializeActions();
-
  errorString->clear();
  return true;
 }
@@ -157,14 +152,6 @@ void DEditorPlugin::extensionsInitialized()
  // Retrieve objects from the plugin manager's object pool
  // In the extensionsInitialized method, a plugin can be sure that all
  // plugins that depend on it are completely initialized.
-
- m_searchResultWindow = Find::SearchResultWindow::instance();
-// m_outlineFactory->setWidgetFactories(ExtensionSystem::PluginManager::getObjects<TextEditor::IOutlineWidgetFactory>());
- connect(m_settings, SIGNAL(fontSettingsChanged(TextEditor::FontSettings)),
-         this, SLOT(updateSearchResultsFont(TextEditor::FontSettings)));
-
- updateSearchResultsFont(m_settings->fontSettings());
-
 }
 
 ExtensionSystem::IPlugin::ShutdownFlag DEditorPlugin::aboutToShutdown()
@@ -181,21 +168,7 @@ ExtensionSystem::IPlugin::ShutdownFlag DEditorPlugin::aboutToShutdown()
 
 void DEditorPlugin::initializeEditor(DTextEditorWidget* editor)
 {
- m_actionHandler->setupActions(editor);
- TextEditorSettings::instance()->initializeEditor(editor);
-}
-
-void DEditorPlugin::updateSearchResultsFont(const FontSettings &settings)
-{
- if (m_searchResultWindow)
- {
-  m_searchResultWindow->setTextEditorFont(
-     QFont(settings.family(), settings.fontSize() * settings.fontZoom() / 100),
-           settings.formatFor(TextEditor::C_TEXT).foreground(),
-           settings.formatFor(TextEditor::C_TEXT).background(),
-           settings.formatFor(TextEditor::C_SEARCH_RESULT).foreground(),
-           settings.formatFor(TextEditor::C_SEARCH_RESULT).background());
- }
+ TextEditorSettings::initializeEditor(editor);
 }
 
 Q_EXPORT_PLUGIN2(DEditor, DEditorPlugin)
