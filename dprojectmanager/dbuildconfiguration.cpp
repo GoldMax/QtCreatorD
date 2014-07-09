@@ -137,7 +137,8 @@ bool DBuildConfigurationFactory::canRestore(const Target *parent, const QVariant
 {
  if (!canHandle(parent))
   return false;
- return ProjectExplorer::idFromMap(map) == Constants::D_BC_ID;
+ Core::Id id = ProjectExplorer::idFromMap(map);
+ return id == Constants::D_BC_ID;
 }
 
 BuildConfiguration* DBuildConfigurationFactory::restore(Target *parent, const QVariantMap &map)

@@ -443,7 +443,8 @@ DMakeStepFactory::DMakeStepFactory(QObject *parent) :
 
 bool DMakeStepFactory::canCreate(BuildStepList *parent, const Id id) const
 {
-	if (parent->target()->project()->id() == Constants::DPROJECT_ID)
+ Core::Id idd = parent->target()->project()->id();
+ if (idd == Constants::DPROJECT_ID)
 		return id == Constants::D_MS_ID;
 	return false;
 }

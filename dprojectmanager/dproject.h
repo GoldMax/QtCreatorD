@@ -37,7 +37,6 @@ public:
  DProject(Manager *manager, const QString &filename);
  ~DProject();
 
- Core::Id id() const { return Core::Id(Constants::DPROJECT_ID); }
  QString displayName() const { return m_projectName; }
  Core::IDocument *document() const;
  ProjectExplorer::IProjectManager *projectManager() const { return m_manager; }

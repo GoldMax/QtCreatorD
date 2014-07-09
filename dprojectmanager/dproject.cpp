@@ -52,7 +52,7 @@ DProject::DProject(Manager *manager, const QString &fileName)
 {
 	setProjectContext(Context(DProjectManager::Constants::DPROJECTCONTEXT));
 	setProjectLanguages(Context(ProjectExplorer::Constants::LANG_CXX));
-
+ setId(Core::Id(Constants::DPROJECT_ID));
 	m_projectIDocument  = new DProjectFile(this, m_projectFileName, DProject::Everything);
 
 	DocumentManager::addDocument(m_projectIDocument);
