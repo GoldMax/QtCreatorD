@@ -13,7 +13,6 @@
 #include <utils/pathchooser.h>
 #include <utils/qtcassert.h>
 #include <coreplugin/mimedatabase.h>
-//#include <qtsupport/customexecutablerunconfiguration.h>
 
 #include <QFormLayout>
 #include <QInputDialog>
@@ -24,7 +23,6 @@ using namespace ProjectExplorer;
 using namespace DProjectManager;
 
 namespace DProjectManager {
-namespace Internal {
 
 DBuildConfiguration::DBuildConfiguration(Target *parent)
 	: BuildConfiguration(parent, Core::Id(Constants::D_BC_ID))
@@ -139,9 +137,8 @@ bool DBuildConfigurationFactory::canRestore(const Target *parent, const QVariant
 {
  if (!canHandle(parent))
   return false;
- // XXXXX
- //return map.contains(QLatin1String(Constants::D_BC_NAME));
- return ProjectExplorer::idFromMap(map) == Constants::D_BC_ID;
+ Core::Id id = ProjectExplorer::idFromMap(map);
+ return id == Constants::D_BC_ID;
 }
 
 BuildConfiguration* DBuildConfigurationFactory::restore(Target *parent, const QVariantMap &map)
@@ -265,5 +262,4 @@ void DBuildSettingsWidget::editsEditingFinished()
  sets.setValue(QLatin1String(Constants::INI_EXTRA_ARGS_KEY), editExtra->text());
  sets.sync();
 }
-} // namespace Internal
 } // namespace DProjectManager

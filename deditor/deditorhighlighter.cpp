@@ -84,12 +84,13 @@ void DEditorHighlighter::highlightBlock(const QString &text)
 	if (tokens.isEmpty()) {
 		setCurrentBlockState(previousState);
 		BaseTextDocumentLayout::clearParentheses(currentBlock());
-		if (text.length())  {// the empty line can still contain whitespace
-			if (initialState == Lexer::State_MultiLineComment)
+  if (text.length())
+  {// the empty line can still contain whitespace
+   /*--if (initialState == Lexer::State_MultiLineComment)
 				highlightLine(text, 0, text.length(), formatForCategory(CppCommentFormat));
 			else if (initialState == Lexer::State_MultiLineDoxyComment)
 				highlightLine(text, 0, text.length(), formatForCategory(CppDoxygenCommentFormat));
-			else
+   else --*/
 				setFormat(0, text.length(), formatForCategory(CppVisualWhitespace));
 		}
 		BaseTextDocumentLayout::setFoldingIndent(currentBlock(), foldingIndent);

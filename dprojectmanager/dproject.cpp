@@ -39,8 +39,6 @@ const char PLUGIN_SETTINGS_KEY[] = "ProjectExplorer.Project.PluginSettings";
 } // namespace
 
 namespace DProjectManager {
-namespace Internal {
-
 //--------------------------------------------------------------------------------------
 //
 // DProject
@@ -54,7 +52,7 @@ DProject::DProject(Manager *manager, const QString &fileName)
 {
 	setProjectContext(Context(DProjectManager::Constants::DPROJECTCONTEXT));
 	setProjectLanguages(Context(ProjectExplorer::Constants::LANG_CXX));
-
+ setId(Core::Id(Constants::DPROJECT_ID));
 	m_projectIDocument  = new DProjectFile(this, m_projectFileName, DProject::Everything);
 
 	DocumentManager::addDocument(m_projectIDocument);
@@ -174,32 +172,12 @@ void DProject::refresh(RefreshOptions options)
 //-------
 bool DProject::setupTarget(Target* t)
 {
-	//if(Project::setupTarget(t) == false)
-	// return false;
-
 	IBuildConfigurationFactory *factory = IBuildConfigurationFactory::find(t);
 	if (!factory)
 		return false;
 
 	Utils::FileName projectDir =
 			Utils::FileName::fromString(t->project()->projectDirectory());
-
-// XXXXX
-// QSettings sets(m_projectFileName, QSettings::IniFormat);
-// QStringList groups = sets.childGroups();
-// foreach(QString group, groups)
-//  if(group.startsWith(QLatin1String("BC.")))
-//  {
-//   QVariantMap map;
-//			map[QLatin1String(DProjectManager::Constants::D_BC_NAME)] = group.remove(0,3);
-//   BuildConfiguration* bc = factory->restore(t,map); //create(t,info);
-//   if (!bc)
-//    return false;
-//   t->addBuildConfiguration(bc);
-//  }
-
-// if(t->buildConfigurations().length() > 0)
-//  return true;
 
 	BuildInfo* info = new BuildInfo(factory);
 	info->displayName = tr("Debug");
@@ -246,14 +224,6 @@ bool DProject::setupTarget(Target* t)
 }
 QVariantMap DProject::toMap() const
 {
-// XXXXX
-// QVariantMap map = Project::toMap();
-// map.remove(QLatin1String(ACTIVE_TARGET_KEY));
-// map.remove(QLatin1String(TARGET_COUNT_KEY));
-// const QList<Target *> ts = targets();
-// for (int i = 0; i < ts.size(); ++i)
-//  map.remove(QString::fromLatin1(TARGET_KEY_PREFIX) + QString::number(i));
-// return map;
 	return Project::toMap();
 }
 bool DProject::fromMap(const QVariantMap &map)
@@ -347,5 +317,4 @@ bool DProjectFile::reload(QString *errorString, ReloadFlag flag, ChangeType type
 	return true;
 }
 
-} // namespace Internal
 } // namespace DProjectManager

@@ -14,7 +14,6 @@
 
 
 namespace DProjectManager {
-namespace Internal {
 
 Manager::Manager() { }
 
@@ -61,5 +60,4 @@ void Manager::unregisterProject(DProject *project)
  m_projects.removeAll(project);
 }
 
-} // namespace Internal
 } // namespace DProjectManager

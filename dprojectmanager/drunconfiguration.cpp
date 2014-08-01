@@ -34,7 +34,6 @@
 #include <QLineEdit>
 
 using namespace DProjectManager;
-using namespace DProjectManager::Internal;
 
 //-----------------------------------------------------------------------------
 //--- CustomExecutableDialog
@@ -226,18 +225,14 @@ QString DRunConfiguration::defaultDisplayName() const
 QVariantMap DRunConfiguration::toMap() const
 {
 	QVariantMap map(LocalApplicationRunConfiguration::toMap());
-	//map.insert(QLatin1String(EXECUTABLE_KEY), m_executable);
 	map.insert(QLatin1String(Constants::ARGUMENTS_KEY), m_cmdArguments);
-	//map.insert(QLatin1String(WORKING_DIRECTORY_KEY), m_workingDirectory);
 	map.insert(QLatin1String(Constants::USE_TERMINAL_KEY), m_runMode == Console);
 	return map;
 }
 
 bool DRunConfiguration::fromMap(const QVariantMap &map)
 {
-	//m_executable = map.value(QLatin1String(EXECUTABLE_KEY)).toString();
 	m_cmdArguments = map.value(QLatin1String(Constants::ARGUMENTS_KEY)).toString();
-	//m_workingDirectory = map.value(QLatin1String(WORKING_DIRECTORY_KEY)).toString();
 	m_runMode = map.value(QLatin1String(Constants::USE_TERMINAL_KEY)).toBool() ? Console : Gui;
 
 	setDefaultDisplayName(defaultDisplayName());
@@ -276,16 +271,6 @@ QWidget *DRunConfiguration::createConfigurationWidget()
 	return new DRunConfigurationWidget(this);
 }
 
-QString DRunConfiguration::dumperLibrary() const
-{
-	return QtSupport::QtKitInformation::dumperLibrary(target()->kit());
-}
-
-QStringList DRunConfiguration::dumperLibraryLocations() const
-{
-	return QtSupport::QtKitInformation::dumperLibraryLocations(target()->kit());
-}
-
 ProjectExplorer::Abi DRunConfiguration::abi() const
 {
 	return ProjectExplorer::Abi(); // return an invalid ABI: We do not know what we will end up running!
@@ -297,7 +282,6 @@ void DRunConfiguration::updateConfig(const DMakeStep* makeStep)
 	if(outDir.startsWith(QDir::separator()) == false)
 	{
 		QString projDir = makeStep->target()->project()->projectDirectory();
-		//projDir.truncate(projDir.lastIndexOf(QDir::separator()));
 		outDir = projDir + QDir::separator() + outDir;
 	}
 	setBaseWorkingDirectory(outDir);

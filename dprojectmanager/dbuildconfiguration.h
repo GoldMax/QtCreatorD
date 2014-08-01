@@ -6,7 +6,6 @@
 #include <projectexplorer/buildinfo.h>
 #include <projectexplorer/target.h>
 
-//#include <QPlainTextEdit>
 #include <QLineEdit>
 
 namespace Utils { class PathChooser; }
@@ -14,7 +13,6 @@ namespace Utils { class PathChooser; }
 using namespace ProjectExplorer;
 
 namespace DProjectManager {
-namespace Internal {
 
 class DTarget;
 class DBuildConfigurationFactory;
@@ -86,8 +84,6 @@ public:
 private:
 	DBuildConfiguration *m_buildConfiguration;
 	Utils::PathChooser *m_pathChooser;
-//	QPlainTextEdit* editIncludes;
-//	QPlainTextEdit* editLibs;
 	QLineEdit* editIncludes;
 	QLineEdit* editLibs;
 	QLineEdit* editExtra;
@@ -99,7 +95,6 @@ private slots:
 
 };
 
-} // namespace Internal
 } // namespace DProjectManager
 
 #endif // DBUILDCONFIGURATION_H

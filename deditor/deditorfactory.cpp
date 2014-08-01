@@ -23,28 +23,18 @@ DEditorFactory::DEditorFactory(QObject *parent)
  setDisplayName(qApp->translate("OpenWith::Editors", C_DEDITOR_DISPLAY_NAME));
  addMimeType(DEditor::Constants::D_MIMETYPE_SRC);
  addMimeType(DEditor::Constants::D_MIMETYPE_HDR);
-// if (!Utils::HostOsInfo::isMacHost() && !Utils::HostOsInfo::isWindowsHost()) {
-//     FileIconProvider *iconProvider = FileIconProvider::instance();
-//     iconProvider->registerIconOverlayForMimeType(QIcon(QLatin1String(":/cppeditor/images/qt_cpp.png")),
-//                                                  MimeDatabase::findByType(QLatin1String(CppEditor::Constants::CPP_SOURCE_MIMETYPE)));
-//     iconProvider->registerIconOverlayForMimeType(QIcon(QLatin1String(":/cppeditor/images/qt_c.png")),
-//                                                  MimeDatabase::findByType(QLatin1String(CppEditor::Constants::C_SOURCE_MIMETYPE)));
-//     iconProvider->registerIconOverlayForMimeType(QIcon(QLatin1String(":/cppeditor/images/qt_h.png")),
-//                                                  MimeDatabase::findByType(QLatin1String(CppEditor::Constants::CPP_HEADER_MIMETYPE)));
-// }
-
+ new TextEditor::TextEditorActionHandler(this, Constants::C_DEDITOR_ID,
+                             TextEditor::TextEditorActionHandler::Format
+                             | TextEditor::TextEditorActionHandler::UnCommentSelection
+                             | TextEditor::TextEditorActionHandler::UnCollapseAll);
 }
 
 DEditorFactory::~DEditorFactory() {}
 
-Core::IEditor* DEditorFactory::createEditor(QWidget *parent)
+Core::IEditor* DEditorFactory::createEditor()
 {
- DTextEditorWidget *rc = new DTextEditorWidget(parent);
+ DTextEditorWidget *rc = new DTextEditorWidget();
  DEditorPlugin::instance()->initializeEditor(rc);
-
- connect(rc, SIGNAL(configured(Core::IEditor*)),
-         this, SLOT(updateEditorInfoBar(Core::IEditor*)));
- updateEditorInfoBar(rc->editor());
  return rc->editor();
  //return 0;
 }

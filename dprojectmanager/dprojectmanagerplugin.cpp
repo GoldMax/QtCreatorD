@@ -23,7 +23,6 @@
 //#include <QDebug>
 
 namespace DProjectManager {
-namespace Internal {
 
 DProjectPlugin::DProjectPlugin(){ }
 
@@ -37,8 +36,7 @@ bool DProjectPlugin::initialize(const QStringList &, QString *errorMessage)
  if (!MimeDatabase::addMimeTypes(mimetypesXml, errorMessage))
   return false;
 
- Manager *manager = new Manager;
- addAutoReleasedObject(manager);
+ addAutoReleasedObject(new Manager);
  addAutoReleasedObject(new DProjectWizard);
  addAutoReleasedObject(new DMakeStepFactory);
  addAutoReleasedObject(new DBuildConfigurationFactory);
@@ -49,7 +47,6 @@ bool DProjectPlugin::initialize(const QStringList &, QString *errorMessage)
 
 void DProjectPlugin::extensionsInitialized() { }
 
-} // namespace Internal
 } // namespace DProjectManager
 
-Q_EXPORT_PLUGIN(DProjectManager::Internal::DProjectPlugin)
+Q_EXPORT_PLUGIN(DProjectManager::DProjectPlugin)

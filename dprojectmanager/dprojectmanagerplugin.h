@@ -11,7 +11,6 @@ class Node;
 }
 
 namespace DProjectManager {
-namespace Internal {
 
 class ProjectFilesFactory;
 
@@ -28,7 +27,6 @@ public:
     void extensionsInitialized();
 };
 
-} // namespace Internal
 } // namespace DProjectManager
 
 #endif // DPROJECTMANAGERPLUGIN_H

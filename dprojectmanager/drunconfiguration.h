@@ -24,7 +24,6 @@ class PathChooser;
 namespace ProjectExplorer { class Target; }
 
 namespace DProjectManager {
-namespace Internal {
 
 class DRunConfigurationWidget;
 class DRunConfigurationFactory;
@@ -33,7 +32,7 @@ class DRunConfiguration : public ProjectExplorer::LocalApplicationRunConfigurati
 {
  Q_OBJECT
  // the configuration widget needs to setExecutable setWorkingDirectory and setCommandLineArguments
- friend class Internal::DRunConfigurationWidget;
+ friend class DRunConfigurationWidget;
  friend class DRunConfigurationFactory;
 
 public:
@@ -54,8 +53,6 @@ public:
  QString commandLineArguments() const;
 
  QWidget *createConfigurationWidget();
- QString dumperLibrary() const;
- QStringList dumperLibraryLocations() const;
 
  ProjectExplorer::Abi abi() const;
  QVariantMap toMap() const;
@@ -146,6 +143,5 @@ private:
     Utils::DetailsWidget *m_detailsContainer;
 };
 
-} // namespace Internal
 } // namespace DProjectManager
 #endif // DRUNCONFIG_H

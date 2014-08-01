@@ -16,8 +16,8 @@
 #include <QSet>
 
 namespace DProjectManager {
-namespace Internal {
 
+class Manager;
 class DProjectFile;
 
 class DProject : public ProjectExplorer::Project
@@ -27,21 +27,22 @@ class DProject : public ProjectExplorer::Project
 public:
  enum RefreshOptions
  {
-  Files         = 0x01,
-  Configuration = 0x02,
-  Everything    = Files | Configuration
+  ProjectFile   = 0x01,
+  Files         = 0x02,
+  Configuration = 0x04,
+  Everything    = ProjectFile | Files | Configuration
  };
 
 public:
  DProject(Manager *manager, const QString &filename);
  ~DProject();
 
- Core::Id id() const { return Core::Id(Constants::DPROJECT_ID); }
  QString displayName() const { return m_projectName; }
  Core::IDocument *document() const;
  ProjectExplorer::IProjectManager *projectManager() const { return m_manager; }
+
  DProjectNode *rootProjectNode() const { return m_rootNode; }
-	QStringList files(FilesMode ) const { return m_files.keys(); }
+ QStringList files(FilesMode ) const { return m_files.keys(); }
  bool setupTarget(ProjectExplorer::Target *t);
 
  bool addFiles(const QStringList &filePaths);
@@ -108,7 +109,6 @@ private:
  DProject::RefreshOptions m_options;
 };
 
-} // namespace Internal
 } // namespace DProjectManager
 
 #endif // DPROJECT_H

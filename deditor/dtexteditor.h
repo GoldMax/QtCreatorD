@@ -16,40 +16,33 @@ class DTextEditorWidget;
 
 class DTextEditor : public TextEditor::BaseTextEditor
 {
- Q_OBJECT
+	Q_OBJECT
 
 public:
- DTextEditor(DTextEditorWidget* );
+	DTextEditor(DTextEditorWidget* );
 
- bool duplicateSupported() const { return true; }
- Core::IEditor *duplicate(QWidget *parent);
- Core::Id id() const;
- bool open(QString *errorString, const QString &fileName, const QString &realFileName);
+	bool duplicateSupported() const { return true; }
+	Core::IEditor *duplicate();
+	bool open(QString *errorString, const QString &fileName, const QString &realFileName);
 	TextEditor::CompletionAssistProvider *completionAssistProvider();
 };
 
 class DTextEditorWidget : public TextEditor::BaseTextEditorWidget
 {
- Q_OBJECT
+	Q_OBJECT
 
 public:
- DTextEditorWidget(QWidget* parent);
- TextEditor::IAssistInterface *createAssistInterface(TextEditor::AssistKind assistKind,
-                                                     TextEditor::AssistReason reason) const;
- void configure(const QString& mimeType);
- void configure(const Core::MimeType &mimeType);
+	DTextEditorWidget(QWidget* parent =0);
+	DTextEditorWidget(DTextEditorWidget* other);
 
+	TextEditor::IAssistInterface *createAssistInterface(TextEditor::AssistKind assistKind,
+																																																					TextEditor::AssistReason reason) const;
 public slots:
- virtual void unCommentSelection();
-
-private slots:
- void configure();
-
-signals:
- void configured(Core::IEditor *editor);
+	virtual void unCommentSelection();
 
 protected:
- TextEditor::BaseTextEditor *createEditor();
+	void init();
+	TextEditor::BaseTextEditor *createEditor();
 
 };
 
