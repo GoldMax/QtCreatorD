@@ -19,5 +19,7 @@
         <file>images/struct.png</file>
         <file>images/union.png</file>
         <file>images/variable.png</file>
+        <file>images/template.png</file>
+        <file>images/mixin.png</file>
     </qresource>
 </RCC>

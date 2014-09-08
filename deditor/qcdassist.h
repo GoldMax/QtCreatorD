@@ -13,11 +13,11 @@
 
 namespace QcdAssist
 {
- DEDITORSHARED_EXPORT bool isDCDEnabled();
- void isDCDEnabled(bool value);
-  /// Port of DCD server
- //static quint16 dcdPort = 9166;
- QString dcdClient();
+	DEDITORSHARED_EXPORT bool isDCDEnabled();
+	void isDCDEnabled(bool value);
+		/// Port of DCD server
+	//static quint16 dcdPort = 9166;
+	QString dcdClient();
 
 
 // struct AutocompleteRequest
@@ -44,56 +44,58 @@ namespace QcdAssist
 //  MSGPACK_DEFINE(fileName, kind, importPaths, sourceCode, cursorPosition)
 // };
 
- enum DCDCompletionType { Identifiers, Calltips };
- enum DCDCompletionItemType
- {
-  Invalid             = 0,
-  Calltip             = 1,
-  ClassName           = 'c',
-  InterfaceName       = 'i',
-  StructName          = 's',
-  UnionName           = 'u',
-  VariableName        = 'v',
-  MemberVariableName  = 'm',
-  Keyword             = 'k',
-  FunctionName        = 'f',
-  EnumName            = 'g',
-  EnumMember          = 'e',
-  PackageName         = 'P',
-  ModuleName          = 'M',
-  Array               = 'a',
-  AssociativeArray    = 'A',
-  AliasName           = 'l'
- };
- struct DCDCompletionItem
- {
-  DCDCompletionItem(DCDCompletionItemType t, QString s);
+	enum DCDCompletionType { Identifiers, Calltips };
+	enum DCDCompletionItemType
+	{
+		Invalid             = 0,
+		Calltip             = 1,
+		ClassName           = 'c',
+		InterfaceName       = 'i',
+		StructName          = 's',
+		UnionName           = 'u',
+		VariableName        = 'v',
+		MemberVariableName  = 'm',
+		Keyword             = 'k',
+		FunctionName        = 'f',
+		EnumName            = 'g',
+		EnumMember          = 'e',
+		PackageName         = 'P',
+		ModuleName          = 'M',
+		Array               = 'a',
+		AssociativeArray    = 'A',
+		AliasName           = 'l',
+		TemplateName        = 't',
+		MixinTemplateName   = 'T'
+	};
+	struct DCDCompletionItem
+	{
+		DCDCompletionItem(DCDCompletionItemType t, QString s);
 
-  DCDCompletionItemType type;
-  QString name;
+		DCDCompletionItemType type;
+		QString name;
 
-  //QIcon icon() const;
- };
- struct DCDCompletion
- {
-  DCDCompletionType type;
-  QList<DCDCompletionItem> completions;
- };
+		//QIcon icon() const;
+	};
+	struct DCDCompletion
+	{
+		DCDCompletionType type;
+		QList<DCDCompletionItem> completions;
+	};
 
- //--------------------
- //--- Socket Funcs ---
- //--------------------
- //bool openDcdSocket();
+	//--------------------
+	//--- Socket Funcs ---
+	//--------------------
+	//bool openDcdSocket();
 
- //-------------------
- //--- Client Func ---
- //-------------------
- DEDITORSHARED_EXPORT void sendClearChache();
- DEDITORSHARED_EXPORT void sendAddImportToDCD(QString path);
- DEDITORSHARED_EXPORT DCDCompletion sendRequestToDCD(QByteArray& filedata, uint pos);
- DEDITORSHARED_EXPORT DCDCompletion processCompletion(QByteArray dataArray);
+	//-------------------
+	//--- Client Func ---
+	//-------------------
+	DEDITORSHARED_EXPORT void sendClearChache();
+	DEDITORSHARED_EXPORT void sendAddImportToDCD(QString path);
+	DEDITORSHARED_EXPORT DCDCompletion sendRequestToDCD(QByteArray& filedata, uint pos);
+	DEDITORSHARED_EXPORT DCDCompletion processCompletion(QByteArray dataArray);
 
- //QByteArray sendRequestToDCD(AutocompleteRequest& req);
+	//QByteArray sendRequestToDCD(AutocompleteRequest& req);
 // QByteArray sendRequestToDCD(const char* data, qint64 len);
 // {
 //  ubyte[] message = msgpack.pack(request);
