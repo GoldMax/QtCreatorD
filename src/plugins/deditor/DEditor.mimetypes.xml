@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
+
+    <mime-type type="application/x-dsrc">
+        <comment>D source code</comment>
+        <sub-class-of type="text/x-csrc"/>
+        <glob pattern="*.d"/>
+    </mime-type>
+
+    <mime-type type="application/x-disrc">
+        <sub-class-of type="application/x-dsrc"/>
+        <comment>D interface code</comment>
+        <glob pattern="*.di"/>
+    </mime-type>
+
+</mime-info>

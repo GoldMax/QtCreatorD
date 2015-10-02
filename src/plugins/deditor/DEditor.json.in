@@ -1,0 +1,12 @@
+{
+				\"Name\" : \"DEditor\",
+				\"Version\" : \"0.2.0\",
+				\"CompatVersion\" : \"0.2.0\",
+				\"Vendor\" : \"Max Goldaev\",
+				\"Copyright\" : \"(C) 2013-2015 Max Goldaev\",
+				\"License\" : \"LGPL v3\",
+				\"Description\" : \"Editor for D language files.\",
+				\"Category\" : \"D Language\",
+				\"Url\" : \"\",
+				$$dependencyList
+}

@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/dprojectmanager">
+        <file>DProjectManager.mimetypes.xml</file>
+        <file>dlang.png</file>
+        <file>dmd-source.png</file>
+        <file>dlang24.png</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,17 @@
+{
+				\"Name\" : \"DProjectManager\",
+				\"Version\" : \"0.2.0\",
+				\"CompatVersion\" : \"0.2.0\",
+				\"Vendor\" : \"Max Goldaev\",
+				\"Copyright\" : \"(C) 2013-2015 Max Goldaev\",
+				\"License\" : \"LGPL v3\",
+				\"Description\" : \"Project manager for D language projects.\",
+				\"Category\" : \"D Language\",
+				\"Url\" : \"\",
+				\"Dependencies\" : [
+					{ \"Name\" : \"Core\", \"Version\" : \"$$QTCREATOR_VERSION\" },
+					{ \"Name\" : \"ProjectExplorer\", \"Version\" : \"$$QTCREATOR_VERSION\" },
+					{ \"Name\" : \"DEditor\", \"Version\" : \"0.2.0\" }
+				]
+}
+
