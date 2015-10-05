@@ -486,7 +486,13 @@ QString SessionManagerPrivate::windowTitleAddition(const QString &filePath)
 
 QStringList SessionManagerPrivate::dependenciesOrder() const
 {
-				QList<QPair<QString, QStringList> > unordered;
+	QStringList ordered;
+	// copy the map to a temporary list
+	foreach (Project *pro, m_projects) {
+					const QString proName = pro->projectFilePath().toString();
+					ordered << proName;
+	}
+				/*QList<QPair<QString, QStringList> > unordered;
 				QStringList ordered;
 
 				// copy the map to a temporary list
@@ -512,7 +518,7 @@ QStringList SessionManagerPrivate::dependenciesOrder() const
 																unordered[i].second = depList;
 												}
 								}
-				}
+				}*/
 
 				return ordered;
 }
@@ -531,10 +537,8 @@ QList<Project *> SessionManager::projectOrder(Project *project)
 								foreach (Project *pro, projects()) {
 												if (pro->projectFilePath().toString() == proFile)
 												{
-																// result << pro;
-																// for build from start of project's list
-																result.insert(0,pro);
-																break;
+													result << pro;
+													break;
 												}
 								}
 				}
