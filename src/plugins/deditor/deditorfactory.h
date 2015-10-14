@@ -24,6 +24,12 @@ public:
 
 	AssistInterface *createAssistInterface(AssistKind assistKind,
 																																								AssistReason reason) const override;
+
+protected:
+	void keyPressEvent(QKeyEvent *e) override;
+
+private:
+	bool handleStringSplitting(QKeyEvent *e) const;
 };
 
 

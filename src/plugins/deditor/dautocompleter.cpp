@@ -12,6 +12,16 @@ using namespace CPlusPlus;
 
 namespace DEditor {
 
+static const Token tokenAtPosition(const Tokens &tokens, const unsigned pos)
+{
+	for (int i = tokens.size() - 1; i >= 0; --i) {
+		const Token tk = tokens.at(i);
+		if (pos >= tk.utf16charsBegin() && pos < tk.utf16charsEnd())
+			return tk;
+	}
+	return Token();
+}
+
 DCompleter::DCompleter()
 {}
 
@@ -95,6 +105,35 @@ bool DCompleter::isInComment(const QTextCursor &cursor) const
 	}
 
 	return false;
+}
+bool DCompleter::isInString(const QTextCursor &cursor) const
+{
+	//return isInStringHelper(cursor);
+	LanguageFeatures features;
+	features.qtEnabled = false;
+	features.qtKeywordsEnabled = false;
+	features.qtMocRunEnabled = false;
+	features.cxx11Enabled = true;
+	features.c99Enabled = true;
+
+	SimpleLexer tokenize;
+	tokenize.setLanguageFeatures(features);
+
+	const int prevState = BackwardsScanner::previousBlockState(cursor.block()) & 0xFF;
+	const Tokens tokens = tokenize(cursor.block().text(), prevState);
+
+	const unsigned pos = cursor.selectionEnd() - cursor.block().position();
+
+	if (tokens.isEmpty() || pos <= tokens.first().utf16charsBegin())
+					return false;
+
+	if (pos >= tokens.last().utf16charsEnd()) {
+					const Token tk = tokens.last();
+					return tk.isStringLiteral(); // && prevState > 0;
+	}
+
+	Token tk = tokenAtPosition(tokens, pos);
+	return tk.isStringLiteral() && pos > tk.utf16charsBegin();
 }
 
 QString DCompleter::insertMatchingBrace(const QTextCursor &cursor,

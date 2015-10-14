@@ -3,10 +3,11 @@ QTC_LIB_DEPENDS += \
 				utils \
 				cplusplus
 QTC_PLUGIN_DEPENDS += \
-    coreplugin \
+				coreplugin \
 				texteditor \
-				cpptools
+				cpptools \
+				cppeditor
 
 QTC_PLUGIN_RECOMMENDS += \
-    # optional plugin dependencies. nothing here at this time
+				# optional plugin dependencies. nothing here at this time
 
