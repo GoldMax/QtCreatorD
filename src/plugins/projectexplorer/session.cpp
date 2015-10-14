@@ -486,6 +486,7 @@ QString SessionManagerPrivate::windowTitleAddition(const QString &filePath)
 
 QStringList SessionManagerPrivate::dependenciesOrder() const
 {
+ //--vvv-- GoldMax --vvv-- 
 	QStringList ordered;
 	// copy the map to a temporary list
 	foreach (Project *pro, m_projects) {
@@ -521,6 +522,7 @@ QStringList SessionManagerPrivate::dependenciesOrder() const
 				}*/
 
 				return ordered;
+ //--^^^-- GoldMax --^^^--
 }
 
 QList<Project *> SessionManager::projectOrder(Project *project)

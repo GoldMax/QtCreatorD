@@ -19,7 +19,7 @@ using namespace DEditor;
 using namespace TextEditor;
 using namespace TextEditor::Internal;
 
-namespace
+namespace // Anonymous
 {
 bool isActivationChar(const QChar &ch)
 {
@@ -93,6 +93,7 @@ QString prettyPrint(QString str, int currentArgument)
 	return str;
 }
 } // Anonymous
+
 // --------------------------------------------------------------------------------------
 // DCompletionAssistInterface
 // --------------------------------------------------------------------------------------
@@ -149,8 +150,8 @@ int DFunctionHintProposalModel::activeArgument(const QString &prefix) const
 		if((y = str.indexOf(cb)) == -1)
 			y = str.size()-1;
 		str = str.remove(x, y - x+1);
-		Core::MessageManager::write(str);
-	}while(x > 0 && y > 0);
+		//Core::MessageManager::write(str);
+	} while(x > 0 && y > 0);
 
 	m_currentArg = str.count(QLatin1Char(','));
 	return m_currentArg;
@@ -193,13 +194,22 @@ IAssistProposal *DCompletionAssistProcessor::perform(const AssistInterface *inte
 		return 0;
 
 	// просто по нажатию кнопки
-	if (reason == IdleEditor) // && !acceptsIdleEditor())
+	if (reason == IdleEditor && !acceptsIdleEditor())
 		return 0;
 	else if(reason == ExplicitlyInvoked)
 	{
-		int x = pos-1;
-		for(; isIdentifierChar(interface->characterAt(x)); x--)
-			m_startPosition = x;
+		if(isActivationChar(interface->characterAt(pos-1)))
+			m_startPosition = pos;
+		else
+			for(int x = pos-1; x >= 0;  x--)
+			{
+				auto ch = interface->characterAt(x);
+				if(!isIdentifierChar(ch))
+				{
+					m_startPosition = x+1;
+					break;
+				}
+			}
 	}
 	else if(reason == ActivationCharacter && isActivationChar(interface->characterAt(pos-1)))
 		m_startPosition = pos;
@@ -211,6 +221,7 @@ IAssistProposal *DCompletionAssistProcessor::perform(const AssistInterface *inte
 	QByteArray arr;
 	toUtf8(arr, doc, pos);
 	DCDCompletion c = QcdAssist::sendRequestToDCD(arr, pos);
+	qDebug() <<  "DCD items: " << c.completions.length();
 	foreach(DCDCompletionItem i, c.completions)
 	{
 		QIcon icon;
@@ -257,11 +268,12 @@ void DCompletionAssistProcessor::toUtf8(QByteArray& arr, QTextDocument* doc, int
 
 IAssistProposal* DCompletionAssistProcessor::createContentProposal() const
 {
-	GenericProposalModel* model = new GenericProposalModel();
-	model->loadContent(m_completions);
-			//new BasicProposalItemListModel(m_completions);
-	IAssistProposal *proposal = new GenericProposal(m_startPosition, model);
-	return proposal;
+//	GenericProposalModel* model = new GenericProposalModel();
+//	model->loadContent(m_completions);
+//			//new BasicProposalItemListModel(m_completions);
+//	IAssistProposal *proposal = new GenericProposal(m_startPosition, model);
+//	return proposal;
+	return new GenericProposal(m_startPosition, m_completions);
 }
 
 IAssistProposal* DCompletionAssistProcessor::createHintProposal() const
@@ -305,7 +317,7 @@ void DCompletionAssistProcessor::addCompletion(const QString &text,
 																																															const QIcon &icon,
 																																															int order)
 {
-	AssistProposalItem *item = new AssistProposalItem;
+	AssistProposalItem* item = new AssistProposalItem;
 	item->setText(text);
 	item->setIcon(icon);
 	item->setOrder(order);

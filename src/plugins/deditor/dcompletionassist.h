@@ -27,7 +27,7 @@ class DCompletionAssistProvider : public CompletionAssistProvider
 	Q_OBJECT
 public:
 	bool supportsEditor(Core::Id editorId) const override;
-	IAssistProcessor *createProcessor() const override;
+	IAssistProcessor* createProcessor() const override;
 
 	int activationCharSequenceLength() const override;
 	bool isActivationCharSequence(const QString &sequence) const override;
@@ -42,8 +42,8 @@ public:
 	void toUtf8(QByteArray& arr, QTextDocument* doc, int & charPosition);
 
 private:
-	TextEditor::IAssistProposal *createContentProposal() const;
-	TextEditor::IAssistProposal *createHintProposal() const;
+	IAssistProposal* createContentProposal() const;
+	IAssistProposal* createHintProposal() const;
 	bool acceptsIdleEditor() const;
 	void addCompletion(const QString &text, const QIcon &icon, int order = 0);
 

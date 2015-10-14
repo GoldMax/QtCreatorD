@@ -90,7 +90,7 @@ bool sortNodes(Node *n1, Node *n2)
 												unsigned int l1 = project1->line();
 												unsigned int l2 = project2->line();
 
-												// DProjectManager
+												//--vvv-- GoldMax --vvv--
 												if(l1 == l2)
 													return project1 < project2; // sort by pointer value
 												else
@@ -104,6 +104,7 @@ bool sortNodes(Node *n1, Node *n2)
 //            if (result != 0)
 //                return result < 0;
 //            return project1 < project2; // sort by pointer value
+            //--^^^-- GoldMax --^^^--
 								} else {
 											return true; // project is before folder & file
 							}
