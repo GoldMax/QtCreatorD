@@ -10,7 +10,8 @@ SOURCES += deditorplugin.cpp \
 				qcdassist.cpp \
 				deditorhighlighter.cpp \
     dindenter.cpp \
-    dautocompleter.cpp
+    dautocompleter.cpp \
+    dsnippetprovider.cpp
 
 HEADERS += deditorplugin.h \
 								deditor_global.h \
@@ -22,7 +23,8 @@ HEADERS += deditorplugin.h \
 				qcdassist.h \
 				deditorhighlighter.h \
     dindenter.h \
-    dautocompleter.h
+    dautocompleter.h \
+    dsnippetprovider.h
 
 # Qt Creator linking
 

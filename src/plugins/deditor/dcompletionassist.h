@@ -6,6 +6,7 @@
 #include <texteditor/codeassist/iassistproposal.h>
 #include <texteditor/codeassist/assistinterface.h>
 #include <texteditor/codeassist/ifunctionhintproposalmodel.h>
+#include <texteditor/snippets/snippetassistcollector.h>
 
 #include <QScopedPointer>
 #include <QIcon>
@@ -42,10 +43,12 @@ public:
 	void toUtf8(QByteArray& arr, QTextDocument* doc, int & charPosition);
 
 private:
-	IAssistProposal* createContentProposal() const;
+	IAssistProposal* createContentProposal();
 	IAssistProposal* createHintProposal() const;
 	bool acceptsIdleEditor() const;
 	void addCompletion(const QString &text, const QIcon &icon, int order = 0);
+
+	void addSnippets();
 
 	int m_startPosition;
 	QScopedPointer<const DCompletionAssistInterface> m_interface;
@@ -56,6 +59,7 @@ private:
 	i_EnumName, i_PackageName, i_ModuleName, i_Array,
 	i_AssociativeArray, i_AliasName, i_TemplateName,i_MixinTemplateName, i_dIcon;
 
+	TextEditor::SnippetAssistCollector m_snippetCollector;
 };
 //**************************************************************************************
 class DFunctionHintProposalModel : public TextEditor::IFunctionHintProposalModel

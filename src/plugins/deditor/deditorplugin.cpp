@@ -5,6 +5,7 @@
 #include "dhoverhandler.h"
 #include "dcompletionassist.h"
 #include "deditorhighlighter.h"
+#include "dsnippetprovider.h"
 #include "qcdassist.h"
 
 #include <coreplugin/icore.h>
@@ -62,6 +63,7 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
 
 	addAutoReleasedObject(new DEditorFactory);
 	addAutoReleasedObject(new DCompletionAssistProvider);
+	addAutoReleasedObject(new DSnippetProvider);
 
 	IWizardFactory::registerFactoryCreator([]()
 	{

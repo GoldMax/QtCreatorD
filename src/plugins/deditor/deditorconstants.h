@@ -23,6 +23,8 @@ const char D_MIMETYPE_HDR[] = "application/x-disrc";
 const char WIZARD_CATEGORY_D[] = "A.D";
 const char WIZARD_TR_CATEGORY_D[] = QT_TRANSLATE_NOOP("DEditor", "D");
 
+const char D_SNIPPETS_GROUP_ID[] = "D";
+
 // Settings
 const char INI_SOURCE_ROOT_KEY[]   = "SourceRoot";
 

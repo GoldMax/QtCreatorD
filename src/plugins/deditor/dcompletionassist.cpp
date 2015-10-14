@@ -177,7 +177,9 @@ DCompletionAssistProcessor::DCompletionAssistProcessor()
 	i_AliasName(QLatin1String(":/deditor/images/alias.png")),
 	i_TemplateName(QLatin1String(":/deditor/images/template.png")),
 	i_MixinTemplateName(QLatin1String(":/deditor/images/mixin.png")),
-	i_dIcon(QLatin1String(":/deditor/images/d.png"))
+	i_dIcon(QLatin1String(":/deditor/images/d.png")),
+	m_snippetCollector(QLatin1String(Constants::D_SNIPPETS_GROUP_ID),
+																				QIcon(QLatin1String(":/texteditor/images/snippet.png")))
 {}
 
 IAssistProposal *DCompletionAssistProcessor::perform(const AssistInterface *interface)
@@ -221,7 +223,7 @@ IAssistProposal *DCompletionAssistProcessor::perform(const AssistInterface *inte
 	QByteArray arr;
 	toUtf8(arr, doc, pos);
 	DCDCompletion c = QcdAssist::sendRequestToDCD(arr, pos);
-	qDebug() <<  "DCD items: " << c.completions.length();
+	//qDebug() <<  "DCD items: " << c.completions.length();
 	foreach(DCDCompletionItem i, c.completions)
 	{
 		QIcon icon;
@@ -249,12 +251,12 @@ IAssistProposal *DCompletionAssistProcessor::perform(const AssistInterface *inte
 		}
 		addCompletion(i.name,icon);
 	}
-	if(c.type == Identifiers)
+	if(c.type == Calltips)
+			return createHintProposal();
+	else if(c.type == Identifiers || reason == ExplicitlyInvoked)
 		return createContentProposal();
-	else if(c.type == Calltips)
-		return createHintProposal();
 	else
-		return 0;
+		return NULL;
 }
 
 void DCompletionAssistProcessor::toUtf8(QByteArray& arr, QTextDocument* doc, int& charPosition)
@@ -266,13 +268,14 @@ void DCompletionAssistProcessor::toUtf8(QByteArray& arr, QTextDocument* doc, int
 	charPosition = pos;
 }
 
-IAssistProposal* DCompletionAssistProcessor::createContentProposal() const
+IAssistProposal* DCompletionAssistProcessor::createContentProposal()
 {
 //	GenericProposalModel* model = new GenericProposalModel();
 //	model->loadContent(m_completions);
 //			//new BasicProposalItemListModel(m_completions);
 //	IAssistProposal *proposal = new GenericProposal(m_startPosition, model);
 //	return proposal;
+	addSnippets();
 	return new GenericProposal(m_startPosition, m_completions);
 }
 
@@ -324,4 +327,7 @@ void DCompletionAssistProcessor::addCompletion(const QString &text,
 	m_completions.append(item);
 }
 
-
+void DCompletionAssistProcessor::addSnippets()
+{
+	m_completions.append(m_snippetCollector.collect());
+}
