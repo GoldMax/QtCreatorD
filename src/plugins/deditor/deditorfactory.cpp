@@ -4,6 +4,8 @@
 #include "dcompletionassist.h"
 #include "dhoverhandler.h"
 #include "deditorhighlighter.h"
+#include "dindenter.h"
+#include "dautocompleter.h"
 
 #include <coreplugin/icore.h>
 #include <coreplugin/infobar.h>
@@ -34,6 +36,7 @@ DEditorFactory::DEditorFactory()
 
 	setDocumentCreator([]() { return new TextDocument(Constants::C_DEDITOR_ID); });
 	setEditorWidgetCreator([]() { return new DEditorWidget; });
+	setIndenterCreator([]() { return new DIndenter; });
 	setSyntaxHighlighterCreator([]() { return new DEditorHighlighter; });
 	setCommentStyle(Utils::CommentDefinition::CppStyle);
 	setCompletionAssistProvider(new DCompletionAssistProvider);
@@ -54,6 +57,7 @@ DEditorFactory::DEditorFactory()
 //-----------------------------
 DEditorWidget::DEditorWidget()
 {
+	setAutoCompleter(new DCompleter);
 }
 
 AssistInterface* DEditorWidget::createAssistInterface(AssistKind kind,

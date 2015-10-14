@@ -8,7 +8,9 @@ SOURCES += deditorplugin.cpp \
 				dhoverhandler.cpp \
 				dcompletionassist.cpp \
 				qcdassist.cpp \
-				deditorhighlighter.cpp
+				deditorhighlighter.cpp \
+    dindenter.cpp \
+    dautocompleter.cpp
 
 HEADERS += deditorplugin.h \
 								deditor_global.h \
@@ -18,7 +20,9 @@ HEADERS += deditorplugin.h \
 				dhoverhandler.h \
 				dcompletionassist.h \
 				qcdassist.h \
-				deditorhighlighter.h
+				deditorhighlighter.h \
+    dindenter.h \
+    dautocompleter.h
 
 # Qt Creator linking
 
