@@ -46,10 +46,10 @@ public:
 	virtual bool contextAllowsElectricCharacters(const QTextCursor &cursor) const;
 	virtual bool isInComment(const QTextCursor &cursor) const;
 	virtual bool isInString(const QTextCursor &cursor) const;
-	virtual QString insertMatchingBrace(const QTextCursor &cursor,
-																																					const QString &text,
-																																					QChar la,
-																																					int *skippedChars) const;
+ virtual QString insertMatchingBrace(const QTextCursor &cursor, const
+                                     QString &text,
+                                     QChar lookAhead, bool skipChars,
+                                     int *skippedChars) const;
 	virtual QString insertParagraphSeparator(const QTextCursor &cursor) const;
 };
 

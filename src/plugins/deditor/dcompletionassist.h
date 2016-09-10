@@ -52,7 +52,7 @@ private:
 
 	int m_startPosition;
 	QScopedPointer<const DCompletionAssistInterface> m_interface;
-	QList<TextEditor::AssistProposalItem *> m_completions;
+ QList<TextEditor::AssistProposalItemInterface *> m_completions;
 
 	QIcon i_ClassName, i_InterfaceName, i_StructName, i_UnionName,
 	i_VariableName, i_MemberVariableName, i_Keyword, i_FunctionName,
@@ -65,7 +65,7 @@ private:
 class DFunctionHintProposalModel : public TextEditor::IFunctionHintProposalModel
 {
 public:
-	DFunctionHintProposalModel(const QList<AssistProposalItem *> items) :
+ DFunctionHintProposalModel(const QList<AssistProposalItemInterface *> items) :
 			m_items(items),	m_currentArg(-1)
 	{
 	}
@@ -76,7 +76,7 @@ public:
 	virtual int activeArgument(const QString &prefix) const;
 
 private:
-	const QList<AssistProposalItem *> m_items;
+ const QList<AssistProposalItemInterface *> m_items;
 	mutable int m_currentArg;
 };
 

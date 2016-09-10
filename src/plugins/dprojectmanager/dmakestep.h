@@ -2,6 +2,7 @@
 #define DMAKESTEP_H
 
 #include <projectexplorer/abstractprocessstep.h>
+#include <projectexplorer/buildstep.h>
 
 QT_BEGIN_NAMESPACE
 class QListWidgetItem;
@@ -39,8 +40,8 @@ public:
 	DMakeStep(ProjectExplorer::BuildStepList *parent);
 	~DMakeStep();
 
-	bool init();
-	void run(QFutureInterface<bool> &fi);
+ bool init(QList<const BuildStep *> &earlierSteps) override;
+ void run(QFutureInterface<bool> &fi);
 	ProjectExplorer::BuildStepConfigWidget *createConfigWidget();
 	bool immutable() const;
 	QVariantMap toMap() const;
@@ -105,7 +106,10 @@ class DMakeStepFactory : public ProjectExplorer::IBuildStepFactory
 public:
 	explicit DMakeStepFactory(QObject *parent = 0);
 
-	bool canCreate(ProjectExplorer::BuildStepList *parent, const Core::Id id) const;
+ QList<ProjectExplorer::BuildStepInfo> availableSteps(ProjectExplorer::BuildStepList *parent) const;
+
+
+ bool canCreate(ProjectExplorer::BuildStepList *parent, const Core::Id id) const;
 	ProjectExplorer::BuildStep *create(ProjectExplorer::BuildStepList *parent, const Core::Id id);
 	bool canClone(ProjectExplorer::BuildStepList *parent,
 															ProjectExplorer::BuildStep *source) const;

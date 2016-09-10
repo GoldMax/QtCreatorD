@@ -21,7 +21,7 @@ DProjectNode::DProjectNode(DProject *project, Core::IDocument *projectFile)
 {
 	static uint count = 0;
 	setDisplayName(projectFile->filePath().toFileInfo().completeBaseName());
-	setLine(++count);
+ setAbsoluteFilePathAndLine(projectFile->filePath(),++count);
 }
 
 Core::IDocument *DProjectNode::projectFile() const
@@ -86,7 +86,7 @@ void DProjectNode::refresh(bool needRebuild)
 	{
 		FolderNode* n = stack.pop();
 		foreach(FileNode* i, n->fileNodes())
-			nodes[i->path().toString()] = i;
+   nodes[i->filePath().toString()] = i;
 		foreach(FolderNode* i, n->subFolderNodes())
 			stack.push(i);
 	}
@@ -123,7 +123,7 @@ void DProjectNode::refresh(bool needRebuild)
 		}
 		FileNode* node = 0;
 		foreach(FileNode* n, folder->fileNodes())
-			if(n->path().toString() == kv.key())
+   if(n->filePath().toString() == kv.key())
 			{
 				node = n;
 				break;

@@ -65,7 +65,7 @@ public:
 
 protected:
 	QVariantMap toMap() const;
-	bool fromMap(const QVariantMap &map);
+ RestoreResult fromMap(const QVariantMap &map, QString* errorMessage);
 
 private:
 	bool parseProject(RefreshOptions options);

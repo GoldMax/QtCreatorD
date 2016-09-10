@@ -136,12 +136,12 @@ bool DCompleter::isInString(const QTextCursor &cursor) const
 	return tk.isStringLiteral() && pos > tk.utf16charsBegin();
 }
 
-QString DCompleter::insertMatchingBrace(const QTextCursor &cursor,
-																																								const QString &text,
-																																								QChar la,
-																																								int *skippedChars) const
+QString DCompleter::insertMatchingBrace(const QTextCursor &cursor, const
+                                        QString &text,
+                                        QChar lookAhead, bool skipChars,
+                                        int *skippedChars) const
 {
-	return MatchingText::insertMatchingBrace(cursor, text, la, skippedChars);
+ return MatchingText::insertMatchingBrace(cursor, text, lookAhead, skipChars, skippedChars);
 }
 
 QString DCompleter::insertParagraphSeparator(const QTextCursor &cursor) const

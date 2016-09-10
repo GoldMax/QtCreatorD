@@ -1,0 +1,16 @@
+/cplusplus/
+/glsl/
+/modeleditor/
+/qml/
+/qml-type-descriptions/
+/qmldesigner/
+/qmlicons/
+/schemes/
+/scripts/
+/snippets/
+/styles/
+/templates/
+/themes/
+/translations/
+/welcomescreen/
+*.pro

@@ -76,7 +76,7 @@ AssistInterface* DEditorWidget::createAssistInterface(AssistKind kind,
 																																											position(),
 																																											textDocument()->filePath().toString(),
 																																											reason);
-	return TextEditorWidget::createAssistInterface(kind, reason);
+ return TextEditorWidget::createAssistInterface(kind, reason);
 }
 
 void DEditorWidget::keyPressEvent(QKeyEvent *e)
@@ -84,14 +84,15 @@ void DEditorWidget::keyPressEvent(QKeyEvent *e)
 	if(handleStringSplitting(e))
 		return;
 
-	if(e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter)
-	{
-		if(CppEditor::Internal::trySplitComment(this))
-		{
-			e->accept();
-			return;
-		}
-	}
+//	if(e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter)
+//	{
+//  // CppEditor::Internal::CppEditorWidget::semanticInfo().snapshot
+//  if(CppEditor::Internal::trySplitComment(this, semanticInfo().snapshot))
+//		{
+//			e->accept();
+//			return;
+//		}
+//	}
 
 	TextEditorWidget::keyPressEvent(e);
 }
