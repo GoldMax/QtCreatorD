@@ -405,13 +405,15 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 				{
 					case 'a':
 						if (name == QLatin1String("alias")) kind = (unsigned)T_FIRST_KEYWORD;
+						else if (name == QLatin1String("await")) kind = (unsigned)T_FIRST_KEYWORD;
+						else if (name == QLatin1String("async")) kind = (unsigned)T_FIRST_KEYWORD;
 						break;
 					case 'c':
 						if (name == QLatin1String("creal")) kind = (unsigned)T_INT;
 						break;
 					case 'd':
 						if (name == QLatin1String("dchar")) kind = (unsigned)T_INT;
-						if (name == QLatin1String("debug")) kind = (unsigned)T_LAST_TOKEN;
+						else if (name == QLatin1String("debug")) kind = (unsigned)T_LAST_TOKEN;
 						break;
 					case 'f':
 						if (name == QLatin1String("final")) kind = (unsigned)T_FIRST_KEYWORD;

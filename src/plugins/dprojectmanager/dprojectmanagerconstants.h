@@ -35,7 +35,7 @@ const char D_BC_NAME[] = "BuildConfigurationName";
 const char BUILD_TARGETS_KEY[]  = "DProjectManager.DMakeStep.BuildTargets";
 
 const char D_MS_ID[] = "DProjectManager.DMakeStep";
-const char D_MS_DISPLAY_NAME[] = "XXXXX"; //QT_TRANSLATE_NOOP("DProjectManager::Internal::DMakeStep","Make");
+const char D_MS_DISPLAY_NAME[] = "D make step"; //QT_TRANSLATE_NOOP("DProjectManager::Internal::DMakeStep","Make");
 
 // Run configuration
 const char BUILDRUN_CONFIG_ID[] = "ProjectExplorer.DRunConfiguration";

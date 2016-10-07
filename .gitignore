@@ -71,3 +71,5 @@
 /qbs/
 /scripts/
 /tests/
+*.qcd.user
+*.qcd.user.*

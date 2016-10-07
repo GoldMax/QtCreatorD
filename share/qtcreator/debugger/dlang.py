@@ -32,6 +32,7 @@ def cleanDType(type):
     return stripClassTag(str(type)).replace("uns long long", "string")
 
 def qdump___Array_char(d, value):
+    echo("ZZZ")
     d.putValue("XXX")
     d.putType("string")
     """n = value["length"]
