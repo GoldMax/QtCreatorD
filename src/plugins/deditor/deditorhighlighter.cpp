@@ -477,6 +477,9 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					case 'e':
 						if (name == QLatin1String("enforce"))	kind = (unsigned)T_LAST_TOKEN;
 						break;
+					case 'f':
+						if (name == QLatin1String("finally"))	kind = (unsigned)T_FIRST_KEYWORD;
+						break;
 					case 'i':
 						if (name == QLatin1String("idouble")) kind = (unsigned)T_INT;
 						break;

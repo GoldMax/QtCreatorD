@@ -9,6 +9,8 @@
 #include <projectexplorer/runconfigurationaspects.h>
 
 #include <projectexplorer/buildconfiguration.h>
+#include <projectexplorer/buildstep.h>
+#include <projectexplorer/buildsteplist.h>
 #include <projectexplorer/environmentaspect.h>
 #include <projectexplorer/localenvironmentaspect.h>
 #include <projectexplorer/project.h>
@@ -254,7 +256,7 @@ QString DRunConfiguration::defaultDisplayName() const
 QVariantMap DRunConfiguration::toMap() const
 {
  QVariantMap map(RunConfiguration::toMap());
- map.insert(QLatin1String(Constants::EXECUTABLE_KEY), m_executable);
+	//map.insert(QLatin1String(Constants::EXECUTABLE_KEY), m_executable);
  map.insert(QLatin1String(Constants::WORKING_DIRECTORY_KEY), m_workingDirectory);
  //    map.insert(QLatin1String(Constants::ARGUMENTS_KEY), m_cmdArguments);
  //    map.insert(QLatin1String(Constants::USE_TERMINAL_KEY),
@@ -269,7 +271,7 @@ bool DRunConfiguration::fromMap(const QVariantMap &map)
  // m_runMode = map.value(QLatin1String(Constants::USE_TERMINAL_KEY)).toBool() ?
  //              ApplicationLauncher::Mode::Console : ApplicationLauncher::Mode::Gui;
 
- m_executable = map.value(QLatin1String(Constants::EXECUTABLE_KEY)).toString();
+	//m_executable = map.value(QLatin1String(Constants::EXECUTABLE_KEY)).toString();
  m_workingDirectory = map.value(QLatin1String(Constants::WORKING_DIRECTORY_KEY)).toString();
 
  setDefaultDisplayName(defaultDisplayName());
@@ -319,23 +321,23 @@ void DRunConfiguration::updateConfig(/*const DMakeStep* makeStep*/)
  if(!build)
   return;
 
- BuildStepList* bsl = build->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
- Q_ASSERT(bsl);
- DMakeStep *makeStep = new DMakeStep(bsl);
- if(!makeStep)
-  return;
+	BuildStepList* bsl = build->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
+	Q_ASSERT(bsl);
+	auto makeStep = bsl->firstOfType<DMakeStep>();
+	if (!makeStep)
+		return;
 
- QString outDir = makeStep->targetDirName();
- if(outDir.startsWith(QDir::separator()) == false)
- {
-  QString projDir = makeStep->target()->project()->projectDirectory().toString();
-  outDir = projDir + QDir::separator() + outDir;
- }
- m_workingDirectory = outDir;
- setBaseWorkingDirectory(outDir);
- outDir.append(QDir::separator() + makeStep->outFileName());
- m_executable = outDir;
- setExecutable(outDir);
+	QString outDir = makeStep->targetDirName();
+	if(outDir.startsWith(QDir::separator()) == false)
+	{
+		QString projDir = makeStep->target()->project()->projectDirectory().toString();
+		outDir = projDir + QDir::separator() + outDir;
+	}
+	m_workingDirectory = outDir;
+	setBaseWorkingDirectory(outDir);
+	outDir.append(QDir::separator() + makeStep->outFileName());
+	m_executable = outDir;
+	setExecutable(outDir);
 }
 //---------------------------------------------------------------------------------
 //--- DRunConfigurationFactory
