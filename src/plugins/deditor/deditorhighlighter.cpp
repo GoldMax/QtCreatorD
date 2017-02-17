@@ -523,6 +523,9 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 				} break;
 				case 9: switch (name.at(0).toLatin1())
 				{
+					case '_':
+							if (name == QLatin1String("__gshared"))	kind = (unsigned)T_LAST_TOKEN;
+							break;
 					case 'i':
 						if (name == QLatin1String("immutable")) kind = (unsigned)T_FIRST_KEYWORD;
 						else if (name == QLatin1String("interface")) kind = (unsigned)T_FIRST_KEYWORD;
