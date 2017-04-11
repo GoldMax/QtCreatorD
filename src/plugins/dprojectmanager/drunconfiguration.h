@@ -1,13 +1,11 @@
 #ifndef DRUNCONFIG_H
 #define DRUNCONFIG_H
 
-#include "dmakestep.h"
+//#include "dmakestep.h"
 
-#include <projectexplorer/localapplicationrunconfiguration.h>
+#include <projectexplorer/runconfiguration.h>
 #include <projectexplorer/applicationlauncher.h>
-
-#include <QVariantMap>
-#include <QWidget>
+#include <projectexplorer/runnables.h>
 
 QT_BEGIN_NAMESPACE
 class QCheckBox;
@@ -21,128 +19,125 @@ namespace Utils {
 class DetailsWidget;
 class PathChooser;
 }
+namespace ProjectExplorer {
 
-namespace ProjectExplorer { class Target; }
+class ArgumentsAspect;
+class TerminalAspect;
+}
+using namespace ProjectExplorer;
 
 namespace DProjectManager {
 
 class DRunConfigurationWidget;
 class DRunConfigurationFactory;
+class DCustomExecutableDialog;
 
-class DRunConfiguration : public ProjectExplorer::LocalApplicationRunConfiguration
+class DRunConfiguration : public RunConfiguration
 {
-	Q_OBJECT
-	// the configuration widget needs to setExecutable setWorkingDirectory and setCommandLineArguments
-	friend class DRunConfigurationWidget;
-	friend class DRunConfigurationFactory;
+    Q_OBJECT
+    // the configuration widget needs to setExecutable setWorkingDirectory and setCommandLineArguments
+    friend class DRunConfigurationWidget;
+    friend class DRunConfigurationFactory;
 
 public:
-	explicit DRunConfiguration(ProjectExplorer::Target *parent);
-	~DRunConfiguration();
+    explicit DRunConfiguration(Target *parent);
+    ~DRunConfiguration() override;
 
-	/*
-		* Returns the executable, looks in the environment for it and might even
-		* ask the user if none is specified
-		*/
-	QString executable() const;
+    /**
+     * Returns the executable, looks in the environment for it and might even
+     * ask the user if none is specified
+     */
+    QString executable() const;
+    QString workingDirectory() const;
+    Runnable runnable() const override;
 
-	/* Returns whether this runconfiguration ever was configured with an executable */
-	bool isConfigured() const;
+    /** Returns whether this runconfiguration ever was configured with an executable
+     */
+    bool isConfigured() const override;
+    QWidget *createConfigurationWidget() override;
+    Abi abi() const override;
+    QVariantMap toMap() const override;
+    ConfigurationState ensureConfigured(QString *errorMessage) override;
 
-	ProjectExplorer::ApplicationLauncher::Mode runMode() const;
-	QString workingDirectory() const;
-	QString commandLineArguments() const;
+    void updateConfig(/*const DMakeStep* makeStep*/);
 
-	QWidget *createConfigurationWidget();
-
-	ProjectExplorer::Abi abi() const;
-	QVariantMap toMap() const;
-
-	ConfigurationState ensureConfigured(QString *errorMessage);
-
-	void setExecutable(const QString &executable);
-	QString rawExecutable() const;
-	void setCommandLineArguments(const QString &commandLineArguments);
-	QString rawCommandLineArguments() const;
-	void setBaseWorkingDirectory(const QString &workingDirectory);
-	QString baseWorkingDirectory() const;
-	void setUserName(const QString &name);
-	void setRunMode(ProjectExplorer::ApplicationLauncher::Mode runMode);
-	bool validateExecutable(QString *executable = 0, QString *errorMessage = 0) const;
-
-	void updateConfig(const DMakeStep* makeStep);
 signals:
-	void changed();
+    void changed();
 
 protected:
-	DRunConfiguration(ProjectExplorer::Target *parent, DRunConfiguration *source);
-	virtual bool fromMap(const QVariantMap &map);
-	QString defaultDisplayName() const;
+    DRunConfiguration(Target *parent,
+                                     DRunConfiguration *source);
+    virtual bool fromMap(const QVariantMap &map) override;
+    QString defaultDisplayName() const;
 
 private:
-	void ctor();
+    void ctor();
 
-	QString m_executable;
-	QString m_workingDirectory;
-	QString m_cmdArguments;
-	ProjectExplorer::ApplicationLauncher::Mode m_runMode;
-	bool m_userSetName;
-	QString m_userName;
+    void configurationDialogFinished();
+    void setExecutable(const QString &executable);
+    QString rawExecutable() const;
+    void setCommandLineArguments(const QString &commandLineArguments);
+    void setBaseWorkingDirectory(const QString &workingDirectory);
+    QString baseWorkingDirectory() const;
+    void setUserName(const QString &name);
+    void setRunMode(ApplicationLauncher::Mode runMode);
+    bool validateExecutable(QString *executable = 0, QString *errorMessage = 0) const;
+
+    QString m_executable;
+    QString m_workingDirectory;
+    DCustomExecutableDialog *m_dialog;
 };
 
-class DRunConfigurationFactory : public ProjectExplorer::IRunConfigurationFactory
+class DRunConfigurationFactory : public IRunConfigurationFactory
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	explicit DRunConfigurationFactory(QObject *parent = 0);
-	~DRunConfigurationFactory();
+    explicit DRunConfigurationFactory(QObject *parent = 0);
 
-	static DRunConfigurationFactory* instance() { return m_instance; }
+    QList<Core::Id> availableCreationIds(Target *parent, CreationMode mode) const override;
+    QString displayNameForId(Core::Id id) const override;
 
-	QList<Core::Id> availableCreationIds(ProjectExplorer::Target *parent, CreationMode mode) const;
-	QString displayNameForId(const Core::Id id) const;
-
-	bool canCreate(ProjectExplorer::Target *parent, const Core::Id id) const;
-	bool canRestore(ProjectExplorer::Target *parent, const QVariantMap &map) const;
-	bool canClone(ProjectExplorer::Target *parent, ProjectExplorer::RunConfiguration *product) const;
-	ProjectExplorer::RunConfiguration *clone(ProjectExplorer::Target *parent,
-																																										ProjectExplorer::RunConfiguration *source);
+    bool canCreate(Target *parent, Core::Id id) const override;
+    bool canRestore(Target *parent, const QVariantMap &map) const override;
+    bool canClone(Target *parent, RunConfiguration *product) const override;
+    RunConfiguration *clone(Target *parent, RunConfiguration *source) override;
 
 private:
-	static DRunConfigurationFactory* m_instance;
-	bool canHandle(ProjectExplorer::Target *parent) const;
+    bool canHandle(Target *parent) const;
 
-	ProjectExplorer::RunConfiguration *doCreate(ProjectExplorer::Target *parent, const Core::Id id);
-	ProjectExplorer::RunConfiguration *doRestore(ProjectExplorer::Target *parent,
-																																														const QVariantMap &map);
-
+    RunConfiguration *doCreate(Target *parent, Core::Id id) override;
+    RunConfiguration *doRestore(Target *parent, const QVariantMap &map) override;
 };
 
 class DRunConfigurationWidget : public QWidget
 {
-				Q_OBJECT
+    Q_OBJECT
 
 public:
-				DRunConfigurationWidget(DRunConfiguration *rc);
+    enum ApplyMode { InstantApply, DelayedApply};
+    DRunConfigurationWidget(DRunConfiguration *rc, ApplyMode mode);
+    ~DRunConfigurationWidget();
 
-private slots:
-				void changed();
+    void apply(); // only used for DelayedApply
+    bool isValid() const;
 
-				void executableEdited();
-				void argumentsEdited(const QString &arguments);
-				void workingDirectoryEdited();
-				void termToggled(bool);
-				void environmentWasChanged();
+signals:
+    void validChanged();
 
 private:
-				bool m_ignoreChange;
-				DRunConfiguration *m_runConfiguration;
-				Utils::PathChooser *m_executableChooser;
-				QLineEdit *m_commandLineArgumentsLineEdit;
-				Utils::PathChooser *m_workingDirectory;
-				QCheckBox *m_useTerminalCheck;
-				Utils::DetailsWidget *m_detailsContainer;
+    void changed();
+    void executableEdited();
+    void workingDirectoryEdited();
+    void environmentWasChanged();
+
+    bool m_ignoreChange = false;
+    DRunConfiguration *m_runConfiguration = 0;
+    ProjectExplorer::ArgumentsAspect *m_temporaryArgumentsAspect = 0;
+    ProjectExplorer::TerminalAspect *m_temporaryTerminalAspect = 0;
+    Utils::PathChooser *m_executableChooser = 0;
+    Utils::PathChooser *m_workingDirectory = 0;
+    Utils::DetailsWidget *m_detailsContainer = 0;
 };
 
 } // namespace DProjectManager

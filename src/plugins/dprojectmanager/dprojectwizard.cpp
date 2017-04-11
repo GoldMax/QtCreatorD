@@ -1,5 +1,7 @@
 #include "dprojectwizard.h"
 
+#include "dprojectmanagerconstants.h"
+
 #include <coreplugin/icore.h>
 #include <projectexplorer/projectexplorerconstants.h>
 #include <projectexplorer/customwizard/customwizard.h>
@@ -61,7 +63,7 @@ QString DProjectWizardDialog::projectName() const
 
 DProjectWizard::DProjectWizard()
 {
-	setWizardKind(ProjectWizard);
+ setSupportedProjectTypes({ Constants::DPROJECT_ID });
 	setId("A.DProject");
 	setDisplayName(tr("D Project"));
 	setDescription(tr("Create a D language project."));

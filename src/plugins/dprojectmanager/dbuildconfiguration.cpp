@@ -206,7 +206,7 @@ DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
 	QSettings sets(m_buildConfiguration->target()->project()->projectFilePath().toString(), QSettings::IniFormat);
 	QString root = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
 	m_pathChooser->setPath(root);
-	connect(m_pathChooser, SIGNAL(changed(QString)), this, SLOT(buildDirectoryChanged()));
+ connect(m_pathChooser, SIGNAL(pathChanged(QString)), this, SLOT(buildDirectoryChanged()));
 	fl->addRow(tr("Source directory:"), m_pathChooser);
 
 	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());

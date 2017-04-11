@@ -77,14 +77,14 @@ void DMakeStep::ctor()
 
 DMakeStep::~DMakeStep() { }
 
-bool DMakeStep::init()
+bool DMakeStep::init(QList<const BuildStep *> &earlierSteps)
 {
 	BuildConfiguration *bc = buildConfiguration();
 	if (!bc)
 		bc = target()->activeBuildConfiguration();
 
 	m_tasks.clear();
-	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit());
+	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit(), ToolChain::Language::Cxx);
 	if (!tc) {
 		m_tasks.append(Task(Task::Error, tr("Qt Creator needs a compiler set up to build. Configure a compiler in the kit options."),
 																						Utils::FileName(), -1,
@@ -110,7 +110,7 @@ bool DMakeStep::init()
 		appendOutputParser(parser);
 	outputParser()->setWorkingDirectory(pp->effectiveWorkingDirectory());
 
-	return AbstractProcessStep::init();
+ return AbstractProcessStep::init(earlierSteps);
 }
 
 QVariantMap DMakeStep::toMap() const
@@ -138,7 +138,7 @@ bool DMakeStep::fromMap(const QVariantMap &map)
 
 QString DMakeStep::makeCommand(const Utils::Environment &environment) const
 {
-	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit());
+	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit(), ToolChain::Language::Cxx);
 	if (tc)
 		return tc->makeCommand(environment);
 	else
@@ -254,7 +254,7 @@ void DMakeStep::run(QFutureInterface<bool> &fi)
 	{
 		emit addOutput(tr("Configuration is faulty. Check the Issues view for details."), BuildStep::MessageOutput);
 		fi.reportResult(false);
-		emit finished();
+  //emit finished();
 		return;
 	}
 	AbstractProcessStep::run(fi);
@@ -392,7 +392,7 @@ void DMakeStepConfigWidget::updateDetails()
 	{
 		DRunConfiguration * brc = dynamic_cast<DRunConfiguration *>(rc);
 		if(brc)
-			brc->updateConfig(m_makeStep);
+   brc->updateConfig();
 	}
 }
 
@@ -438,6 +438,16 @@ void DMakeStepConfigWidget::objDirLineEditTextEdited()
 DMakeStepFactory::DMakeStepFactory(QObject *parent) :
 		IBuildStepFactory(parent)
 {
+}
+
+QList<BuildStepInfo> DMakeStepFactory::availableSteps(BuildStepList* parent) const
+{
+ if (parent->target()->project()->id() != Constants::DPROJECT_ID)
+         return {};
+
+     return {{ Constants::D_MS_ID,
+               QCoreApplication::translate("DProjectManager::DMakeStep",
+               Constants::D_MS_DISPLAY_NAME) }};
 }
 
 bool DMakeStepFactory::canCreate(BuildStepList *parent, const Id id) const

@@ -30,7 +30,7 @@ HEADERS += deditorplugin.h \
 
 ## set the QTC_SOURCE environment variable to override the setting here
 QTCREATOR_SOURCES = $$(QTC_SOURCE)
-isEmpty(QTCREATOR_SOURCES):QTCREATOR_SOURCES=/opt/Qt/qt-creator-opensource-src-3.5.0
+isEmpty(QTCREATOR_SOURCES):QTCREATOR_SOURCES=/opt/Qt/qt-creator-opensource-src-4.2.1
 
 ## set the QTC_BUILD environment variable to override the setting here
 #IDE_BUILD_TREE = $$(QTC_BUILD)

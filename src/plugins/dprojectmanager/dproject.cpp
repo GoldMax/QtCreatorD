@@ -17,7 +17,8 @@
 #include <projectexplorer/kitmanager.h>
 #include <projectexplorer/projectexplorerconstants.h>
 #include <projectexplorer/editorconfiguration.h>
-#include <qtsupport/customexecutablerunconfiguration.h>
+#include <projectexplorer/session.h>
+//#include <qtsupport/customexecutablerunconfiguration.h>
 #include <utils/fileutils.h>
 #include <utils/qtcassert.h>
 
@@ -54,8 +55,9 @@ DProject::DProject(IProjectManager* manager, const QString &fileName)
 	m_projectIDocument  = new DProjectFile(this, m_projectFileName, DProject::Everything);
 
 	DocumentManager::addDocument(m_projectIDocument);
+ setDocument(m_projectIDocument);
 	m_rootNode = new DProjectNode(this, m_projectIDocument);
-//	m_manager->registerProject(this);
+ //m_manager->registerProject(this);
 
 	QSettings sets(m_projectFileName, QSettings::IniFormat);
 	QString bds = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
@@ -186,7 +188,7 @@ bool DProject::setupTarget(Target* t)
 	if (!bc)
 		return false;
 	t->addBuildConfiguration(bc);
-	t->setActiveBuildConfiguration(bc);
+ SessionManager::instance()->setActiveBuildConfiguration(t,bc, SetActive::Cascade);
 
 	info = new BuildInfo(factory);
 	info->displayName = tr("Release");
@@ -210,12 +212,24 @@ bool DProject::setupTarget(Target* t)
 		return false;
 	t->addBuildConfiguration(bc);
 
-	RunConfiguration* run =
-			DRunConfigurationFactory::instance()->create(t, Core::Id(Constants::BUILDRUN_CONFIG_ID));
-	t->addRunConfiguration(run);
-	t->setActiveRunConfiguration(run);
+ QList<IRunConfigurationFactory *> rfs = IRunConfigurationFactory::find(t);
+ if (rfs.length() == 0 )
+  return false;
 
-	setActiveTarget(t);
+ RunConfiguration* rc = 0;
+ foreach(IRunConfigurationFactory* rf, rfs)
+ {
+  rc = rf->create(t,Core::Id(Constants::BUILDRUN_CONFIG_ID));
+  if(rc)
+   break;
+ }
+ if (!rc)
+  return false;
+
+ t->addRunConfiguration(rc);
+ t->setActiveRunConfiguration(rc);
+
+ SessionManager::instance()->setActiveTarget(this, t, SetActive::Cascade);
 
 	return true;
 }
@@ -223,10 +237,11 @@ QVariantMap DProject::toMap() const
 {
 	return Project::toMap();
 }
-bool DProject::fromMap(const QVariantMap &map)
+Project::RestoreResult DProject::fromMap(const QVariantMap &map, QString *errorMessage)
 {
-	if (!Project::fromMap(map))
-		return false;
+ RestoreResult result = Project::fromMap(map, errorMessage);
+ if (result != RestoreResult::Ok)
+     return result;
 
 	Kit *defaultKit = KitManager::defaultKit();
 	if (!activeTarget() && defaultKit)
@@ -245,12 +260,24 @@ bool DProject::fromMap(const QVariantMap &map)
 			continue;
 		}
 		if (!t->activeRunConfiguration())
-			t->addRunConfiguration(
-						DRunConfigurationFactory::instance()->create(t, ProjectExplorer::Constants::BUILDSTEPS_BUILD));
+  {
+   QList<IRunConfigurationFactory *> rfs = IRunConfigurationFactory::find(t);
+   if (rfs.length() > 0 )
+    foreach(IRunConfigurationFactory* rf, rfs)
+    {
+     RunConfiguration* rc = rf->create(t,Core::Id(Constants::BUILDRUN_CONFIG_ID));
+     if(rc)
+     {
+      t->addRunConfiguration(rf->create(t, ProjectExplorer::Constants::BUILDSTEPS_BUILD));
+      break;
+     }
+    }
+
+  }
 	}
 
 	refresh(Everything);
-	return true;
+ return result;
 }
 
 //--------------------------------------------------------------------------------------

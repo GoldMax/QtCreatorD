@@ -67,7 +67,7 @@ DFileWizardFactory::DFileWizardFactory(FileType fileType) :
 	if(fileType == FileType::Header)
 	{
 		setId("B.Header");
-		setWizardKind(FileWizard);
+  //setWizardKind(FileWizard);
 		setDisplayName(tr("D Header File"));
 		setDescription(tr("Creates a D header file."));
 		setCategory(QLatin1String(Constants::WIZARD_CATEGORY_D));
@@ -78,7 +78,7 @@ DFileWizardFactory::DFileWizardFactory(FileType fileType) :
 	else
 	{
 		setId("A.Source");
-		setWizardKind(FileWizard);
+  //setWizardKind(FileWizard);
 		setDisplayName(tr("D Source File"));
 		setDescription(tr("Creates a D source file."));
 		setCategory(QLatin1String(Constants::WIZARD_CATEGORY_D));
@@ -97,8 +97,8 @@ Core::BaseFileWizard* DFileWizardFactory::create(QWidget *parent,
 		QVariant qnode = params.extraValues().value(key);
 		if(qnode.isNull() == false)
 		{
-			ProjectExplorer::Node* projNode = qnode.value<ProjectExplorer::Node*>()->projectNode();
-			wizard->projFile = projNode->path().toString();
+   ProjectExplorer::ProjectNode* projNode = qnode.value<ProjectExplorer::Node*>()->projectNode();
+   wizard->projFile = projNode->filePath().toString();
 		}
 
 		wizard->setWindowTitle(tr("New %1").arg(displayName()));
