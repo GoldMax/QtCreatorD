@@ -84,7 +84,7 @@ bool DMakeStep::init(QList<const BuildStep *> &earlierSteps)
 		bc = target()->activeBuildConfiguration();
 
 	m_tasks.clear();
-	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit());
+	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit(), ToolChain::Language::Cxx);
 	if (!tc) {
 		m_tasks.append(Task(Task::Error, tr("Qt Creator needs a compiler set up to build. Configure a compiler in the kit options."),
 																						Utils::FileName(), -1,
@@ -138,7 +138,7 @@ bool DMakeStep::fromMap(const QVariantMap &map)
 
 QString DMakeStep::makeCommand(const Utils::Environment &environment) const
 {
-	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit());
+	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit(), ToolChain::Language::Cxx);
 	if (tc)
 		return tc->makeCommand(environment);
 	else

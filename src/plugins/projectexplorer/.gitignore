@@ -82,9 +82,6 @@
 /deploymentdataview.cpp
 /deploymentdataview.h
 /deploymentdataview.ui
-/doubletabwidget.cpp
-/doubletabwidget.h
-/doubletabwidget.ui
 /editorconfiguration.cpp
 /editorconfiguration.h
 /editorsettingspropertiespage.cpp
@@ -209,8 +206,6 @@
 /projectwindow.h
 /projectwizardpage.h
 /projectwizardpage.ui
-/propertiespanel.cpp
-/propertiespanel.h
 /removetaskhandler.cpp
 /removetaskhandler.h
 /runconfiguration.cpp
@@ -229,6 +224,10 @@
 /sessiondialog.cpp
 /sessiondialog.h
 /sessiondialog.ui
+/sessionmodel.cpp
+/sessionmodel.h
+/sessionview.cpp
+/sessionview.h
 /settingsaccessor.cpp
 /settingsaccessor.h
 /showineditortaskhandler.cpp
@@ -237,12 +236,8 @@
 /showoutputtaskhandler.h
 /target.cpp
 /target.h
-/targetselector.cpp
-/targetselector.h
 /targetsettingspanel.cpp
 /targetsettingspanel.h
-/targetsettingswidget.cpp
-/targetsettingswidget.h
 /targetsetuppage.cpp
 /targetsetuppage.h
 /targetsetupwidget.cpp
@@ -263,8 +258,6 @@
 /toolchainmanager.h
 /toolchainoptionspage.cpp
 /toolchainoptionspage.h
-/unconfiguredprojectpanel.cpp
-/unconfiguredprojectpanel.h
 /vcsannotatetaskhandler.cpp
 /vcsannotatetaskhandler.h
 /waitforstopdialog.cpp
@@ -275,7 +268,7 @@
 /windebuginterface.h
 /xcodebuildparser.cpp
 /xcodebuildparser.h
-/jsonwizard/
-/images/
-/devicesupport/
 /customwizard/
+/devicesupport/
+/images/
+/jsonwizard/

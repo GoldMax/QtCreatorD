@@ -1,27 +1,3 @@
-############################################################################
-#
-# Copyright (C) 2016 The Qt Company Ltd.
-# Contact: https://www.qt.io/licensing/
-#
-# This file is part of Qt Creator.
-#
-# Commercial License Usage
-# Licensees holding valid commercial Qt licenses may use this file in
-# accordance with the commercial license agreement provided with the
-# Software or, alternatively, in accordance with the terms contained in
-# a written agreement between you and The Qt Company. For licensing terms
-# and conditions see https://www.qt.io/terms-conditions. For further
-# information use the contact form at https://www.qt.io/contact-us.
-#
-# GNU General Public License Usage
-# Alternatively, this file may be used under the terms of the GNU
-# General Public License version 3 as published by the Free Software
-# Foundation with exceptions as appearing in the file LICENSE.GPL3-EXCEPT
-# included in the packaging of this file. Please review the following
-# information to ensure the GNU General Public License requirements will
-# be met: https://www.gnu.org/licenses/gpl-3.0.html.
-#
-############################################################################
 
 try:
     import __builtin__
@@ -38,9 +14,11 @@ import sys
 import struct
 import types
 
+def warn(message):
+    print("XXX: %s\n" % message.encode("latin1"))
+
 from dumper import *
 from dlang import *
-
 
 #######################################################################
 #
@@ -169,14 +147,12 @@ class PlainDumper:
         self.typeCache = {}
 
     def __call__(self, d, value):
-        printer = self.printer.gen_printer(value)
+        printer = self.printer.invoke(value)
         lister = getattr(printer, "children", None)
         children = [] if lister is None else list(lister())
         d.putType(self.printer.name)
         val = printer.to_string()
         if isinstance(val, str):
-            d.putValue(val)
-        elif sys.version_info[0] <= 2 and isinstance(val, unicode):
             d.putValue(val)
         else: # Assuming LazyString
             d.putCharArrayHelper(val.address, val.length, val.type.sizeof)
@@ -189,11 +165,7 @@ class PlainDumper:
 
 def importPlainDumpers(args):
     if args == "off":
-        try:
-            gdb.execute("disable pretty-printer .* .*")
-        except:
-            # Might occur in non-ASCII directories
-            warn("COULD NOT DISABLE PRETTY PRINTERS")
+        gdb.execute("disable pretty-printer .* .*")
     else:
         theDumper.importPlainDumpers()
 
@@ -249,13 +221,15 @@ class Dumper(DumperBase):
     def __init__(self):
         DumperBase.__init__(self)
 
-        # These values will be kept between calls to 'fetchVariables'.
+        # These values will be kept between calls to 'showData'.
         self.isGdb = True
+        self.childEventAddress = None
         self.typeCache = {}
         self.typesReported = {}
         self.typesToReport = {}
         self.qtNamespaceToReport = None
-        self.interpreterBreakpointResolvers = []
+        self.qmlEngines = []
+        self.qmlBreakpoints = []
 
     def prepare(self, args):
         self.output = []
@@ -269,6 +243,11 @@ class Dumper(DumperBase):
         self.currentType = ReportItem()
         self.currentAddress = None
 
+        # The guess does not need to be updated during a showData()
+        # as the result is fixed during that time (ignoring "active"
+        # dumpers causing loading of shared objects etc).
+        self.currentQtNamespaceGuess = None
+
         self.resultVarName = args.get("resultvarname", "")
         self.expandedINames = set(args.get("expanded", []))
         self.stringCutOff = int(args.get("stringcutoff", 10000))
@@ -276,24 +255,20 @@ class Dumper(DumperBase):
         self.typeformats = args.get("typeformats", {})
         self.formats = args.get("formats", {})
         self.watchers = args.get("watchers", {})
+        self.qmlcontext = int(args.get("qmlcontext", "0"), 0)
         self.useDynamicType = int(args.get("dyntype", "0"))
         self.useFancy = int(args.get("fancy", "0"))
         self.forceQtNamespace = int(args.get("forcens", "0"))
-        self.passExceptions = int(args.get("passexceptions", "0"))
-        self.showQObjectNames = int(args.get("qobjectnames", "0"))
+        self.passExceptions = int(args.get("passExceptions", "0"))
         self.nativeMixed = int(args.get("nativemixed", "0"))
         self.autoDerefPointers = int(args.get("autoderef", "0"))
         self.partialUpdate = int(args.get("partial", "0"))
         self.fallbackQtVersion = 0x50200
+        self.sortStructMembers = bool(args.get("sortStructMembers", True))
 
         #warn("NAMESPACE: '%s'" % self.qtNamespace())
         #warn("EXPANDED INAMES: %s" % self.expandedINames)
         #warn("WATCHERS: %s" % self.watchers)
-
-        # The guess does not need to be updated during a fetchVariables()
-        # as the result is fixed during that time (ignoring "active"
-        # dumpers causing loading of shared objects etc).
-        self.currentQtNamespaceGuess = None
 
     def listOfLocals(self):
         frame = gdb.selected_frame()
@@ -315,9 +290,6 @@ class Dumper(DumperBase):
                 warn("UNEXPECTED 'None' BLOCK")
                 break
             for symbol in block:
-
-              # Filter out labels etc.
-              if symbol.is_variable or symbol.is_argument:
                 name = symbol.print_name
 
                 if name == "__in_chrg" or name == "__PRETTY_FUNCTION__":
@@ -384,24 +356,21 @@ class Dumper(DumperBase):
     def canCallLocale(self):
         return False if self.is32bit() else True
 
-    def fetchVariables(self, args):
-        self.resetStats()
-        self.preping("locals")
+    def showData(self, args):
         self.prepare(args)
-        partialVariable = args.get("partialvar", "")
-        isPartial = len(partialVariable) > 0
 
-        (ok, res) = self.tryFetchInterpreterVariables(args)
-        if ok:
-            safePrint(res)
-            return
+        partialVariable = args.get("partialVariable", "")
+        isPartial = len(partialVariable) > 0
 
         #
         # Locals
         #
         self.output.append('data=[')
 
-        if isPartial:
+        if self.qmlcontext:
+            locals = self.extractQmlVariables(self.qmlcontext)
+
+        elif isPartial:
             parts = partialVariable.split('.')
             name = parts[1]
             item = self.LocalItem()
@@ -422,8 +391,6 @@ class Dumper(DumperBase):
         else:
             locals = self.listOfLocals()
 
-        self.ping("locals")
-
         # Take care of the return value of the last function call.
         if len(self.resultVarName) > 0:
             try:
@@ -436,6 +403,7 @@ class Dumper(DumperBase):
                 # Don't bother. It's only supplementary information anyway.
                 pass
 
+        locals.sort(key = lambda item: item.name)
         for item in locals:
             value = self.downcast(item.value) if self.useDynamicType else item.value
             with OutputSafer(self):
@@ -446,16 +414,12 @@ class Dumper(DumperBase):
                 else:
                     # A "normal" local variable or parameter.
                     with TopLevelItem(self, item.iname):
-                        self.preping("all-" + item.iname)
                         self.put('iname="%s",' % item.iname)
                         self.put('name="%s",' % item.name)
                         self.putItem(value)
-                        self.ping("all-" + item.iname)
 
-        self.preping("watches")
         with OutputSafer(self):
             self.handleWatches(args)
-        self.ping("watches")
 
         self.output.append('],typeinfo=[')
         for name in self.typesToReport.keys():
@@ -476,10 +440,7 @@ class Dumper(DumperBase):
 
         self.output.append(',partial="%d"' % isPartial)
 
-        self.preping('safePrint')
         safePrint(''.join(self.output))
-        self.ping('safePrint')
-        safePrint('"%s"' % str(self.dumpStats()))
 
     def enterSubItem(self, item):
         if not item.iname:
@@ -504,7 +465,7 @@ class Dumper(DumperBase):
             if self.passExceptions:
                 showException("SUBITEM", exType, exValue, exTraceBack)
             self.putNumChild(0)
-            self.putSpecialValue("notaccessible")
+            self.putSpecialValue(SpecialNotAccessibleValue)
         try:
             if self.currentType.value:
                 typeName = self.stripClassTag(self.currentType.value)
@@ -512,10 +473,11 @@ class Dumper(DumperBase):
                     self.put('type="%s",' % typeName) # str(type.unqualified()) ?
 
             if  self.currentValue.value is None:
-                self.put('value="",encoding="notaccessible",numchild="0",')
+                self.put('value="",encoding="%d","numchild="0",'
+                        % SpecialNotAccessibleValue)
             else:
                 if not self.currentValue.encoding is None:
-                    self.put('valueencoded="%s",' % self.currentValue.encoding)
+                    self.put('valueencoded="%d",' % self.currentValue.encoding)
                 if self.currentValue.elided:
                     self.put('valueelided="%d",' % self.currentValue.elided)
                 self.put('value="%s",' % self.currentValue.value)
@@ -533,7 +495,7 @@ class Dumper(DumperBase):
     def parseAndEvaluate(self, exp):
         return gdb.parse_and_eval(exp)
 
-    def callHelper(self, value, function, args):
+    def callHelper(self, value, func, args):
         # args is a tuple.
         arg = ""
         for i in range(len(args)):
@@ -545,14 +507,14 @@ class Dumper(DumperBase):
             else:
                 arg += a
 
-        #warn("CALL: %s -> %s(%s)" % (value, function, arg))
+        #warn("CALL: %s -> %s(%s)" % (value, func, arg))
         typeName = self.stripClassTag(str(value.type))
         if typeName.find(":") >= 0:
             typeName = "'" + typeName + "'"
         # 'class' is needed, see http://sourceware.org/bugzilla/show_bug.cgi?id=11912
-        #exp = "((class %s*)%s)->%s(%s)" % (typeName, value.address, function, arg)
+        #exp = "((class %s*)%s)->%s(%s)" % (typeName, value.address, func, arg)
         ptr = value.address if value.address else self.pokeValue(value)
-        exp = "((%s*)%s)->%s(%s)" % (typeName, ptr, function, arg)
+        exp = "((%s*)%s)->%s(%s)" % (typeName, ptr, func, arg)
         #warn("CALL: %s" % exp)
         result = gdb.parse_and_eval(exp)
         #warn("  -> %s" % result)
@@ -566,13 +528,13 @@ class Dumper(DumperBase):
         except:
             return None
 
-    def pointerInfo(self, value):
+    def isBadPointer(self, value):
         try:
             target = value.dereference()
             target.is_optimized_out # Access test.
-            return (True, toInteger(value))
+            return False
         except:
-            return (False, toInteger(value))
+            return True
 
     def makeValue(self, typeobj, init):
         typename = "::" + self.stripClassTag(str(typeobj));
@@ -774,40 +736,38 @@ class Dumper(DumperBase):
         self.selectedInferior = lambda: self.cachedInferior
         return self.cachedInferior
 
-    def readRawMemory(self, address, size):
-        mem = self.selectedInferior().read_memory(address, size)
+    def readRawMemory(self, addr, size):
+        mem = self.selectedInferior().read_memory(addr, size)
         if sys.version_info[0] >= 3:
             mem.tobytes()
         return mem
 
-    def extractInt64(self, address):
-        return struct.unpack("q", self.readRawMemory(address, 8))[0]
+    def extractInt64(self, addr):
+        return struct.unpack("q", self.readRawMemory(addr, 8))[0]
 
-    def extractUInt64(self, address):
-        return struct.unpack("Q", self.readRawMemory(address, 8))[0]
+    def extractUInt64(self, addr):
+        return struct.unpack("Q", self.readRawMemory(addr, 8))[0]
 
-    def extractInt(self, address):
-        return struct.unpack("i", self.readRawMemory(address, 4))[0]
+    def extractInt(self, addr):
+        return struct.unpack("i", self.readRawMemory(addr, 4))[0]
 
-    def extractUInt(self, address):
-        return struct.unpack("I", self.readRawMemory(address, 4))[0]
+    def extractUInt(self, addr):
+        return struct.unpack("I", self.readRawMemory(addr, 4))[0]
 
-    def extractShort(self, address):
-        return struct.unpack("h", self.readRawMemory(address, 2))[0]
+    def extractShort(self, addr):
+        return struct.unpack("h", self.readRawMemory(addr, 2))[0]
 
-    def extractUShort(self, address):
-        return struct.unpack("H", self.readRawMemory(address, 2))[0]
+    def extractUShort(self, addr):
+        return struct.unpack("H", self.readRawMemory(addr, 2))[0]
 
-    def extractByte(self, address):
-        return struct.unpack("b", self.readRawMemory(address, 1))[0]
+    def extractByte(self, addr):
+        return struct.unpack("b", self.readRawMemory(addr, 1))[0]
 
     def findStaticMetaObject(self, typename):
-        symbol = gdb.lookup_global_symbol(typename + "::staticMetaObject")
-        return toInteger(symbol.value().address) if symbol else 0
+        return self.findSymbol(typename + "::staticMetaObject")
 
     def findSymbol(self, symbolName):
         try:
-            self.bump('findSymbol1')
             result = gdb.lookup_global_symbol(symbolName)
             return result.value() if result else 0
         except:
@@ -816,11 +776,9 @@ class Dumper(DumperBase):
         try:
             address = gdb.parse_and_eval("&'%s'" % symbolName)
             typeobj = gdb.lookup_type(self.qtNamespace() + "QMetaObject")
-            self.bump('findSymbol2')
             return self.createPointerValue(address, typeobj)
         except:
-            self.bump('findSymbol3')
-        return 0
+            return 0
 
     def put(self, value):
         self.output.append(value)
@@ -855,7 +813,7 @@ class Dumper(DumperBase):
     def qtVersion(self):
         try:
             # Only available with Qt 5.3+
-            qtversion = int(str(gdb.parse_and_eval("((void**)&qtHookData)[2]")), 16)
+            qtversion = int(gdb.parse_and_eval("((void**)&qtHookData)[2]"))
             self.qtVersion = lambda: qtversion
             return qtversion
         except:
@@ -886,12 +844,12 @@ class Dumper(DumperBase):
         self.isQt3Support = lambda: self.cachedIsQt3Suport
         return self.cachedIsQt3Suport
 
-    def putAddress(self, address):
+    def putAddress(self, addr):
         if self.currentPrintsAddress and not self.isCli:
             try:
-                # address can be "None", int(None) fails.
-                #self.put('address="0x%x",' % int(address))
-                self.currentAddress = 'address="0x%x",' % toInteger(address)
+                # addr can be "None", int(None) fails.
+                #self.put('addr="0x%x",' % int(addr))
+                self.currentAddress = 'addr="0x%x",' % toInteger(addr)
             except:
                 pass
 
@@ -941,14 +899,31 @@ class Dumper(DumperBase):
     def simpleEncoding(self, typeobj):
         code = typeobj.code
         if code == BoolCode or code == CharCode:
-            return "int:1"
+            return Hex2EncodedInt1
         if code == IntCode:
             if str(typeobj).find("unsigned") >= 0:
-                 return "uint:%d" % typeobj.sizeof
+                if typeobj.sizeof == 1:
+                    return Hex2EncodedUInt1
+                if typeobj.sizeof == 2:
+                    return Hex2EncodedUInt2
+                if typeobj.sizeof == 4:
+                    return Hex2EncodedUInt4
+                if typeobj.sizeof == 8:
+                    return Hex2EncodedUInt8
             else:
-                 return "int:%d" % typeobj.sizeof
+                if typeobj.sizeof == 1:
+                    return Hex2EncodedInt1
+                if typeobj.sizeof == 2:
+                    return Hex2EncodedInt2
+                if typeobj.sizeof == 4:
+                    return Hex2EncodedInt4
+                if typeobj.sizeof == 8:
+                    return Hex2EncodedInt8
         if code == FloatCode:
-            return "float:%d" % typeobj.sizeof
+            if typeobj.sizeof == 4:
+                return Hex2EncodedFloat4
+            if typeobj.sizeof == 8:
+                return Hex2EncodedFloat8
         return None
 
     def isReferenceType(self, typeobj):
@@ -964,7 +939,7 @@ class Dumper(DumperBase):
         if value is None:
             # Happens for non-available watchers in gdb versions that
             # need to use gdb.execute instead of gdb.parse_and_eval
-            self.putSpecialValue("notaccessible")
+            self.putSpecialValue(SpecialNotAvailableValue)
             self.putType("<unknown>")
             self.putNumChild(0)
             return
@@ -973,7 +948,7 @@ class Dumper(DumperBase):
         typeName = str(typeobj)
 
         if value.is_optimized_out:
-            self.putSpecialValue("optimizedout")
+            self.putSpecialValue(SpecialOptimizedOutValue)
             self.putType(typeName)
             self.putNumChild(0)
             return
@@ -994,7 +969,7 @@ class Dumper(DumperBase):
             try:
                 # Try to recognize null references explicitly.
                 if toInteger(value.address) == 0:
-                    self.putSpecialValue("nullreference")
+                    self.putSpecialValue(SpecialNullReferenceValue)
                     self.putType(typeName)
                     self.putNumChild(0)
                     return
@@ -1022,7 +997,7 @@ class Dumper(DumperBase):
                 self.putBetterType("%s &" % self.currentType.value)
                 return
             except RuntimeError:
-                self.putSpecialValue("optimizedout")
+                self.putSpecialValue(SpecialOptimizedOutValue)
                 self.putType(typeName)
                 self.putNumChild(0)
                 return
@@ -1031,7 +1006,7 @@ class Dumper(DumperBase):
             self.putType(typeName)
             if typeobj.sizeof == 1:
                 # Force unadorned value transport for char and Co.
-                self.putValue(int(value))
+                self.putValue(int(value) & 0xff)
             else:
                 self.putValue(value)
             self.putNumChild(0)
@@ -1103,7 +1078,7 @@ class Dumper(DumperBase):
             # Anonymous union. We need a dummy name to distinguish
             # multiple anonymous unions in the struct.
             self.putType(typeobj)
-            self.putSpecialValue("emptystructure")
+            self.putSpecialValue(SpecialEmptyStructureValue)
             self.anonNumber += 1
             with Children(self, 1):
                 self.listAnonymous(value, "#%d" % self.anonNumber, typeobj)
@@ -1113,7 +1088,7 @@ class Dumper(DumperBase):
             # FORTRAN strings
             size = typeobj.sizeof
             data = self.readMemory(value.address, size)
-            self.putValue(data, "latin1", 1)
+            self.putValue(data, Hex2EncodedLatin1, 1)
             self.putType(typeobj)
 
         if typeobj.code != StructCode and typeobj.code != UnionCode:
@@ -1142,10 +1117,19 @@ class Dumper(DumperBase):
         #warn("INAME: %s " % self.currentIName)
         #warn("INAMES: %s " % self.expandedINames)
         #warn("EXPANDED: %s " % (self.currentIName in self.expandedINames))
+        staticMetaObject = self.extractStaticMetaObject(value.type)
+        if staticMetaObject:
+            self.putQObjectNameValue(value)
         self.putType(typeName)
+        self.putEmptyValue()
         self.putNumChild(len(typeobj.fields()))
-        self.putStructGuts(value)
 
+        if self.currentIName in self.expandedINames:
+            innerType = None
+            with Children(self, 1, childType=innerType):
+                self.putFields(value)
+                if staticMetaObject:
+                    self.putQObjectGuts(value, staticMetaObject)
 
     def toBlob(self, value):
         size = toInteger(value.type.sizeof)
@@ -1177,40 +1161,17 @@ class Dumper(DumperBase):
         #    return mem.tobytes()
         return mem
 
-    def createSpecialBreakpoints(self, args):
-        self.specialBreakpoints = []
-        def newSpecial(spec):
-            class SpecialBreakpoint(gdb.Breakpoint):
-                def __init__(self, spec):
-                    super(SpecialBreakpoint, self).\
-                        __init__(spec, gdb.BP_BREAKPOINT, internal=True)
-                    self.spec = spec
-
-                def stop(self):
-                    print("Breakpoint on '%s' hit." % self.spec)
-                    return True
-            return SpecialBreakpoint(spec)
-
-        # FIXME: ns is accessed too early. gdb.Breakpoint() has no
-        # 'rbreak' replacement, and breakpoints created with
-        # 'gdb.execute("rbreak...") cannot be made invisible.
-        # So let's ignore the existing of namespaced builds for this
-        # fringe feature here for now.
-        ns = self.qtNamespace()
-        if args.get('breakonabort', 0):
-            self.specialBreakpoints.append(newSpecial("abort"))
-
-        if args.get('breakonwarning', 0):
-            self.specialBreakpoints.append(newSpecial(ns + "qWarning"))
-            self.specialBreakpoints.append(newSpecial(ns + "QMessageLogger::warning"))
-
-        if args.get('breakonfatal', 0):
-            self.specialBreakpoints.append(newSpecial(ns + "qFatal"))
-            self.specialBreakpoints.append(newSpecial(ns + "QMessageLogger::fatal"))
-
-
     def putFields(self, value, dumpBase = True):
             fields = value.type.fields()
+            if self.sortStructMembers:
+                def sortOrder(field):
+                    if field.is_base_class:
+                        return 0
+                    if field.name and field.name.startswith("_vptr."):
+                        return 1
+                    return 2
+                fields.sort(key = lambda field: "%d%s" % (sortOrder(field), field.name))
+
             #warn("TYPE: %s" % value.type)
             #warn("FIELDS: %s" % fields)
             baseNumber = 0
@@ -1244,7 +1205,6 @@ class Dumper(DumperBase):
                         # int (**)(void)
                         n = 100
                         self.putType(" ")
-                        self.put('sortgroup="20"')
                         self.putValue(value[field.name])
                         self.putNumChild(n)
                         if self.isExpanded():
@@ -1268,7 +1228,6 @@ class Dumper(DumperBase):
                         baseNumber += 1
                         with UnnamedSubItem(self, "@%d" % baseNumber):
                             baseValue = value.cast(field.type)
-                            self.put('sortgroup="30"')
                             self.putBaseClassName(field.name)
                             self.putAddress(baseValue.address)
                             self.putItem(baseValue, False)
@@ -1343,7 +1302,8 @@ class Dumper(DumperBase):
     #                         s = self.readMemory(data, 2 * size)
     #
     #                thread = gdb.selected_thread()
-    #                inner = '{valueencoded="uf16:2:0",id="'
+    #                inner = '{valueencoded="';
+    #                inner += str(Hex4EncodedLittleEndianWithoutQuotes)+'",id="'
     #                inner += str(thread.num) + '",value="'
     #                inner += s
     #                #inner += self.encodeString(objectName)
@@ -1425,10 +1385,8 @@ class Dumper(DumperBase):
                 self.fallbackQtVersion = 0x30308
                 return ""
             # Seemingly needed with Debian's GDB 7.4.1
-            pos1 = s.find("class")
-            pos2 = s.find("QByteArray")
-            if pos1 > -1 and pos2 > -1:
-                ns = s[s.find("class") + 6:s.find("QByteArray")]
+            ns = s[s.find("class")+6:s.find("QByteArray")]
+            if len(ns):
                 self.qtNamespaceToReport = ns
                 self.qtNamespace = lambda: ns
                 return ns
@@ -1613,18 +1571,19 @@ class Dumper(DumperBase):
         self.typesToReport[typestring] = typeobj
         return typeobj
 
-    def doContinue(self):
-        gdb.execute('continue')
-
-    def fetchStack(self, args):
+    def stackListFrames(self, args):
         def fromNativePath(str):
             return str.replace('\\', '/')
 
         limit = int(args['limit'])
         if limit <= 0:
            limit = 10000
+        options = args['options']
+        opts = {}
+        if options == "nativemixed":
+            opts["nativemixed"] = 1
 
-        self.prepare(args)
+        self.prepare(opts)
         self.output = []
 
         frame = gdb.newest_frame()
@@ -1636,7 +1595,7 @@ class Dumper(DumperBase):
                 functionName = "??" if name is None else name
                 fileName = ""
                 objfile = ""
-                symtab = ""
+                fullName = ""
                 pc = frame.pc()
                 sal = frame.find_sal()
                 line = -1
@@ -1645,78 +1604,84 @@ class Dumper(DumperBase):
                     symtab = sal.symtab
                     if not symtab is None:
                         objfile = fromNativePath(symtab.objfile.filename)
-                        fullname = symtab.fullname()
-                        if fullname is None:
-                            fileName = ""
+                        fileName = fromNativePath(symtab.filename)
+                        fullName = symtab.fullname()
+                        if fullName is None:
+                            fullName = ""
                         else:
-                            fileName = fromNativePath(fullname)
+                            fullName = fromNativePath(fullName)
 
-                if self.nativeMixed and functionName == "qt_qmlDebugMessageAvailable":
-                    interpreterStack = self.extractInterpreterStack()
-                    #print("EXTRACTED INTEPRETER STACK: %s" % interpreterStack)
-                    for interpreterFrame in interpreterStack.get('frames', []):
-                        function = interpreterFrame.get('function', '')
-                        fileName = interpreterFrame.get('file', '')
-                        language = interpreterFrame.get('language', '')
-                        lineNumber = interpreterFrame.get('line', 0)
-                        context = interpreterFrame.get('context', 0)
+                if self.nativeMixed:
+                    if self.isReportableQmlFrame(functionName):
+                        engine = frame.read_var("engine")
+                        h = self.extractQmlLocation(engine)
+                        self.put(('frame={level="%s",func="%s",file="%s",'
+                                 'fullname="%s",line="%s",language="js",addr="0x%x"}')
+                            % (i, h['functionName'], h['fileName'], h['fileName'],
+                                  h['lineNumber'], h['context']))
 
-                        self.put(('frame={function="%s",file="%s",'
-                                 'line="%s",language="%s",context="%s"}')
-                            % (function, fileName, lineNumber, language, context))
-
-                    if False and self.isInternalInterpreterFrame(functionName):
-                        frame = frame.older()
-                        self.put(('frame={address="0x%x",function="%s",'
-                                'file="%s",line="%s",'
-                                'module="%s",language="c",usable="0"}') %
-                            (pc, functionName, fileName, line, objfile))
                         i += 1
                         frame = frame.older()
                         continue
 
-                self.put(('frame={level="%s",address="0x%x",function="%s",'
-                        'file="%s",line="%s",module="%s",language="c"}') %
-                    (i, pc, functionName, fileName, line, objfile))
+                    if self.isInternalQmlFrame(functionName):
+                        frame = frame.older()
+                        self.put(('frame={level="%s",addr="0x%x",func="%s",'
+                                'file="%s",fullname="%s",line="%s",'
+                                'from="%s",language="c",usable="0"}') %
+                            (i, pc, functionName, fileName, fullName, line, objfile))
+                        i += 1
+                        frame = frame.older()
+                        continue
+
+                self.put(('frame={level="%s",addr="0x%x",func="%s",'
+                        'file="%s",fullname="%s",line="%s",'
+                        'from="%s",language="c"}') %
+                    (i, pc, functionName, fileName, fullName, line, objfile))
 
             frame = frame.older()
             i += 1
-        safePrint('frames=[' + ','.join(self.output) + ']')
+        safePrint(''.join(self.output))
 
     def createResolvePendingBreakpointsHookBreakpoint(self, args):
         class Resolver(gdb.Breakpoint):
             def __init__(self, dumper, args):
                 self.dumper = dumper
                 self.args = args
-                spec = "qt_qmlDebugConnectorOpen"
+                spec = "qt_v4ResolvePendingBreakpointsHook"
+                print("Preparing hook to resolve pending QML breakpoint at %s" % args)
                 super(Resolver, self).\
                     __init__(spec, gdb.BP_BREAKPOINT, internal=True, temporary=False)
 
             def stop(self):
-                self.dumper.resolvePendingInterpreterBreakpoint(args)
+                bp = self.dumper.doInsertQmlBreakpoint(args)
+                print("Resolving QML breakpoint %s -> %s" % (args, bp))
                 self.enabled = False
                 return False
 
-        self.interpreterBreakpointResolvers.append(Resolver(self, args))
+        self.qmlBreakpoints.append(Resolver(self, args))
 
     def exitGdb(self, _):
         gdb.execute("quit")
 
     def loadDumpers(self, args):
-        print(self.setupDumpers())
+        self.setupDumpers()
+
+    def reportDumpers(self, msg):
+        print(msg)
 
     def profile1(self, args):
         """Internal profiling"""
         import tempfile
         import cProfile
         tempDir = tempfile.gettempdir() + "/bbprof"
-        cProfile.run('theDumper.fetchVariables(%s)' % args, tempDir)
+        cProfile.run('theDumper.showData(%s)' % args, tempDir)
         import pstats
         pstats.Stats(tempDir).sort_stats('time').print_stats()
 
     def profile2(self, args):
         import timeit
-        print(timeit.repeat('theDumper.fetchVariables(%s)' % args,
+        print(timeit.repeat('theDumper.showData(%s)' % args,
             'from __main__ import theDumper', number=10))
 
 
@@ -1756,7 +1721,7 @@ class CliDumper(Dumper):
             if self.passExceptions:
                 showException("SUBITEM", exType, exValue, exTraceBack)
             self.putNumChild(0)
-            self.putSpecialValue("notaccessible")
+            self.putSpecialValue(SpecialNotAccessibleValue)
         try:
             if self.currentType.value:
                 typeName = self.stripClassTag(self.currentType.value)
@@ -1766,11 +1731,11 @@ class CliDumper(Dumper):
                 self.put('<not accessible>')
             else:
                 value = self.currentValue.value
-                if self.currentValue.encoding == "latin1":
+                if self.currentValue.encoding is Hex2EncodedLatin1:
                     value = self.hexdecode(value)
-                elif self.currentValue.encoding == "utf8":
+                elif self.currentValue.encoding is Hex2EncodedUtf8:
                     value = self.hexdecode(value)
-                elif self.currentValue.encoding == "utf16":
+                elif self.currentValue.encoding is Hex4EncodedLittleEndian:
                     b = bytes.fromhex(value)
                     value = codecs.decode(b, 'utf-16')
                 self.put('"%s"' % value)
@@ -1809,11 +1774,10 @@ class CliDumper(Dumper):
     def putAddressRange(self, base, step):
         return True
 
-    def fetchVariables(self, args):
+    def showData(self, args):
         args['fancy'] = 1
-        args['passexception'] = 1
+        args['passException'] = 1
         args['autoderef'] = 1
-        args['qobjectnames'] = 1
         name = args['varlist']
         self.prepare(args)
         self.output = name + ' = '
@@ -1824,11 +1788,11 @@ class CliDumper(Dumper):
         return self.output
 
 # Global instance.
-#if gdb.parameter('height') is None:
-theDumper = Dumper()
-#else:
-#    import codecs
-#    theDumper = CliDumper()
+if gdb.parameter('height') is None:
+    theDumper = Dumper()
+else:
+    import codecs
+    theDumper = CliDumper()
 
 ######################################################################
 #
@@ -1847,14 +1811,29 @@ registerCommand("threadnames", threadnames)
 #
 #######################################################################
 
-class InterpreterMessageBreakpoint(gdb.Breakpoint):
+#class QmlEngineCreationTracker(gdb.Breakpoint):
+#    def __init__(self):
+#        spec = "QQmlEnginePrivate::init"
+#        super(QmlEngineCreationTracker, self).\
+#            __init__(spec, gdb.BP_BREAKPOINT, internal=True)
+#
+#    def stop(self):
+#        engine = gdb.parse_and_eval("q_ptr")
+#        print("QML engine created: %s" % engine)
+#        theDumper.qmlEngines.append(engine)
+#        return False
+#
+#QmlEngineCreationTracker()
+
+class TriggeredBreakpointHookBreakpoint(gdb.Breakpoint):
     def __init__(self):
-        spec = "qt_qmlDebugMessageAvailable"
-        super(InterpreterMessageBreakpoint, self).\
+        spec = "qt_v4TriggeredBreakpointHook"
+        super(TriggeredBreakpointHookBreakpoint, self).\
             __init__(spec, gdb.BP_BREAKPOINT, internal=True)
 
     def stop(self):
-        print("Interpreter event received.")
-        return theDumper.handleInterpreterMessage()
+        print("QML engine stopped.")
+        return True
 
-InterpreterMessageBreakpoint()
+TriggeredBreakpointHookBreakpoint()
+

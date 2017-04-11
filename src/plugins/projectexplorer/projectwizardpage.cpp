@@ -339,7 +339,7 @@ ProjectWizardPage::~ProjectWizardPage()
     delete m_ui;
 }
 
-void ProjectWizardPage::setModel(TreeModel *model)
+void ProjectWizardPage::setModel(Utils::TreeModel<> *model)
 {
     delete m_model;
     m_model = model;
@@ -487,18 +487,17 @@ void ProjectWizardPage::initializeProjectTree(Node *context, const QStringList &
                                               IWizardFactory::WizardKind kind,
                                               ProjectAction action)
 {
- //--vvv-- GoldMax --vvv--
- if(context && context->nodeType() != ProjectNodeType && context->projectNode())
-  context = context->projectNode();
- //--^^^-- GoldMax --^^^--
+	//--vvv-- GoldMax --vvv--
+	if(context && context->nodeType() != ProjectNodeType && context->projectNode())
+		context = context->projectNode();
+	//--^^^-- GoldMax --^^^--
 
-    BestNodeSelector selector(m_commonDirectory, paths);
+				BestNodeSelector selector(m_commonDirectory, paths);
     AddNewTree *tree = getChoices(paths, kind, context, &selector);
 
     setAdditionalInfo(selector.deployingProjects());
 
-    auto model = new TreeModel(tree);
-    setModel(model);
+    setModel(new TreeModel<>(tree));
     setBestNode(selector.bestChoice());
     setAddingSubProject(action == AddSubProject);
 }

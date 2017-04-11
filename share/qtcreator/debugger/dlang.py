@@ -6,9 +6,6 @@ from dumper import *
 #
 #######################################################################
 
-def echo(message):
-    print("XXX: %s\n" % message.encode("latin1"))
-
 def encodeDArray(d, p, innerType, suffix, length):
     t = d.lookupType(innerType)
     p = p.cast(t.pointer())
@@ -31,11 +28,8 @@ def encodeDChar4Array(d, p, length):
 def cleanDType(type):
     return stripClassTag(str(type)).replace("uns long long", "string")
 
-def qdump___Array_char(d, value):
-    echo("ZZZ")
-    d.putValue("XXX")
-    d.putType("string")
-    """n = value["length"]
+def qdump__Array_char(d, value):
+    n = value["length"]
     p = value["ptr"]
     d.putType("string")
     if n==0:
@@ -65,7 +59,7 @@ def qdump___Array_char(d, value):
                         d.putType(innerType)
                         d.putValue((p+i).dereference())
                         d.putNumChild(0)
-"""
+
 def qdump__Array_dchar(d, value):
     n = value["length"]
     p = value["ptr"]

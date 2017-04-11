@@ -3,8 +3,8 @@ include(../../qtcreator.pri)
 TEMPLATE  = subdirs
 
 SUBDIRS   = \
-    autotest \
-    clangstaticanalyzer \
+				#autotest \
+				#clangstaticanalyzer \
     coreplugin \
     texteditor \
     cppeditor \
@@ -14,10 +14,10 @@ SUBDIRS   = \
     bookmarks \
     projectexplorer \
     vcsbase \
-    perforce \
-    subversion \
+				#perforce \
+				#subversion \
     git \
-    cvs \
+				#cvs \
     cpptools \
     qtsupport \
     qmakeprojectmanager \
@@ -26,36 +26,37 @@ SUBDIRS   = \
     cpaster \
     cmakeprojectmanager \
     autotoolsprojectmanager \
-    fakevim \
-    emacskeys \
+				#fakevim \
+				#emacskeys \
     designer \
     resourceeditor \
     genericprojectmanager \
     qmljseditor \
     qmlprojectmanager \
-    glsleditor \
+				#glsleditor \
     pythoneditor \
-    nim \
-    mercurial \
-    bazaar \
+				#nim \
+				#mercurial \
+				#bazaar \
     classview \
     tasklist \
     qmljstools \
     macros \
-    remotelinux \
-    android \
-    valgrind \
+				#remotelinux \
+				#android \
+				#valgrind \
     todo \
-    qnx \
-    clearcase \
-    baremetal \
-    ios \
+				#qnx \
+				#clearcase \
+				#baremetal \
+				#ios \
     beautifier \
-    modeleditor \
-    qmakeandroidsupport \
-    winrt \
-    qmlprofiler \
-    updateinfo \
+				#modeleditor \
+				#qmakeandroidsupport \
+				#winrt \
+				#qmlprofiler \
+				#updateinfo \
+				#scxmleditor \
     welcome \
     buildallbutton \
     deditor \
@@ -78,6 +79,7 @@ exists(../shared/qbs/qbs.pro)|!isEmpty(QBS_INSTALL_DIR): \
 isEmpty(LLVM_INSTALL_DIR):LLVM_INSTALL_DIR=$$(LLVM_INSTALL_DIR)
 exists($$LLVM_INSTALL_DIR) {
     SUBDIRS += clangcodemodel
+#    SUBDIRS += clangrefactoring
 } else {
     warning("Set LLVM_INSTALL_DIR to build the Clang Code Model. " \
             "For details, see doc/src/editors/creator-clang-codemodel.qdoc.")

@@ -1,7 +1,7 @@
 #include "buildallbuttonplugin.h"
 #include "buildallbuttonconstants.h"
 
-#include <coreplugin/icore.h>
+//#include <coreplugin/icore.h>
 #include <coreplugin/icontext.h>
 #include <coreplugin/actionmanager/actionmanager.h>
 #include <coreplugin/actionmanager/command.h>
