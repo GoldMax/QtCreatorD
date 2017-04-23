@@ -373,12 +373,18 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					case 'r':
 						if (name == QLatin1String("ref")) kind = (unsigned)T_FIRST_KEYWORD;
 						break;
+					case 'n':
+						if (name == QLatin1String("new")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
 					case 'o':
 						if (name == QLatin1String("out")) kind = (unsigned)T_FIRST_KEYWORD;
 						break;
 				} break;
 				case 4: switch(name.at(0).toLatin1())
 				{
+					case 'a':
+							if (name == QLatin1String("auto")) kind = (unsigned)T_FIRST_KEYWORD;
+							break;
 					case 'b':
 						if (name == QLatin1String("byte")) kind = (unsigned)T_INT;
 						break;
@@ -399,6 +405,9 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					break;
 					case 'p':
 						if (name == QLatin1String("pure")) kind = (unsigned)T_FIRST_KEYWORD;
+					break;
+					case 't':
+						if (name == QLatin1String("this")) kind = (unsigned)T_FIRST_KEYWORD;
 					break;
 				} break;
 				case 5: switch(name.at(0).toLatin1())
@@ -428,6 +437,9 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					case 's':
 						if (name == QLatin1String("scope")) kind = (unsigned)T_FIRST_KEYWORD;
 						else if (name == QLatin1String("super")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
+					case 't':
+						if (name == QLatin1String("throw")) kind = (unsigned)T_FIRST_KEYWORD;
 						break;
 					case 'w':
 						if (name == QLatin1String("wchar")) kind = (unsigned)T_INT;
@@ -501,6 +513,7 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					case '_':
 						if (name == QLatin1String("__FILE__")) kind = (unsigned)T_LAST_TOKEN;
 						else if (name == QLatin1String("__LINE__")) kind = (unsigned)T_LAST_TOKEN;
+						else if (name == QLatin1String("__traits")) kind = (unsigned)T_LAST_TOKEN;
 						break;
 					case 'a':
 						if (name == QLatin1String("abstract")) kind = (unsigned)T_FIRST_KEYWORD;
