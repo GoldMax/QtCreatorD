@@ -419,6 +419,7 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 						break;
 					case 'c':
 						if (name == QLatin1String("creal")) kind = (unsigned)T_INT;
+						else if (name == QLatin1String("class")) kind = (unsigned)T_FIRST_KEYWORD;
 						break;
 					case 'd':
 						if (name == QLatin1String("dchar")) kind = (unsigned)T_INT;
@@ -457,6 +458,7 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					case 's':
 						if (name == QLatin1String("string")) kind = (unsigned)T_INT;
 						else if (name == QLatin1String("shared")) kind = (unsigned)T_FIRST_KEYWORD;
+						else if (name == QLatin1String("struct")) kind = (unsigned)T_FIRST_KEYWORD;
 					break;
 					case 'c':
 						if (name == QLatin1String("cfloat")) kind = (unsigned)T_INT;
@@ -470,6 +472,7 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					break;
 					case 'p':
 						if (name == QLatin1String("pragma")) kind = (unsigned)T_LAST_TOKEN;
+						else if (name == QLatin1String("public")) kind = (unsigned)T_FIRST_KEYWORD;
 					break;
 					case 't':
 						if (name == QLatin1String("t_size")) kind = (unsigned)T_LAST_TOKEN;
@@ -502,7 +505,8 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 						if (name == QLatin1String("wstring")) kind = (unsigned)T_INT;
 						break;
 					case 'p':
-						if (name == QLatin1String("package")) kind = (unsigned)T_FIRST_KEYWORD;
+						if (name == QLatin1String("private")) kind = (unsigned)T_FIRST_KEYWORD;
+						else if (name == QLatin1String("package")) kind = (unsigned)T_FIRST_KEYWORD;
 						break;
 					case 'n':
 						if (name == QLatin1String("nothrow")) kind = (unsigned)T_FIRST_KEYWORD;
@@ -543,6 +547,9 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 						if (name == QLatin1String("immutable")) kind = (unsigned)T_FIRST_KEYWORD;
 						else if (name == QLatin1String("interface")) kind = (unsigned)T_FIRST_KEYWORD;
 						break;
+					case 'p':
+							if (name == QLatin1String("protected"))	kind = (unsigned)T_FIRST_KEYWORD;
+							break;
 				} break;
 				case 10: switch (name.at(0).toLatin1())
 				{
