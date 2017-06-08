@@ -379,6 +379,9 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					case 'o':
 						if (name == QLatin1String("out")) kind = (unsigned)T_FIRST_KEYWORD;
 						break;
+					case 't':
+						if (name == QLatin1String("try")) kind = (unsigned)T_FIRST_KEYWORD;
+						break;
 				} break;
 				case 4: switch(name.at(0).toLatin1())
 				{
@@ -409,6 +412,9 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					case 't':
 						if (name == QLatin1String("this")) kind = (unsigned)T_FIRST_KEYWORD;
 					break;
+					case 'w':
+						if (name == QLatin1String("with")) kind = (unsigned)T_FIRST_KEYWORD;
+					break;
 				} break;
 				case 5: switch(name.at(0).toLatin1())
 				{
@@ -420,6 +426,7 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					case 'c':
 						if (name == QLatin1String("creal")) kind = (unsigned)T_INT;
 						else if (name == QLatin1String("class")) kind = (unsigned)T_FIRST_KEYWORD;
+						else if (name == QLatin1String("catch")) kind = (unsigned)T_FIRST_KEYWORD;
 						break;
 					case 'd':
 						if (name == QLatin1String("dchar")) kind = (unsigned)T_INT;
@@ -457,6 +464,7 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					break;
 					case 's':
 						if (name == QLatin1String("string")) kind = (unsigned)T_INT;
+						else if (name == QLatin1String("size_t")) kind = (unsigned)T_INT;
 						else if (name == QLatin1String("shared")) kind = (unsigned)T_FIRST_KEYWORD;
 						else if (name == QLatin1String("struct")) kind = (unsigned)T_FIRST_KEYWORD;
 					break;
@@ -476,6 +484,7 @@ void DEditorHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					break;
 					case 't':
 						if (name == QLatin1String("t_size")) kind = (unsigned)T_LAST_TOKEN;
+						else if (name == QLatin1String("typeid")) kind = (unsigned)T_FIRST_KEYWORD;
 					break;
 					case 'u':
 						if (name == QLatin1String("ushort")) kind = (unsigned)T_INT;
