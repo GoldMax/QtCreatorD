@@ -1,7 +1,8 @@
 QTC_PLUGIN_NAME = BuildAllButton
 QTC_LIB_DEPENDS += \
-    extensionsystem \
-    utils
+				extensionsystem \
+				utils
 QTC_PLUGIN_DEPENDS += \
-    coreplugin \
-    projectexplorer
+				coreplugin \
+				texteditor \
+				projectexplorer
