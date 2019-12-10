@@ -23,7 +23,7 @@ public:
 	virtual ~DEditorPlugin();
 
 	// IPlugin
-	bool initialize(const QStringList &arguments, QString *errorMessage = 0);
+	bool initialize(const QStringList &arguments, QString *errorMessage = nullptr);
 	void extensionsInitialized();
 	ShutdownFlag aboutToShutdown();
 

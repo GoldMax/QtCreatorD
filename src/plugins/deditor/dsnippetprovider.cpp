@@ -1,40 +1,40 @@
-#include "dsnippetprovider.h"
+//#include "dsnippetprovider.h"
 
-#include "deditorhighlighter.h"
-#include "dautocompleter.h"
-#include "dindenter.h"
-#include "deditorconstants.h"
+//#include "deditorhighlighter.h"
+//#include "dautocompleter.h"
+//#include "dindenter.h"
+//#include "deditorconstants.h"
 
-#include <cpptools/cppqtstyleindenter.h>
+//#include <cpptools/cppqtstyleindenter.h>
 
-#include <texteditor/snippets/snippeteditor.h>
-#include <texteditor/textdocument.h>
+//#include <texteditor/snippets/snippeteditor.h>
+//#include <texteditor/textdocument.h>
 
-#include <QLatin1String>
-#include <QCoreApplication>
+//#include <QLatin1String>
+//#include <QCoreApplication>
 
-using namespace DEditor;
+//using namespace DEditor;
 
-DSnippetProvider::DSnippetProvider() :
-				TextEditor::ISnippetProvider()
-{}
+//DSnippetProvider::DSnippetProvider() :
+//				TextEditor::ISnippetProvider()
+//{}
 
-DSnippetProvider::~DSnippetProvider()
-{}
+//DSnippetProvider::~DSnippetProvider()
+//{}
 
-QString DSnippetProvider::groupId() const
-{
-				return QLatin1String(Constants::D_SNIPPETS_GROUP_ID);
-}
+//QString DSnippetProvider::groupId() const
+//{
+//				return QLatin1String(Constants::D_SNIPPETS_GROUP_ID);
+//}
 
-QString DSnippetProvider::displayName() const
-{
-				return QCoreApplication::translate("DEditor::DSnippetProvider", "D");
-}
+//QString DSnippetProvider::displayName() const
+//{
+//				return QCoreApplication::translate("DEditor::DSnippetProvider", "D");
+//}
 
-void DSnippetProvider::decorateEditor(TextEditor::SnippetEditorWidget *editor) const
-{
-				editor->textDocument()->setSyntaxHighlighter(new DEditorHighlighter);
-				editor->textDocument()->setIndenter(new DIndenter);
-				editor->setAutoCompleter(new DCompleter);
-}
+//void DSnippetProvider::decorateEditor(TextEditor::SnippetEditorWidget *editor) const
+//{
+//				editor->textDocument()->setSyntaxHighlighter(new DEditorHighlighter);
+//				editor->textDocument()->setIndenter(new DIndenter);
+//				editor->setAutoCompleter(new DCompleter);
+//}

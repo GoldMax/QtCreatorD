@@ -1,36 +1,36 @@
-#ifndef DEDITORHIGHLIGHTER_H
-#define DEDITORHIGHLIGHTER_H
+//#ifndef DEDITORHIGHLIGHTER_H
+//#define DEDITORHIGHLIGHTER_H
 
-#include "deditorconstants.h"
+//#include "deditorconstants.h"
 
-#include <texteditor/syntaxhighlighter.h>
-#include <cplusplus/Token.h>
-#include <cplusplus/SimpleLexer.h>
+//#include <texteditor/syntaxhighlighter.h>
+//#include <cplusplus/Token.h>
+//#include <cplusplus/SimpleLexer.h>
 
 
-namespace DEditor {
+//namespace DEditor {
 
-class DEditorHighlighter : public TextEditor::SyntaxHighlighter
-{
-	Q_OBJECT
+//class DEditorHighlighter : public TextEditor::SyntaxHighlighter
+//{
+//	Q_OBJECT
 
-public:
-	DEditorHighlighter();
+//public:
+//	DEditorHighlighter();
 
-protected:
-	void highlightBlock(const QString &text);
-	void highlightLine(const QString &line, int position, int length,
-																				const QTextCharFormat &format);
-	void highlightWord(QStringRef word, int position, int length);
+//protected:
+//	void highlightBlock(const QString &text);
+//	void highlightLine(const QString &line, int position, int length,
+//																				const QTextCharFormat &format);
+//	void highlightWord(QStringRef word, int position, int length);
 
-	void highlightDoxygenComment(const QString &text, int position,
-																														int length);
+//	void highlightDoxygenComment(const QString &text, int position,
+//																														int length);
 
-private:
-	bool isPPKeyword(const QStringRef &text) const;
-	void correctTokens(CPlusPlus::Tokens& tokens, const QString& text);
-};
+//private:
+//	bool isPPKeyword(const QStringRef &text) const;
+//	void correctTokens(CPlusPlus::Tokens& tokens, const QString& text);
+//};
 
-} // namespace DEditor
+//} // namespace DEditor
 
-#endif // DEDITORHIGHLIGHTER_H
+//#endif // DEDITORHIGHLIGHTER_H

@@ -91,25 +91,28 @@ DFileWizardFactory::DFileWizardFactory(FileType fileType) :
 Core::BaseFileWizard* DFileWizardFactory::create(QWidget *parent,
 																														const Core::WizardDialogParameters &params) const
 {
-		DFileWizardDialog* wizard = new DFileWizardDialog(this, params.extraValues(), parent);
+	DFileWizardDialog* wizard = new DFileWizardDialog(this, params.extraValues(), parent);
 
-		QLatin1String key(ProjectExplorer::Constants::PREFERRED_PROJECT_NODE);
-		QVariant qnode = params.extraValues().value(key);
-		if(qnode.isNull() == false)
+	QLatin1String key(ProjectExplorer::Constants::PREFERRED_PROJECT_NODE);
+	QVariant qnode = params.extraValues().value(key);
+	if(qnode.isNull() == false)
+	{
+		ProjectExplorer::Node* node = qnode.value<ProjectExplorer::Node*>();
+		if(node->isProjectNodeType())
 		{
-   ProjectExplorer::ProjectNode* projNode = qnode.value<ProjectExplorer::Node*>()->projectNode();
-   wizard->projFile = projNode->filePath().toString();
+			ProjectExplorer::ProjectNode* projNode = node->asProjectNode();
+			wizard->projFile = projNode->filePath().toString();
 		}
+	}
 
-		wizard->setWindowTitle(tr("New %1").arg(displayName()));
-		wizard->setPath(params.defaultPath());
-		foreach (QWizardPage *p, wizard->extensionPages())
-			wizard->addPage(p);
-		return wizard;
+	wizard->setWindowTitle(tr("New %1").arg(displayName()));
+	wizard->setPath(params.defaultPath());
+	foreach (QWizardPage *p, wizard->extensionPages())
+		wizard->addPage(p);
+	return wizard;
 }
 
-Core::GeneratedFiles DFileWizardFactory::generateFiles(const QWizard *w,
-																																																									QString *) const
+Core::GeneratedFiles DFileWizardFactory::generateFiles(const QWizard *w,	QString *) const
 {
 	const DFileWizardDialog *wizardDialog = qobject_cast<const DFileWizardDialog *>(w);
 	const QString path = wizardDialog->path();
@@ -127,10 +130,10 @@ Core::GeneratedFiles DFileWizardFactory::generateFiles(const QWizard *w,
 	{
 		QSettings sets(modul, QSettings::IniFormat);
 		QString bds = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
-		Utils::FileName dir = Utils::FileName::fromString(modul);
+		Utils::FilePath dir = Utils::FilePath::fromString(modul);
 		dir = dir.parentDir();
 		if(bds.length() > 0 && bds != QLatin1String("."))
-			dir.appendPath(bds);
+			dir.pathAppended(bds);
 
 		QDir buildDir(dir.toString());
 		modul = buildDir.relativeFilePath(wizardDialog->path());
@@ -158,7 +161,7 @@ bool DFileWizardFactory::postGenerateFiles(const QWizard *w,
 																																							const Core::GeneratedFiles &l,
 																																							QString *errorMessage) const
 {
-	Q_UNUSED(w);
+	Q_UNUSED(w)
 	return ProjectExplorer::CustomProjectWizard::postGenerateOpen(l, errorMessage);
 }
 

@@ -36,7 +36,7 @@ using namespace TextEditor::Internal;
 
 using namespace DEditor;
 
-DEditorPlugin* DEditorPlugin::m_instance = 0;
+DEditorPlugin* DEditorPlugin::m_instance = nullptr;
 
 DEditorPlugin::DEditorPlugin()
 {
@@ -45,7 +45,7 @@ DEditorPlugin::DEditorPlugin()
 }
 DEditorPlugin::~DEditorPlugin()
 {
-	m_instance = NULL;
+	m_instance = nullptr;
 }
 
 bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorString)
@@ -59,11 +59,12 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
 
 	Q_UNUSED(arguments)
 
-	Utils::MimeDatabase::addMimeTypes(QLatin1String(":/deditor/DEditor.mimetypes.xml"));
+	// ??? Больше не нужна вроде, так как mime цепляются в DEditor.json.in
+	//Utils::addMimeTypes(QLatin1String(":/deditor/DEditor.mimetypes.xml"));
 
-	addAutoReleasedObject(new DEditorFactory);
-	addAutoReleasedObject(new DCompletionAssistProvider);
-	addAutoReleasedObject(new DSnippetProvider);
+	///addAutoReleasedObject(new DEditorFactory);
+	///addAutoReleasedObject(new DCompletionAssistProvider);
+	///addAutoReleasedObject(new DSnippetProvider);
 
 	IWizardFactory::registerFactoryCreator([]()
 	{

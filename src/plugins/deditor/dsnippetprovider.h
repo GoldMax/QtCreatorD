@@ -1,23 +1,23 @@
-#ifndef DSNIPPETPROVIDER
-#define DSNIPPETPROVIDER
+//#ifndef DSNIPPETPROVIDER
+//#define DSNIPPETPROVIDER
 
-#include <texteditor/snippets/isnippetprovider.h>
+//#include <texteditor/snippets/snippetprovider.h>
 
-namespace DEditor {
+//namespace DEditor {
 
-class DSnippetProvider : public TextEditor::ISnippetProvider
-{
-public:
-				DSnippetProvider();
-				virtual ~DSnippetProvider();
+//class DSnippetProvider : public TextEditor::SnippetProvider
+//{
+//public:
+//				DSnippetProvider();
+//				virtual ~DSnippetProvider();
 
-public:
-				virtual QString groupId() const;
-				virtual QString displayName() const;
-				virtual void decorateEditor(TextEditor::SnippetEditorWidget *editor) const;
-};
+//public:
+//				virtual QString groupId() const;
+//				virtual QString displayName() const;
+//				virtual void decorateEditor(TextEditorWidget *editor) const;
+//};
 
-} // DEditor
+//} // DEditor
 
-#endif // DSNIPPETPROVIDER
+//#endif // DSNIPPETPROVIDER
 
