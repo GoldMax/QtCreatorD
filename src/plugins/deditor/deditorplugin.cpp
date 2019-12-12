@@ -1,66 +1,125 @@
-#include "deditorconstants.h"
 #include "deditorplugin.h"
-#include "deditorfactory.h"
+#include "deditorconstants.h"
+#include "deditor.h"
+#include "deditordocument.h"
 #include "dfilewizard.h"
-#include "dhoverhandler.h"
-#include "dcompletionassist.h"
-#include "deditorhighlighter.h"
-#include "dsnippetprovider.h"
+//#include "dhoverhandler.h"
+//#include "dcompletionassist.h"
+//#include "deditorhighlighter.h"
+//#include "dsnippetprovider.h"
 #include "qcdassist.h"
 
 #include <coreplugin/icore.h>
-#include <coreplugin/icontext.h>
 #include <coreplugin/coreconstants.h>
-#include <coreplugin/actionmanager/actionmanager.h>
-#include <coreplugin/actionmanager/command.h>
-#include <coreplugin/actionmanager/actioncontainer.h>
-#include <coreplugin/coreconstants.h>
-//#include <coreplugin/mimedatabase.h>
-#include <coreplugin/id.h>
 #include <coreplugin/fileiconprovider.h>
-#include <utils/qtcassert.h>
-//#include <texteditor/generichighlighter/manager.h>
-#include <utils/mimetypes/mimedatabase.h>
+#include <coreplugin/actionmanager/actionmanager.h>
+#include <coreplugin/actionmanager/actioncontainer.h>
+#include <coreplugin/actionmanager/command.h>
 
-#include <QAction>
-#include <QMessageBox>
-#include <QMainWindow>
-#include <QMenu>
-#include <QtPlugin>
+#include <texteditor/texteditorconstants.h>
+#include <texteditor/texteditor.h>
+#include <texteditor/textdocument.h>
+#include <texteditor/texteditoractionhandler.h>
+
+//#include <utils/qtcassert.h>
+//#include <utils/mimetypes/mimedatabase.h>
+
 #include <QCoreApplication>
-#include <QShortcut>
+#include <QAction>
+#include <QMenu>
+#include <QList>
+//#include <QMessageBox>
+//#include <QMainWindow>
+//#include <QtPlugin>
+//#include <QShortcut>
 
 using namespace Core;
 using namespace TextEditor;
-using namespace TextEditor::Internal;
+//using namespace TextEditor::Internal;
 
 using namespace DEditor;
+
+namespace DEditor
+{
+	//---- DEditorFactory ----------------------------
+	class DEditorFactory : public TextEditorFactory
+	{
+	public:
+		DEditorFactory()
+		{
+			setId(DEditor::Constants::C_DEDITOR_ID);
+			setDisplayName(QCoreApplication::translate("OpenWith::Editors",
+																																		DEditor::Constants::C_DEDITOR_DISPLAY_NAME));
+			addMimeType(DEditor::Constants::D_MIMETYPE_SRC);
+			addMimeType(DEditor::Constants::D_MIMETYPE_HDR);
+
+
+			setDocumentCreator([]() { return new DEditorDocument; });
+			setEditorCreator([]() { return new DTextEditor; });
+			setEditorWidgetCreator([]() { return new DEditorWidget; });
+			///setAutoCompleterCreator([]() { return new DCompleter; });
+			setCommentDefinition(Utils::CommentDefinition::CppStyle);
+			setCodeFoldingSupported(true);
+			setParenthesesMatchingEnabled(true);
+			setMarksVisible(true);
+
+			///???	setIndenterCreator([]() { return new DIndenter; });
+			///???setSyntaxHighlighterCreator([]() { return new DEditorHighlighter; });
+			///???setCompletionAssistProvider(new DCompletionAssistProvider);
+
+			setEditorActionHandlers(TextEditorActionHandler::Format
+																									| TextEditorActionHandler::UnCommentSelection
+																									| TextEditorActionHandler::UnCollapseAll
+																									| TextEditorActionHandler::FollowSymbolUnderCursor);
+
+			///???addHoverHandler(new DHoverHandler);
+		}
+	};
+
+	//--- DEditorPluginPrivate -----------------------
+	class DEditorPluginPrivate : public QObject
+	{
+	public:
+	//    void onTaskStarted(Core::Id type);
+	//    void onAllTasksFinished(Core::Id type);
+	//    void inspectCppCodeModel();
+
+	//    QAction *m_renameSymbolUnderCursorAction = nullptr;
+	//    QAction *m_reparseExternallyChangedFiles = nullptr;
+	//    QAction *m_openTypeHierarchyAction = nullptr;
+	//    QAction *m_openIncludeHierarchyAction = nullptr;
+
+	//    CppQuickFixAssistProvider m_quickFixProvider;
+
+	//    QPointer<CppCodeModelInspectorDialog> m_cppCodeModelInspectorDialog;
+
+	//    QPointer<TextEditor::BaseTextEditor> m_currentEditor;
+
+	//    CppOutlineWidgetFactory m_cppOutlineWidgetFactory;
+	//    CppTypeHierarchyFactory m_cppTypeHierarchyFactory;
+	//    CppIncludeHierarchyFactory m_cppIncludeHierarchyFactory;
+					DEditorFactory m_editorFactory;
+	};
+}
 
 DEditorPlugin* DEditorPlugin::m_instance = nullptr;
 
 DEditorPlugin::DEditorPlugin()
 {
-	QTC_ASSERT(!m_instance, return);
 	m_instance = this;
 }
 DEditorPlugin::~DEditorPlugin()
 {
+	delete d;
+	d = nullptr;
 	m_instance = nullptr;
 }
 
 bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorString)
 {
-	// Register objects in the plugin manager's object pool
-	// Load settings
-	// Add actions to menus
-	// Connect to other plugins' signals
-	// In the initialize method, a plugin can be sure that the plugins it
-	// depends on have initialized their members.
-
 	Q_UNUSED(arguments)
 
-	// ??? Больше не нужна вроде, так как mime цепляются в DEditor.json.in
-	//Utils::addMimeTypes(QLatin1String(":/deditor/DEditor.mimetypes.xml"));
+	d = new DEditorPluginPrivate;
 
 	///addAutoReleasedObject(new DEditorFactory);
 	///addAutoReleasedObject(new DCompletionAssistProvider);

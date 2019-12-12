@@ -1,5 +1,4 @@
-#ifndef BUILDALLBUTTONCONSTANTS_H
-#define BUILDALLBUTTONCONSTANTS_H
+#pragma once
 
 namespace BuildAllButton {
 namespace Constants {
@@ -15,5 +14,4 @@ const int  P_ACTION_BUILDPROJECT  = 80;
 } // namespace BuildAllButton
 } // namespace Constants
 
-#endif // BUILDALLBUTTONCONSTANTS_H
 

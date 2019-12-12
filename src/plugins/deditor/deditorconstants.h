@@ -6,6 +6,8 @@
 namespace DEditor {
 namespace Constants {
 
+const char D_LANGUAGE_ID[] = "D";
+
 const char D_ACTION_TOGGLE_DCD_ID[] = "DEditor.Action1";
 const char D_ACTION_CLEARASSISTCACHE_ID[] = "DEditor.Action2";
 

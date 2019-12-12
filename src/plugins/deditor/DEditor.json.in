@@ -10,20 +10,20 @@
 				\"Url\" : \"\",
 				$$dependencyList,
 
-\"Mimetypes\" : [
-\"	<?xml version=\'1.0\'?>\",
-\"<mime-info xmlns=\'http://www.freedesktop.org/standards/shared-mime-info\'>\",
-\"    <mime-type type=\'text/x-dsrc\'>\",
-\"        <comment>D source code</comment>\",
-\"        <sub-class-of type=\'text/x-d\'/>\",
-\"								<comment>D source file</comment>\",
-\"        <glob pattern=\'*.d\'/>\",
-\"    </mime-type>\",
-\"    <mime-type type=\'text/x-disrc\'>\",
-\"        <sub-class-of type=\'text/x-d\'/>\",
-\"        <comment>D interface code</comment>\",
-\"        <glob pattern=\'*.di\'/>\",
-\"    </mime-type>\",
-\"</mime-info>\"
+				\"Mimetypes\" : [
+				\"	<?xml version=\'1.0\'?>\",
+				\"<mime-info xmlns=\'http://www.freedesktop.org/standards/shared-mime-info\'>\",
+				\"    <mime-type type=\'text/x-dsrc\'>\",
+				\"        <comment>D source code</comment>\",
+				\"        <sub-class-of type=\'text/x-d\'/>\",
+				\"								<comment>D source file</comment>\",
+				\"        <glob pattern=\'*.d\'/>\",
+				\"    </mime-type>\",
+				\"    <mime-type type=\'text/x-disrc\'>\",
+				\"        <sub-class-of type=\'text/x-d\'/>\",
+				\"        <comment>D interface code</comment>\",
+				\"        <glob pattern=\'*.di\'/>\",
+				\"    </mime-type>\",
+				\"</mime-info>\"
 ]
 }

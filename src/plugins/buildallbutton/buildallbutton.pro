@@ -1,12 +1,13 @@
-include(../../qtcreatorplugin.pri)
+DEFINES += \
+			BUILDALLBUTTON_LIBRARY
 
-DEFINES += BUILDALLBUTTON_LIBRARY
+SOURCES += \
+			buildallbuttonplugin.cpp
 
-SOURCES += buildallbuttonplugin.cpp
-
-HEADERS += buildallbuttonplugin.h \
-											buildallbutton_global.h \
-											buildallbuttonconstants.h
+HEADERS += \
+			buildallbuttonplugin.h \
+			buildallbutton_global.h \
+			buildallbuttonconstants.h
 
 # Qt Creator linking
 QTC_LIB_DEPENDS += \
@@ -14,3 +15,5 @@ QTC_LIB_DEPENDS += \
 				utils
 QTC_PLUGIN_DEPENDS += \
 				coreplugin
+
+include(../../qtcreatorplugin.pri)

@@ -1,5 +1,4 @@
-#ifndef DEDITORFACTORY_H
-#define DEDITORFACTORY_H
+#pragma once
 
 #include <texteditor/texteditor.h>
 
@@ -7,15 +6,17 @@ using namespace TextEditor;
 
 namespace DEditor {
 
-class DEditorFactory : public TextEditorFactory
+class DTextEditor : public TextEditor::BaseTextEditor
 {
 	Q_OBJECT
 
 public:
-	DEditorFactory();
+	DTextEditor();
+
+	static void decorateEditor(TextEditor::TextEditorWidget *editor);
 };
 
-class DEditorWidget : public TextEditorWidget
+class DEditorWidget : public TextEditor::TextEditorWidget
 {
 	Q_OBJECT
 
@@ -35,4 +36,4 @@ private:
 
 } // namespace DEditor
 
-#endif // DEDITORFACTORY_H
+

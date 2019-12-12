@@ -3,25 +3,27 @@ DEFINES += DEDITOR_LIBRARY
 # DEditor files
 
 SOURCES += deditorplugin.cpp \
-				deditorfactory.cpp \
+	deditor.cpp \
+	deditordocument.cpp \
 				dfilewizard.cpp \
+	dhighlighter.cpp \
 				dhoverhandler.cpp \
 				dcompletionassist.cpp \
 				qcdassist.cpp \
-				deditorhighlighter.cpp \
     dindenter.cpp \
     dautocompleter.cpp \
     dsnippetprovider.cpp
 
 HEADERS += deditorplugin.h \
+	deditor.h \
 								deditor_global.h \
 								deditorconstants.h \
-				deditorfactory.h \
+	deditordocument.h \
 				dfilewizard.h \
+	dhighlighter.h \
 				dhoverhandler.h \
 				dcompletionassist.h \
 				qcdassist.h \
-				deditorhighlighter.h \
     dindenter.h \
     dautocompleter.h \
     dsnippetprovider.h
@@ -35,7 +37,8 @@ QTC_LIB_DEPENDS += \
 QTC_PLUGIN_DEPENDS += \
 				coreplugin \
 				texteditor \
-				cpptools
+				cpptools \
+				cppeditor
 
 
 
