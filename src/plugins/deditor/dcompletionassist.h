@@ -1,85 +1,88 @@
-//#ifndef DCOMPLETIONASSIST_H
-//#define DCOMPLETIONASSIST_H
+#ifndef DCOMPLETIONASSIST_H
+#define DCOMPLETIONASSIST_H
 
-//#include <texteditor/codeassist/completionassistprovider.h>
-//#include <texteditor/codeassist/iassistprocessor.h>
-//#include <texteditor/codeassist/iassistproposal.h>
-//#include <texteditor/codeassist/assistinterface.h>
-//#include <texteditor/codeassist/ifunctionhintproposalmodel.h>
-//#include <texteditor/snippets/snippetassistcollector.h>
+#include <texteditor/codeassist/completionassistprovider.h>
+#include <texteditor/codeassist/iassistprocessor.h>
+#include <texteditor/codeassist/iassistproposal.h>
+#include <texteditor/codeassist/assistinterface.h>
+#include <texteditor/codeassist/ifunctionhintproposalmodel.h>
+#include <texteditor/snippets/snippetassistcollector.h>
 
-//#include <QScopedPointer>
-//#include <QIcon>
+#include <QObject>
+#include <QScopedPointer>
+#include <QIcon>
 
-//using namespace TextEditor;
+using namespace TextEditor;
 
-//namespace DEditor {
+namespace DEditor {
 
-//class DCompletionAssistInterface : public AssistInterface
-//{
-//public:
-//	DCompletionAssistInterface(QTextDocument *textDocument,
-//																												int position, const QString &fileName,
-//																												AssistReason reason);
-//};
-////**************************************************************************************
-//class DCompletionAssistProvider : public CompletionAssistProvider
-//{
-//	Q_OBJECT
-//public:
-//	bool supportsEditor(Core::Id editorId) const override;
-//	IAssistProcessor* createProcessor() const override;
+class DCompletionAssistInterface : public AssistInterface
+{
+public:
+	DCompletionAssistInterface(QTextDocument *textDocument,
+																												int position, const QString &fileName,
+																												AssistReason reason);
+};
+//**************************************************************************************
+class DCompletionAssistProvider : public CompletionAssistProvider
+{
+	Q_OBJECT
+public:
+	DCompletionAssistProvider(QObject *parent = nullptr);
 
-//	int activationCharSequenceLength() const override;
-//	bool isActivationCharSequence(const QString &sequence) const override;
-//};
-////**************************************************************************************
-//class DCompletionAssistProcessor : public IAssistProcessor
-//{
-//public:
-//	DCompletionAssistProcessor();
-//	IAssistProposal *perform(const AssistInterface *interface) override;
+	bool supportsEditor(Core::Id editorId) const;
+	IAssistProcessor* createProcessor() const override;
 
-//	void toUtf8(QByteArray& arr, QTextDocument* doc, int & charPosition);
+	int activationCharSequenceLength() const override;
+	bool isActivationCharSequence(const QString &sequence) const override;
+};
+//**************************************************************************************
+class DCompletionAssistProcessor : public IAssistProcessor
+{
+public:
+	DCompletionAssistProcessor();
+	IAssistProposal *perform(const AssistInterface *interface) override;
 
-//private:
-//	IAssistProposal* createContentProposal();
-//	IAssistProposal* createHintProposal() const;
-//	bool acceptsIdleEditor() const;
-//	void addCompletion(const QString &text, const QIcon &icon, int order = 0);
+	void toUtf8(QByteArray& arr, QTextDocument* doc, int & charPosition);
 
-//	void addSnippets();
+private:
+	IAssistProposal* createContentProposal();
+	IAssistProposal* createHintProposal() const;
+	bool acceptsIdleEditor() const;
+	void addCompletion(const QString &text, const QIcon &icon, int order = 0);
 
-//	int m_startPosition;
-//	QScopedPointer<const DCompletionAssistInterface> m_interface;
-// QList<TextEditor::AssistProposalItemInterface *> m_completions;
+	void addSnippets();
 
-//	QIcon i_ClassName, i_InterfaceName, i_StructName, i_UnionName,
-//	i_VariableName, i_MemberVariableName, i_Keyword, i_FunctionName,
-//	i_EnumName, i_PackageName, i_ModuleName, i_Array,
-//	i_AssociativeArray, i_AliasName, i_TemplateName,i_MixinTemplateName, i_dIcon;
+	int m_startPosition;
+	QScopedPointer<const DCompletionAssistInterface> m_interface;
+	QList<TextEditor::AssistProposalItemInterface *> m_completions;
 
-//	TextEditor::SnippetAssistCollector m_snippetCollector;
-//};
-////**************************************************************************************
-//class DFunctionHintProposalModel : public TextEditor::IFunctionHintProposalModel
-//{
-//public:
-// DFunctionHintProposalModel(const QList<AssistProposalItemInterface *> items) :
-//			m_items(items),	m_currentArg(-1)
-//	{
-//	}
+	QIcon i_ClassName, i_InterfaceName, i_StructName, i_UnionName,
+	i_VariableName, i_MemberVariableName, i_Keyword, i_FunctionName,
+	i_EnumName, i_PackageName, i_ModuleName, i_Array,
+	i_AssociativeArray, i_AliasName, i_TemplateName,i_MixinTemplateName, i_dIcon;
 
-//	virtual void reset() {  }
-//	virtual int size() const { return m_items.size(); }
-//	virtual QString text(int index) const;
-//	virtual int activeArgument(const QString &prefix) const;
+	TextEditor::SnippetAssistCollector m_snippetCollector;
+};
+//**************************************************************************************
+class DFunctionHintProposalModel : public TextEditor::IFunctionHintProposalModel
+{
+public:
+	DFunctionHintProposalModel(const QList<AssistProposalItemInterface *> items) :
+			m_items(items),	m_currentArg(-1)
+	{
+	}
 
-//private:
-// const QList<AssistProposalItemInterface *> m_items;
-//	mutable int m_currentArg;
-//};
+	virtual void reset() {  }
+	virtual int size() const { return m_items.size(); }
+	virtual QString text(int index) const;
+	virtual int activeArgument(const QString &prefix) const;
 
-//} // DEditor
+private:
+	const QList<AssistProposalItemInterface *> m_items;
+	mutable int m_currentArg;
+};
 
-//#endif // DCOMPLETIONASSIST_H
+} // DEditor
+
+#endif // DCOMPLETIONASSIST_H

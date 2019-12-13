@@ -8,66 +8,11 @@
 #include <cpptools/cpptoolsreuse.h>
 
 #include <texteditor/textdocumentlayout.h>
-//#include <texteditor/textdocument.h>
-
-//#include <cplusplus/SimpleLexer.h>
-//#include <3rdparty/cplusplus/Lexer.h>
-//#include <cppeditor/cppeditorenums.h>
-
-//#include <QDebug>
 
 using namespace DEditor;
 using namespace TextEditor;
 using namespace CPlusPlus;
-//using namespace CppEditor::Internal;
 
-/*
-TextStyle categoryForTextStyle(int style)
-{
-				switch (style) {
-				case KSyntaxHighlighting::Theme::Normal: return C_TEXT;
-				case KSyntaxHighlighting::Theme::Keyword: return C_KEYWORD;
-				case KSyntaxHighlighting::Theme::Function: return C_FUNCTION;
-				case KSyntaxHighlighting::Theme::Variable: return C_LOCAL;
-				case KSyntaxHighlighting::Theme::ControlFlow: return C_KEYWORD;
-				case KSyntaxHighlighting::Theme::Operator: return C_OPERATOR;
-				case KSyntaxHighlighting::Theme::BuiltIn: return C_PRIMITIVE_TYPE;
-				case KSyntaxHighlighting::Theme::Extension: return C_GLOBAL;
-				case KSyntaxHighlighting::Theme::Preprocessor: return C_PREPROCESSOR;
-				case KSyntaxHighlighting::Theme::Attribute: return C_LOCAL;
-				case KSyntaxHighlighting::Theme::Char: return C_STRING;
-				case KSyntaxHighlighting::Theme::SpecialChar: return C_STRING;
-				case KSyntaxHighlighting::Theme::String: return C_STRING;
-				case KSyntaxHighlighting::Theme::VerbatimString: return C_STRING;
-				case KSyntaxHighlighting::Theme::SpecialString: return C_STRING;
-				case KSyntaxHighlighting::Theme::Import: return C_PREPROCESSOR;
-				case KSyntaxHighlighting::Theme::DataType: return C_TYPE;
-				case KSyntaxHighlighting::Theme::DecVal: return C_NUMBER;
-				case KSyntaxHighlighting::Theme::BaseN: return C_NUMBER;
-				case KSyntaxHighlighting::Theme::Float: return C_NUMBER;
-				case KSyntaxHighlighting::Theme::Constant: return C_KEYWORD;
-				case KSyntaxHighlighting::Theme::Comment: return C_COMMENT;
-				case KSyntaxHighlighting::Theme::Documentation: return C_DOXYGEN_COMMENT;
-				case KSyntaxHighlighting::Theme::Annotation: return C_DOXYGEN_TAG;
-				case KSyntaxHighlighting::Theme::CommentVar: return C_DOXYGEN_TAG;
-				case KSyntaxHighlighting::Theme::RegionMarker: return C_PREPROCESSOR;
-				case KSyntaxHighlighting::Theme::Information: return C_WARNING;
-				case KSyntaxHighlighting::Theme::Warning: return C_WARNING;
-				case KSyntaxHighlighting::Theme::Alert: return C_ERROR;
-				case KSyntaxHighlighting::Theme::Error: return C_ERROR;
-				case KSyntaxHighlighting::Theme::Others: return C_TEXT;
-				}
-				return C_TEXT;
-}
-
-Highlighter::Highlighter()
-{
-				setTextFormatCategories(QMetaEnum::fromType<KSyntaxHighlighting::Theme::TextStyle>().keyCount(),
-																												&categoryForTextStyle);
-}
-
-
-*/
 DHighlighter::DHighlighter()
 {
 	//	static QVector<TextStyle> categories;
@@ -314,10 +259,10 @@ void DHighlighter::highlightBlock(const QString &text)
 
 void DHighlighter::setLanguageFeatures(const LanguageFeatures &languageFeatures)
 {
-				if (languageFeatures != m_languageFeatures) {
-								m_languageFeatures = languageFeatures;
-								rehighlight();
-				}
+	if (languageFeatures != m_languageFeatures) {
+		m_languageFeatures = languageFeatures;
+		rehighlight();
+	}
 }
 
 bool DHighlighter::isPPKeyword(const QStringRef& text) const
@@ -422,21 +367,6 @@ void DHighlighter::highlightLine(const QString &text, int position, int length,
 
 void DHighlighter::highlightWord(QStringRef word, int position, int length)
 {
-	// try to highlight Qt 'identifiers' like QObject and Q_PROPERTY
-
-	if (word.length() > 2 && word.at(0) == QLatin1Char('Q'))
-	{
-		if (word.at(1) == QLatin1Char('_') // Q_
-						|| (word.at(1) == QLatin1Char('T') && word.at(2) == QLatin1Char('_'))) { // QT_
-			for (int i = 1; i < word.length(); ++i) {
-				const QChar &ch = word.at(i);
-				if (!(ch.isUpper() || ch == QLatin1Char('_')))
-					return;
-			}
-
-			setFormat(position, length, formatForCategory(C_TYPE));
-		}
-	}
 	if(word.length() > 0 && word.at(0).isUpper())
 		setFormat(position, length, formatForCategory(C_TYPE));
 }

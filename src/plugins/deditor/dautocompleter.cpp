@@ -1,12 +1,12 @@
 //#include "dautocompleter.h"
 
-//#include <cplusplus/Token.h>
-//#include <cplusplus/SimpleLexer.h>
-//#include <cplusplus/MatchingText.h>
-//#include <cplusplus/BackwardsScanner.h>
+////#include <cplusplus/Token.h>
+////#include <cplusplus/SimpleLexer.h>
+////#include <cplusplus/MatchingText.h>
+////#include <cplusplus/BackwardsScanner.h>
 
-//#include <QLatin1Char>
-//#include <QTextCursor>
+////#include <QLatin1Char>
+////#include <QTextCursor>
 
 //using namespace CPlusPlus;
 

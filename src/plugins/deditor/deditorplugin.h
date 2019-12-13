@@ -7,6 +7,7 @@
 namespace DEditor {
 
 class DEditorPluginPrivate;
+class DCompletionAssistProvider;
 
 class DEditorPlugin : public ExtensionSystem::IPlugin
 {

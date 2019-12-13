@@ -3,8 +3,9 @@
 #include "deditor.h"
 #include "deditordocument.h"
 #include "dfilewizard.h"
+//#include "dautocompleter.h"
 //#include "dhoverhandler.h"
-//#include "dcompletionassist.h"
+#include "dcompletionassist.h"
 //#include "deditorhighlighter.h"
 //#include "dsnippetprovider.h"
 #include "qcdassist.h"
@@ -20,6 +21,7 @@
 #include <texteditor/texteditor.h>
 #include <texteditor/textdocument.h>
 #include <texteditor/texteditoractionhandler.h>
+#include <texteditor/snippets/snippetprovider.h>
 
 //#include <utils/qtcassert.h>
 //#include <utils/mimetypes/mimedatabase.h>
@@ -57,15 +59,14 @@ namespace DEditor
 			setDocumentCreator([]() { return new DEditorDocument; });
 			setEditorCreator([]() { return new DTextEditor; });
 			setEditorWidgetCreator([]() { return new DEditorWidget; });
-			///setAutoCompleterCreator([]() { return new DCompleter; });
 			setCommentDefinition(Utils::CommentDefinition::CppStyle);
 			setCodeFoldingSupported(true);
 			setParenthesesMatchingEnabled(true);
 			setMarksVisible(true);
 
 			///???	setIndenterCreator([]() { return new DIndenter; });
-			///???setSyntaxHighlighterCreator([]() { return new DEditorHighlighter; });
-			///???setCompletionAssistProvider(new DCompletionAssistProvider);
+			setCompletionAssistProvider(new DCompletionAssistProvider);
+			///???setAutoCompleterCreator([]() { return new DAutoCompleter; });
 
 			setEditorActionHandlers(TextEditorActionHandler::Format
 																									| TextEditorActionHandler::UnCommentSelection
@@ -80,25 +81,7 @@ namespace DEditor
 	class DEditorPluginPrivate : public QObject
 	{
 	public:
-	//    void onTaskStarted(Core::Id type);
-	//    void onAllTasksFinished(Core::Id type);
-	//    void inspectCppCodeModel();
-
-	//    QAction *m_renameSymbolUnderCursorAction = nullptr;
-	//    QAction *m_reparseExternallyChangedFiles = nullptr;
-	//    QAction *m_openTypeHierarchyAction = nullptr;
-	//    QAction *m_openIncludeHierarchyAction = nullptr;
-
-	//    CppQuickFixAssistProvider m_quickFixProvider;
-
-	//    QPointer<CppCodeModelInspectorDialog> m_cppCodeModelInspectorDialog;
-
-	//    QPointer<TextEditor::BaseTextEditor> m_currentEditor;
-
-	//    CppOutlineWidgetFactory m_cppOutlineWidgetFactory;
-	//    CppTypeHierarchyFactory m_cppTypeHierarchyFactory;
-	//    CppIncludeHierarchyFactory m_cppIncludeHierarchyFactory;
-					DEditorFactory m_editorFactory;
+		DEditorFactory m_editorFactory;
 	};
 }
 
@@ -121,9 +104,8 @@ bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorStrin
 
 	d = new DEditorPluginPrivate;
 
-	///addAutoReleasedObject(new DEditorFactory);
-	///addAutoReleasedObject(new DCompletionAssistProvider);
-	///addAutoReleasedObject(new DSnippetProvider);
+	SnippetProvider::registerGroup(Constants::D_SNIPPETS_GROUP_ID, tr("D", "SnippetProvider"),
+																																&DTextEditor::decorateEditor);
 
 	IWizardFactory::registerFactoryCreator([]()
 	{
