@@ -1,11 +1,10 @@
 #include "deditor.h"
 #include "deditorconstants.h"
 #include "dhighlighter.h"
-//#include "deditorplugin.h"
+#include "dindenter.h"
 #include "dcompletionassist.h"
+#include "dautocompleter.h"
 //#include "dhoverhandler.h"
-//#include "dindenter.h"
-//#include "dautocompleter.h"
 
 #include <texteditor/textdocument.h>
 #include <texteditor/texteditorsettings.h>
@@ -39,13 +38,8 @@ DTextEditor::DTextEditor()
 void DTextEditor::decorateEditor(TextEditor::TextEditorWidget *editor)
 {
 	editor->textDocument()->setSyntaxHighlighter(new DHighlighter);
-//    editor->textDocument()->setIndenter(
-//        new CppTools::CppQtStyleIndenter(editor->textDocument()->document()));
-//    editor->setAutoCompleter(new CppAutoCompleter);
-
-	//				editor->textDocument()->setSyntaxHighlighter(new DEditorHighlighter);
-	//				editor->textDocument()->setIndenter(new DIndenter);
-	//				editor->setAutoCompleter(new DCompleter);
+	editor->textDocument()->setIndenter(new DIndenter(editor->textDocument()->document()));
+	editor->setAutoCompleter(new DAutoCompleter);
 
 }
 //-----------------------------
@@ -53,7 +47,7 @@ void DTextEditor::decorateEditor(TextEditor::TextEditorWidget *editor)
 //-----------------------------
 DEditorWidget::DEditorWidget()
 {
-	///setAutoCompleter(new DCompleter);
+	setAutoCompleter(new DAutoCompleter);
 }
 
 AssistInterface* DEditorWidget::createAssistInterface(AssistKind kind,

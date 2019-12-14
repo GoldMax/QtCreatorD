@@ -1,26 +1,31 @@
-//#pragma once
+#pragma once
 
-//#include <texteditor/autocompleter.h>
+#include <texteditor/autocompleter.h>
 
-//namespace DEditor {
+namespace DEditor {
 
-//class DAutoCompleter : public TextEditor::AutoCompleter
-//{
-//public:
-//	DAutoCompleter();
-//	virtual ~DAutoCompleter();
+class DAutoCompleter : public TextEditor::AutoCompleter
+{
+public:
+	bool contextAllowsAutoBrackets(const QTextCursor &cursor,
+																																const QString &textToInsert = QString()) const override;
+	bool contextAllowsAutoQuotes(const QTextCursor &cursor,
+																														const QString &textToInsert = QString()) const override;
+	bool contextAllowsElectricCharacters(const QTextCursor &cursor) const override;
+	bool isInComment(const QTextCursor &cursor) const override;
+	bool isInString(const QTextCursor &cursor) const override;
+	QString insertMatchingBrace(const QTextCursor &cursor,
+																													const QString &text,
+																													QChar lookAhead,
+																													bool skipChars,
+																													int *skippedChars) const override;
+	QString insertMatchingQuote(const QTextCursor &cursor,
+																													const QString &text,
+																													QChar lookAhead,
+																													bool skipChars,
+																													int *skippedChars) const override;
+	QString insertParagraphSeparator(const QTextCursor &cursor) const override;
+	};
 
-//	virtual bool contextAllowsAutoParentheses(const QTextCursor &cursor,
-//																																											const QString &textToInsert = QString()) const;
-//	virtual bool contextAllowsElectricCharacters(const QTextCursor &cursor) const;
-//	virtual bool isInComment(const QTextCursor &cursor) const;
-//	virtual bool isInString(const QTextCursor &cursor) const;
-//	virtual QString insertMatchingBrace(const QTextCursor &cursor, const
-//																																					QString &text,
-//																																					QChar lookAhead, bool skipChars,
-//																																					int *skippedChars) const;
-//	virtual QString insertParagraphSeparator(const QTextCursor &cursor) const;
-//};
-
-//} // namespace DEditor
+} // namespace DEditor
 

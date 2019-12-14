@@ -14,7 +14,7 @@ namespace QcdAssist
 //static QTcpSocket* dcdSocket = 0;
 //static int waitForConnectedTimeout = 1000;
 //static int waitForWriteTimeout = 5000;
-static int waitForReadyReadTimeout = 10000;
+	static int waitForReadyReadTimeout = 10000;
 }
 
 using namespace QcdAssist;

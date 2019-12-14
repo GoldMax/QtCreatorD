@@ -1,21 +1,22 @@
-//#ifndef DHOVERHANDLER_H
-//#define DHOVERHANDLER_H
+#ifndef DHOVERHANDLER_H
+#define DHOVERHANDLER_H
 
-//#include <texteditor/basehoverhandler.h>
+#include <texteditor/basehoverhandler.h>
 
-//namespace DEditor {
+namespace DEditor {
 
-//class DHoverHandler : public TextEditor::BaseHoverHandler
-//{
-//	Q_OBJECT
-//public:
-//	DHoverHandler();
+class DHoverHandler : public TextEditor::BaseHoverHandler
+{
+public:
+	DHoverHandler();
 
-//private:
-//	virtual void identifyMatch(TextEditor::TextEditorWidget *editorWidget, int pos);
-//	virtual void decorateToolTip();
-//};
+private:
+	void identifyMatch(TextEditor::TextEditorWidget *editorWidget,
+																				int pos,
+																				BaseHoverHandler::ReportPriority report) override;
+	void decorateToolTip() override;
+};
 
-//} // namespace DEditor
+} // namespace DEditor
 
-//#endif // DHOVERHANDLER_H
+#endif // DHOVERHANDLER_H

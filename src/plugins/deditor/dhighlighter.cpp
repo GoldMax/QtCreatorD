@@ -265,7 +265,7 @@ void DHighlighter::setLanguageFeatures(const LanguageFeatures &languageFeatures)
 	}
 }
 
-bool DHighlighter::isPPKeyword(const QStringRef& text) const
+bool DHighlighter::isPPKeyword(const QStringRef& /*text*/) const
 {
 	/*
 				switch (text.length())

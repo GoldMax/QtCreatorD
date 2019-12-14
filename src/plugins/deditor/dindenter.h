@@ -1,28 +1,43 @@
-//#ifndef DINDENTER_H
-//#define DINDENTER_H
+#ifndef DINDENTER_H
+#define DINDENTER_H
 
-//#include <texteditor/indenter.h>
+#include <texteditor/textindenter.h>
 
-//namespace DEditor {
+namespace TextEditor
+{
+class ICodeStylePreferences;
+}
 
-//class DIndenter : public TextEditor::Indenter
-//{
-//public:
-//				DIndenter();
-//				virtual ~DIndenter();
+namespace CppTools {
+class CppCodeStyleSettings;
+class CppCodeStylePreferences;
+}
 
-//				virtual bool isElectricCharacter(const QChar &ch) const;
-//				virtual void indentBlock(QTextDocument *doc,
-//																													const QTextBlock &block,
-//																													const QChar &typedChar,
-//																													const TextEditor::TabSettings &tabSettings);
+namespace DEditor {
 
-//				virtual void indent(QTextDocument *doc,
-//																								const QTextCursor &cursor,
-//																								const QChar &typedChar,
-//																								const TextEditor::TabSettings &tabSettings);
-//};
+class DIndenter : public TextEditor::TextIndenter
+{
+public:
+	DIndenter(QTextDocument *doc);
+	~DIndenter() override;
 
-//} // namespace DEditor
+	bool isElectricCharacter(const QChar &ch) const override;
+	void indentBlock(const QTextBlock &block,
+																		const QChar &typedChar,
+																		const TextEditor::TabSettings &tabSettings,
+																		int cursorPositionInEditor = -1) override;
 
-//#endif // DINDENTER_H
+	void indent(const QTextCursor &cursor,
+													const QChar &typedChar,
+													const TextEditor::TabSettings &tabSettings,
+													int cursorPositionInEditor = -1) override;
+	void setCodeStylePreferences(TextEditor::ICodeStylePreferences *preferences) override;
+
+private:
+	CppTools::CppCodeStyleSettings codeStyleSettings() const;
+	CppTools::CppCodeStylePreferences *m_cppCodeStylePreferences = nullptr;
+};
+
+} // namespace DEditor
+
+#endif // DINDENTER_H

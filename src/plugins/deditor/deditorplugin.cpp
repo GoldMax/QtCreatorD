@@ -3,11 +3,10 @@
 #include "deditor.h"
 #include "deditordocument.h"
 #include "dfilewizard.h"
-//#include "dautocompleter.h"
-//#include "dhoverhandler.h"
 #include "dcompletionassist.h"
-//#include "deditorhighlighter.h"
-//#include "dsnippetprovider.h"
+#include "dindenter.h"
+#include "dautocompleter.h"
+#include "dhoverhandler.h"
 #include "qcdassist.h"
 
 #include <coreplugin/icore.h>
@@ -64,16 +63,16 @@ namespace DEditor
 			setParenthesesMatchingEnabled(true);
 			setMarksVisible(true);
 
-			///???	setIndenterCreator([]() { return new DIndenter; });
+			setIndenterCreator([](QTextDocument * d) { return new DIndenter(d); });
 			setCompletionAssistProvider(new DCompletionAssistProvider);
-			///???setAutoCompleterCreator([]() { return new DAutoCompleter; });
+			setAutoCompleterCreator([]() { return new DAutoCompleter; });
 
 			setEditorActionHandlers(TextEditorActionHandler::Format
 																									| TextEditorActionHandler::UnCommentSelection
 																									| TextEditorActionHandler::UnCollapseAll
 																									| TextEditorActionHandler::FollowSymbolUnderCursor);
 
-			///???addHoverHandler(new DHoverHandler);
+			addHoverHandler(new DHoverHandler);
 		}
 	};
 
