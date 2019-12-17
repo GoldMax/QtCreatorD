@@ -15,7 +15,7 @@ class DProjectWizardDialog : public Core::BaseFileWizard
 
 public:
 	explicit DProjectWizardDialog(const Core::BaseFileWizardFactory *factory,
-																															QWidget *parent = 0);
+																															QWidget *parent = nullptr);
 
 	QString path() const;
 	void setPath(const QString &path);
@@ -34,7 +34,7 @@ public:
 
 protected:
 	Core::BaseFileWizard* create(QWidget *parent,
-																													const Core::WizardDialogParameters &params) const;
+																													const Core::WizardDialogParameters &params) const override;
 	Core::GeneratedFiles generateFiles(const QWizard* w, QString* errorMessage) const override;
 	bool postGenerateFiles(const QWizard *w, const Core::GeneratedFiles &l,
 																								QString *errorMessage) const override;

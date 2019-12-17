@@ -4,5 +4,6 @@
         <file>dlang.png</file>
         <file>dmd-source.png</file>
         <file>dlang24.png</file>
+        <file>dlogo.png</file>
     </qresource>
 </RCC>

@@ -1,5 +1,4 @@
 #include "dprojectwizard.h"
-
 #include "dprojectmanagerconstants.h"
 
 #include <coreplugin/icore.h>
@@ -63,13 +62,13 @@ QString DProjectWizardDialog::projectName() const
 
 DProjectWizard::DProjectWizard()
 {
- setSupportedProjectTypes({ Constants::DPROJECT_ID });
+	setSupportedProjectTypes({ Constants::DPROJECT_ID });
 	setId("A.DProject");
 	setDisplayName(tr("D Project"));
 	setDescription(tr("Create a D language project."));
 	setCategory(QLatin1String(ProjectExplorer::Constants::QT_PROJECT_WIZARD_CATEGORY));
 	setDisplayCategory(QLatin1String(ProjectExplorer::Constants::QT_PROJECT_WIZARD_CATEGORY_DISPLAY));
-	setIcon(QIcon(QLatin1String(":/dprojectmanager/dlang24.png")));
+	setIcon(QIcon(QLatin1String(":/dprojectmanager/dlogo.png")));
 	setFlags(Core::IWizardFactory::PlatformIndependent);
 }
 
@@ -111,7 +110,7 @@ bool DProjectWizard::postGenerateFiles(const QWizard *w,
 																																							const Core::GeneratedFiles &l,
 																																							QString *errorMessage) const
 {
-	Q_UNUSED(w);
+	Q_UNUSED(w)
 	return ProjectExplorer::CustomProjectWizard::postGenerateOpen(l, errorMessage);
 }
 

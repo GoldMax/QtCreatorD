@@ -7,10 +7,4 @@
     <glob pattern="*.qcd"/>
   </mime-type>
 
-  <mime-type type="application/vnd.qtcreator.generic.files">
-    <sub-class-of type="text/plain"/>
-    <comment>Generic Project Files</comment>
-    <glob pattern="*.files"/>
-  </mime-type>
-
 </mime-info>
