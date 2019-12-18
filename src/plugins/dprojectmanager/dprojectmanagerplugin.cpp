@@ -1,7 +1,6 @@
 #include "dprojectmanagerplugin.h"
 #include "dprojectmanagerconstants.h"
 #include "dproject.h"
-//#include "dprojectmanager.h"
 #include "dprojectwizard.h"
 //#include "dbuildconfiguration.h"
 //#include "dmakestep.h"

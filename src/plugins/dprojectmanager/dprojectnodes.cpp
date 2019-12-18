@@ -16,20 +16,25 @@ using namespace ProjectExplorer;
 
 namespace DProjectManager {
 
-DProjectNode::DProjectNode(DProject *project/*, Core::IDocument *projectFile*/)
-	: ProjectNode(project->projectDirectory()),
-			m_project(project)/*, m_projectFile(projectFile)*/
+DProjectNode::DProjectNode(DProject* project)
+	: ProjectNode(project->projectFilePath()),
+			m_project(project)
 {
+	static int count = 0;
+	//setDisplayName(projectFile->filePath().toFileInfo().completeBaseName());
 	setDisplayName(project->projectFilePath().toFileInfo().completeBaseName());
-	//static int count = 0;
-//	setDisplayName(projectFile->filePath().toFileInfo().completeBaseName());
-//	setAbsoluteFilePathAndLine(projectFile->filePath(),++count);
+	setIcon(QIcon(QLatin1String(Constants::ICON_D_PROJECT)));
+	setAbsoluteFilePathAndLine(project->projectFilePath(),++count);
+	setShowWhenEmpty(true);
 }
 
-//Core::IDocument *DProjectNode::projectFile() const
-//{
-//	return m_projectFile;
-//}
+bool DProjectNode::supportsAction(ProjectExplorer::ProjectAction action, const Node *) const
+{
+	return action == AddNewFile
+			|| action == AddExistingFile
+			|| action == RemoveFile
+			|| action == Rename;
+}
 
 bool DProjectNode::addFiles(const QStringList &filePaths, QStringList *notAdded)
 {
@@ -40,9 +45,7 @@ bool DProjectNode::addFiles(const QStringList &filePaths, QStringList *notAdded)
 bool DProjectNode::removeFiles(const QStringList &filePaths, QStringList *notRemoved)
 {
 	Q_UNUSED(notRemoved)
-	m_project->removeFiles(filePaths);
-	//refresh(false);
-	return true;
+	return m_project->removeFiles(filePaths);;
 }
 
 bool DProjectNode::renameFile(const QString &filePath, const QString &newFilePath)
@@ -56,10 +59,10 @@ bool DProjectNode::renameFile(const QString &filePath, const QString &newFilePat
 //	return QList<RunConfiguration *>();
 //}
 
-bool isEmpty(FolderNode* f)
-{
-	return f->fileNodes().length() + f->folderNodes().length() == 0;
-}
+//bool isEmpty(FolderNode* f)
+//{
+//	return f->fileNodes().length() + f->folderNodes().length() == 0;
+//}
 
 //void DProjectNode::refresh(bool needRebuild)
 //{

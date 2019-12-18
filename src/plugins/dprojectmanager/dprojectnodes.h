@@ -10,40 +10,32 @@
 //#include <QHash>
 //#include <QSet>
 
-//namespace Core
-//{
-//class IDocument;
-//}
+namespace Core
+{
+class IDocument;
+}
 
 using namespace ProjectExplorer;
 
 namespace DProjectManager {
 
-//class DProject;
+class DProject;
 
 class DProjectNode : public ProjectExplorer::ProjectNode
 {
 public:
-	DProjectNode(DProject *project/*, Core::IDocument *projectFile*/);
+	DProjectNode(DProject* project);
 
-	//Core::IDocument *projectFile() const;
-
-	//bool hasBuildTargets() const { return true; }
+		//bool hasBuildTargets() const { return true; }
 	bool canAddSubProject(const QString &) const override { return false; }
 	bool addSubProject(const QString &) override { return false; }
 	bool removeSubProject(const QString &) override { return false; }
 
-	bool supportsAction(ProjectExplorer::ProjectAction action, const Node *) const override
-	{
-					return action == AddNewFile
-													|| action == AddExistingFile
-													// action == AddExistingDirectory
-													|| action == RemoveFile
-													|| action == Rename;
-	}
+	bool supportsAction(ProjectExplorer::ProjectAction action, const Node *) const override;
 	bool addFiles(const QStringList &filePaths, QStringList *notAdded = nullptr) override;
 	bool removeFiles(const QStringList &filePaths, QStringList *notRemoved = nullptr) override;
 	bool deleteFiles(const QStringList &) override { return false; }
+	bool canRenameFile(const QString &, const QString &) override { return true; }
 	bool renameFile(const QString &filePath, const QString &newFilePath) override;
 
 //	QList<ProjectExplorer::ProjectAction> supportedActions(Node *node) const;
@@ -53,7 +45,6 @@ public:
 
 private:
 	DProject *m_project;
-	//Core::IDocument *m_projectFile;
 };
 
 } // namespace DProjectManager
