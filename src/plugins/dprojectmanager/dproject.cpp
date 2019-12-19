@@ -96,13 +96,8 @@ DProject::DProject(const Utils::FilePath &fileName)
 DProject::~DProject()
 {
 //	m_codeModelFuture.cancel();
-//	//m_manager->unregisterProject(this);
 	setRootProjectNode(nullptr);
-	//delete m_rootNode;
 }
-
-//DProjectNode* DProject::rootProjectNode() const { return m_rootNode;  }
-//DProjectFile* DProject::document() const { return m_projectFile; }
 
 bool DProject::addFiles(const QStringList& filePaths)
 {

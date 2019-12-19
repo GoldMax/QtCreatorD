@@ -98,7 +98,7 @@ Core::BaseFileWizard* DFileWizardFactory::create(QWidget *parent,
 	if(qnode.isNull() == false)
 	{
 		ProjectExplorer::Node* node = qnode.value<ProjectExplorer::Node*>();
-		if(node->isProjectNodeType())
+		if(node && node->isProjectNodeType())
 		{
 			ProjectExplorer::ProjectNode* projNode = node->asProjectNode();
 			wizard->projFile = projNode->filePath().toString();
