@@ -42,10 +42,6 @@ public:
 	DProject(const Utils::FilePath &filename);
 	~DProject() override;
 
-//	QString displayName() const { return m_projectName; }
-	//DProjectFile* document() const override;
-	//DProjectNode* rootProjectNode() const final;
-//	//QStringList files(FilesMode ) const { return m_files.keys(); }
 //	bool setupTarget(ProjectExplorer::Target *t) override;
 
 	bool addFiles(const QStringList &filePaths);
@@ -68,23 +64,17 @@ protected:
 	RestoreResult fromMap(const QVariantMap &map, QString* errorMessage) override;
 
 private:
-	//std::unique_ptr<Core::IDocument> m_document;
-	//std::unique_ptr<DProjectNode> m_rootProjectNode;
-
 	bool parseProjectFile(RefreshOptions options);
 
 //	QStringList processEntries(const QStringList &paths,
 //																												QHash<QString, QString> *map = nullptr) const;
 
-//	const QString m_projectName;
-//	Utils::FilePath m_projectFileName;
 	QDir m_buildDir;
 
 	QHash<QString, QString> m_files;
 	QString m_libs;
 	QString m_includes;
 	QString m_extraArgs;
-
 
 //	QFuture<void> m_codeModelFuture;
 };

@@ -24,12 +24,12 @@ void QcdAssist::isDCDEnabled(bool value) { _DCDEnabled = value; }
 
 QString QcdAssist::dcdClient()
 {
-	static Utils::FileName dcd;
+	static Utils::FilePath dcd;
 	if(dcd.isEmpty())
 	{
 		dcd = Utils::Environment::systemEnvironment().searchInPath(QLatin1String("dcd-client"));
 		if(dcd.isEmpty())
-			dcd = Utils::FileName::fromString(QLatin1String("dcd-client"));
+			dcd = Utils::FilePath::fromString(QLatin1String("dcd-client"));
 	}
 	return dcd.toString();
 }

@@ -17,7 +17,3 @@ void DHoverHandler::identifyMatch(TextEditor::TextEditorWidget *editorWidget, in
 
 }
 
-void DHoverHandler::decorateToolTip()
-{
-	BaseHoverHandler::decorateToolTip();
-}

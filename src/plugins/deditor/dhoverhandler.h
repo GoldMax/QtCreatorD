@@ -14,7 +14,6 @@ private:
 	void identifyMatch(TextEditor::TextEditorWidget *editorWidget,
 																				int pos,
 																				BaseHoverHandler::ReportPriority report) override;
-	void decorateToolTip() override;
 };
 
 } // namespace DEditor

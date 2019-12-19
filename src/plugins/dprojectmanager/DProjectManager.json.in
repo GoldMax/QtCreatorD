@@ -8,7 +8,11 @@
 				\"Description\" : \"Project manager for D language projects.\",
 				\"Category\" : \"D Language\",
 				\"Url\" : \"\",
-				$$dependencyList,
+				\"Dependencies\" : [
+												{ \"Name\" : \"Core\", \"Version\" : \"4.11.1\" },
+												{ \"Name\" : \"ProjectExplorer\", \"Version\" : \"4.11.1\" },
+												{ \"Name\" : \"DEditor\", \"Version\" : \"0.4.0\" }
+								],
 
 
 \"Mimetypes\" : [

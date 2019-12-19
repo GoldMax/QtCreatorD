@@ -33,15 +33,13 @@ public:
 
 	bool supportsAction(ProjectExplorer::ProjectAction action, const Node *) const override;
 	bool addFiles(const QStringList &filePaths, QStringList *notAdded = nullptr) override;
-	bool removeFiles(const QStringList &filePaths, QStringList *notRemoved = nullptr) override;
+	RemovedFilesFromProject removeFiles(const QStringList &filePaths, QStringList *notRemoved = nullptr) override;
 	bool deleteFiles(const QStringList &) override { return false; }
 	bool canRenameFile(const QString &, const QString &) override { return true; }
 	bool renameFile(const QString &filePath, const QString &newFilePath) override;
 
 //	QList<ProjectExplorer::ProjectAction> supportedActions(Node *node) const;
 //	QList<ProjectExplorer::RunConfiguration *> runConfigurationsFor(Node *node);
-
-	//void refresh(bool needRebuild);
 
 private:
 	DProject *m_project;

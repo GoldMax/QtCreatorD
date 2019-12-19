@@ -53,9 +53,7 @@ namespace DProjectManager {
 //--------------------------------------------------------------------------------------
 
 DProject::DProject(const Utils::FilePath &fileName)
-	: Project(Constants::DPROJECT_MIMETYPE, fileName, [this]() { refresh(Everything); })/*,
-			m_projectName(fileName.fileName()),
-			m_projectFileName(fileName)*/
+	: Project(Constants::DPROJECT_MIMETYPE, fileName)
 {
 	setId(Constants::DPROJECT_ID);
 	setProjectLanguages(Context(ProjectExplorer::Constants::CXX_LANGUAGE_ID));
@@ -79,16 +77,15 @@ DProject::DProject(const Utils::FilePath &fileName)
 		QString path = fileName.parentDir().toString();
 		QcdAssist::sendAddImportToDCD(path);
 		QDir dir(path);
-		// TODO : доделать includes
-//		foreach(QString s, this->includes().split(QLatin1Char(' '), QString::SkipEmptyParts))
-//		{
-//			if(s.startsWith(QLatin1String("-I")))
-//				s = s.remove(0,2);
-//			if(QDir::isAbsolutePath(s))
-//				QcdAssist::sendAddImportToDCD(path);
-//			else
-//				QcdAssist::sendAddImportToDCD(dir.absoluteFilePath(s));
-//		}
+		foreach(QString s, this->includes().split(QLatin1Char(' '), QString::SkipEmptyParts))
+		{
+			if(s.startsWith(QLatin1String("-I")))
+				s = s.remove(0,2);
+			if(QDir::isAbsolutePath(s))
+				QcdAssist::sendAddImportToDCD(path);
+			else
+				QcdAssist::sendAddImportToDCD(dir.absoluteFilePath(s));
+		}
 	}
 
 }
@@ -147,39 +144,54 @@ Project::RestoreResult DProject::fromMap(const QVariantMap &map, QString *errorM
 	if (result != RestoreResult::Ok)
 					return result;
 
-	Kit *defaultKit = KitManager::defaultKit();
-	if (!activeTarget() && defaultKit)
-					addTarget(createTarget(defaultKit));
+	if (!activeTarget())
+					addTargetForDefaultKit();
 
-	//	// Sanity check: We need both a buildconfiguration and a runconfiguration!
-	//	QList<Target *> targetList = targets();
-	//	foreach (Target *t, targetList)
-	//	{
-	//		if (!t->activeBuildConfiguration())
-	//		{
-	//			removeTarget(t);
-	//			try {
-	//				delete t;
-	//			} catch(...) {}
-	//			continue;
-	//		}
-	//		if (!t->activeRunConfiguration())
-	//		{
-	//			QList<IRunConfigurationFactory *> rfs = IRunConfigurationFactory::find(t);
-	//			if (rfs.length() > 0 )
-	//				foreach(IRunConfigurationFactory* rf, rfs)
-	//				{
-	//					RunConfiguration* rc = rf->create(t,Core::Id(Constants::BUILDRUN_CONFIG_ID));
-	//					if(rc)
-	//					{
-	//						t->addRunConfiguration(rf->create(t, ProjectExplorer::Constants::BUILDSTEPS_BUILD));
-	//						break;
-	//					}
-	//				}
 
-	//		}
-	//	}
+	// Sanity check: We need both a buildconfiguration and a runconfiguration!
+	const QList<Target *> targetList = targets();
+	if (targetList.isEmpty())
+		return RestoreResult::Error;
 
+	for (Target *t : targetList)
+	{
+		if (!t->activeBuildConfiguration())
+		{
+			removeTarget(t);
+			continue;
+		}
+		if (!t->activeRunConfiguration())
+			t->addRunConfiguration(new CustomExecutableRunConfiguration(t));
+	}
+		/*// Sanity check: We need both a buildconfiguration and a runconfiguration!
+		QList<Target *> targetList = targets();
+		foreach (Target *t, targetList)
+		{
+			if (!t->activeBuildConfiguration())
+			{
+				removeTarget(t);
+				try {
+					delete t;
+				} catch(...) {}
+				continue;
+			}
+			if (!t->activeRunConfiguration())
+			{
+				QList<IRunConfigurationFactory *> rfs = IRunConfigurationFactory::find(t);
+				if (rfs.length() > 0 )
+					foreach(IRunConfigurationFactory* rf, rfs)
+					{
+						RunConfiguration* rc = rf->create(t,Core::Id(Constants::BUILDRUN_CONFIG_ID));
+						if(rc)
+						{
+							t->addRunConfiguration(rf->create(t, ProjectExplorer::Constants::BUILDSTEPS_BUILD));
+							break;
+						}
+					}
+
+			}
+		}
+		*/
 
 	refresh(Everything);
 	return result;
@@ -214,7 +226,7 @@ void DProject::refresh(RefreshOptions options)
 					}
 				if(fn == nullptr)
 				{
-					fn = new FolderNode(Utils::FileName::fromString(absFolderPath));
+					fn = new FolderNode(Utils::FilePath::fromString(absFolderPath));
 					fn->setDisplayName(part);
 					folder->addNode(std::unique_ptr<FolderNode>(fn));
 				}
@@ -239,19 +251,9 @@ void DProject::refresh(RefreshOptions options)
 					type = FileType::Header;
 
 				FileNode* fn = new FileNode(Utils::FilePath::fromString(kv.key()), type);
-				//QList<FileNode*> list;
-				//list.append(new FileNode(Utils::FileName::fromString(kv.key()), SourceType, false));
-				//folder->addFileslist);
-
 				folder->addNode(std::unique_ptr<FileNode>(fn));
 			}
-
-
-//			FilePath file = kv.value(); //FilePath::fromString(kv.key());
-//			auto node = std::make_unique<FileNode>(file,	type);
-//			root->addNestedNode(std::move(node), projectDirectory());
 		}
-
 
 		// setRootProjectNode не хочет добавлять пустые ветви, поэтому мухлюем
 		if(root->isEmpty())
@@ -276,7 +278,7 @@ bool DProject::parseProjectFile(RefreshOptions options)
 		m_extraArgs = sets.value(QLatin1String(Constants::INI_EXTRA_ARGS_KEY)).toString();
 
 		QString bds = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
-		Utils::FileName dir = projectDirectory();
+		Utils::FilePath dir = projectDirectory();
 		if(bds.length() > 0 && bds != QLatin1String("."))
 			dir.pathAppended(bds);
 		if((needRebuild = (dir.toString() != m_buildDir.path())))
