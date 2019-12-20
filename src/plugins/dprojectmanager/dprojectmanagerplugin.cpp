@@ -2,9 +2,9 @@
 #include "dprojectmanagerconstants.h"
 #include "dproject.h"
 #include "dprojectwizard.h"
-//#include "dbuildconfiguration.h"
-//#include "dmakestep.h"
-//#include "drunconfiguration.h"
+#include "dmakestep.h"
+#include "dbuildconfiguration.h"
+#include "drunconfiguration.h"
 
 #include <coreplugin/icore.h>
 //#include <coreplugin/actionmanager/actionmanager.h>
@@ -28,21 +28,20 @@ using namespace ProjectExplorer;
 using namespace DProjectManager;
 
 
-class DProjectPluginPrivate : public QObject
+class DProjectPluginPrivate /*: public QObject*/
 {
 public:
-				DProjectPluginPrivate();
+	DProjectPluginPrivate();
 
-//    ProjectFilesFactory projectFilesFactory;
-//    GenericMakeAllStepFactory makeAllStepFactory;
-//    GenericMakeCleanStepFactory makeCleanStepFactory;
-//    GenericBuildConfigurationFactory buildConfigFactory;
+	DMakeStepFactory makeStepFactory;
+	DBuildConfigurationFactory buildConfigFactory;
+	DRunConfigurationFactory runConfigFactory;
 
 //    QAction editFilesAction{GenericProjectPlugin::tr("Edit Files..."), nullptr};
 };
 DProjectPluginPrivate::DProjectPluginPrivate()
 {
-	ProjectManager::registerProjectType<DProject>(Constants::DPROJECT_MIMETYPE);
+	ProjectManager::registerProjectType<DProject>(DProjectManager::Constants::DPROJECT_MIMETYPE);
 	IWizardFactory::registerFactoryCreator([]()
 	{
 		return QList<IWizardFactory *>{ new DProjectWizard };

@@ -3,9 +3,9 @@
 #include "dprojectmanagerconstants.h"
 #include "dproject.h"
 #include "dprojectnodes.h"
-//#include "dmakestep.h"
-//#include "dbuildconfiguration.h"
-//#include "drunconfiguration.h"
+#include "dmakestep.h"
+#include "dbuildconfiguration.h"
+#include "drunconfiguration.h"
 
 #include "deditor/qcdassist.h"
 
@@ -18,13 +18,14 @@
 #include <projectexplorer/projectmanager.h>
 #include <projectexplorer/kitmanager.h>
 //#include <projectexplorer/abi.h>
-//#include <projectexplorer/buildsteplist.h>
-//#include <projectexplorer/headerpath.h>
+#include <projectexplorer/buildinfo.h>
+#include <projectexplorer/buildconfiguration.h>
+#include <projectexplorer/runconfiguration.h>
 #include <projectexplorer/kitinformation.h>
 #include <projectexplorer/target.h>
 //#include <projectexplorer/projectexplorerconstants.h>
 //#include <projectexplorer/editorconfiguration.h>
-//#include <projectexplorer/session.h>
+#include <projectexplorer/session.h>
 //#include <qtsupport/customexecutablerunconfiguration.h>
 #include <utils/fileutils.h>
 //#include <utils/qtcassert.h>
@@ -161,7 +162,7 @@ Project::RestoreResult DProject::fromMap(const QVariantMap &map, QString *errorM
 			continue;
 		}
 		if (!t->activeRunConfiguration())
-			t->addRunConfiguration(new CustomExecutableRunConfiguration(t));
+			t->addRunConfiguration(new DRunConfiguration(t, Constants::BUILDRUN_CONFIG_ID));
 	}
 		/*// Sanity check: We need both a buildconfiguration and a runconfiguration!
 		QList<Target *> targetList = targets();
@@ -309,72 +310,72 @@ bool DProject::parseProjectFile(RefreshOptions options)
 	return needRebuild;
 }
 
+bool DProject::setupTarget(Target *t)
+{
+	//refresh(RefreshOptions::Everything);
+	//return Project::setupTarget(t);
 
+	BuildConfigurationFactory *factory = BuildConfigurationFactory::find(t);
+	if (!factory)
+		return false;
 
-////-------
-//bool DProject::setupTarget(Target* t)
-//{
-////	IBuildConfigurationFactory *factory = IBuildConfigurationFactory::find(t);
-////	if (!factory)
-////		return false;
+	Utils::FilePath projectDir = t->project()->projectDirectory();
 
-////	Utils::FileName projectDir = t->project()->projectDirectory();
+	BuildInfo info(factory);
+	info.displayName = tr("Debug");
+	info.typeName = tr("D Build");
+	info.buildDirectory = projectDir;
+	info.kitId = t->kit()->id();
 
-////	BuildInfo* info = new BuildInfo(factory);
-////	info->displayName = tr("Debug");
-////	info->typeName = tr("D Build");
-////	info->buildDirectory = projectDir;
-////	info->kitId = t->kit()->id();
+	BuildConfiguration* bc = factory->create(t,info);
+	if (!bc)
+		return false;
+	t->addBuildConfiguration(bc);
+	SessionManager::instance()->setActiveBuildConfiguration(t,bc, SetActive::Cascade);
 
-////	BuildConfiguration* bc = factory->create(t,info);
-////	if (!bc)
-////		return false;
-////	t->addBuildConfiguration(bc);
-////	SessionManager::instance()->setActiveBuildConfiguration(t,bc, SetActive::Cascade);
+	info = BuildInfo(factory);
+	info.displayName = tr("Release");
+	info.typeName = tr("D Build");
+	info.buildDirectory = projectDir;
+	info.kitId = t->kit()->id();
 
-////	info = new BuildInfo(factory);
-////	info->displayName = tr("Release");
-////	info->typeName = tr("D Build");
-////	info->buildDirectory = projectDir;
-////	info->kitId = t->kit()->id();
+	bc = factory->create(t,info);
+	if (!bc)
+		return false;
+	t->addBuildConfiguration(bc);
 
-////	bc = factory->create(t,info);
-////	if (!bc)
-////		return false;
-////	t->addBuildConfiguration(bc);
+	info = BuildInfo(factory);
+	info.displayName = tr("Unittest");
+	info.typeName = tr("D Build");
+	info.buildDirectory = projectDir;
+	info.kitId = t->kit()->id();
 
-////	info = new BuildInfo(factory);
-////	info->displayName = tr("Unittest");
-////	info->typeName = tr("D Build");
-////	info->buildDirectory = projectDir;
-////	info->kitId = t->kit()->id();
+	bc = factory->create(t,info);
+	if (!bc)
+		return false;
+	t->addBuildConfiguration(bc);
 
-////	bc = factory->create(t,info);
-////	if (!bc)
-////		return false;
-////	t->addBuildConfiguration(bc);
+//	QList<RunConfigurationFactory *> rfs = RunConfigurationFactory::find(t);
+//	if (rfs.length() == 0 )
+//		return false;
 
-////	QList<IRunConfigurationFactory *> rfs = IRunConfigurationFactory::find(t);
-////	if (rfs.length() == 0 )
-////		return false;
+//	RunConfiguration* rc = 0;
+//	foreach(IRunConfigurationFactory* rf, rfs)
+//	{
+//		rc = rf->create(t,Core::Id(Constants::BUILDRUN_CONFIG_ID));
+//		if(rc)
+//			break;
+//	}
+//	if (!rc)
+//		return false;
 
-////	RunConfiguration* rc = 0;
-////	foreach(IRunConfigurationFactory* rf, rfs)
-////	{
-////		rc = rf->create(t,Core::Id(Constants::BUILDRUN_CONFIG_ID));
-////		if(rc)
-////			break;
-////	}
-////	if (!rc)
-////		return false;
+//	t->addRunConfiguration(rc);
+//	t->setActiveRunConfiguration(rc);
 
-////	t->addRunConfiguration(rc);
-////	t->setActiveRunConfiguration(rc);
+	SessionManager::instance()->setActiveTarget(this, t, SetActive::Cascade);
 
-////	SessionManager::instance()->setActiveTarget(this, t, SetActive::Cascade);
-
-//	return true;
-//}
+	return true;
+}
 
 
 //--------------------------------------------------------------------------------------

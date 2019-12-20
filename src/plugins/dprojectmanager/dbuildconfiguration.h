@@ -1,7 +1,6 @@
-//#ifndef DBUILDCONFIGURATION_H
-//#define DBUILDCONFIGURATION_H
+#pragma once
 
-//#include <projectexplorer/buildconfiguration.h>
+#include <projectexplorer/buildconfiguration.h>
 //#include <projectexplorer/namedwidget.h>
 //#include <projectexplorer/buildinfo.h>
 //#include <projectexplorer/target.h>
@@ -10,21 +9,21 @@
 
 //namespace Utils { class PathChooser; }
 
-//using namespace ProjectExplorer;
+using namespace ProjectExplorer;
 
-//namespace DProjectManager {
+namespace DProjectManager {
 
 //class DTarget;
 //class DBuildConfigurationFactory;
 //class DBuildSettingsWidget;
 
-//class DBuildConfiguration : public ProjectExplorer::BuildConfiguration
-//{
-//	Q_OBJECT
+class DBuildConfiguration : public BuildConfiguration
+{
+	//Q_OBJECT
 //	friend class DBuildConfigurationFactory;
 
-//public:
-//	explicit DBuildConfiguration(Target *parent);
+public:
+	DBuildConfiguration(Target *parent, Core::Id id);
 
 //	NamedWidget *createConfigWidget();
 //	BuildType buildType() const { return Unknown; }
@@ -38,14 +37,14 @@
 //	DBuildConfiguration(Target *parent, const Core::Id id);
 
 //	friend class DBuildSettingsWidget;
-//};
+};
 
-//class DBuildConfigurationFactory : public ProjectExplorer::IBuildConfigurationFactory
-//{
-//	Q_OBJECT
+class DBuildConfigurationFactory : public BuildConfigurationFactory
+{
+	//Q_OBJECT
 
-//public:
-//	explicit DBuildConfigurationFactory(QObject *parent = 0);
+public:
+	DBuildConfigurationFactory();
 //	~DBuildConfigurationFactory();
 
 //	int priority(const Target*) const { return 0; }
@@ -53,7 +52,6 @@
 
 
 //	bool canCreate(const Target *parent) const;
-//	QList<BuildInfo *> availableBuilds(const Target *parent) const;
 //	ProjectExplorer::BuildConfiguration *create(Target *parent, const BuildInfo *info) const;
 
 //	// Used to see whether this factory can produce any BuildConfigurations for a kit when
@@ -69,10 +67,12 @@
 //	BuildConfiguration *restore(Target *parent, const QVariantMap &map);
 
 
-//private:
+private:
+	QList<BuildInfo> availableBuilds(const Kit *k,
+																																		const Utils::FilePath &projectPath,
+																																		bool forSetup) const override;
 //	bool canHandle(const Target *t) const;
-
-//};
+};
 
 //class DBuildSettingsWidget : public ProjectExplorer::NamedWidget
 //{
@@ -95,6 +95,4 @@
 
 //};
 
-//} // namespace DProjectManager
-
-//#endif // DBUILDCONFIGURATION_H
+} // namespace DProjectManager

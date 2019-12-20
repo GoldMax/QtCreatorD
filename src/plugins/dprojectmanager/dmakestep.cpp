@@ -1,17 +1,21 @@
-//#include "dmakestep.h"
-//#include "dprojectmanagerconstants.h"
+#include "dmakestep.h"
+#include "dprojectmanagerconstants.h"
 //#include "dproject.h"
 //#include "ui_dmakestep.h"
 //#include "dbuildconfiguration.h"
 //#include "drunconfiguration.h"
 
-//#include <extensionsystem/pluginmanager.h>
-//#include <projectexplorer/buildsteplist.h>
+#include <projectexplorer/projectexplorerconstants.h>
+#include <projectexplorer/project.h>
+#include <projectexplorer/abi.h>
+#include <projectexplorer/buildsteplist.h>
+#include <projectexplorer/buildconfiguration.h>
 //#include <projectexplorer/gnumakeparser.h>
 //#include <projectexplorer/kitinformation.h>
 //#include <projectexplorer/projectexplorer.h>
 //#include <projectexplorer/projectexplorerconstants.h>
 //#include <projectexplorer/toolchain.h>
+//#include <projectexplorer/target.h>
 //#include <qtsupport/qtkitinformation.h>
 //#include <qtsupport/qtparser.h>
 //#include <utils/stringutils.h>
@@ -21,59 +25,45 @@
 //#include <QSettings>
 
 //using namespace Core;
-//using namespace ProjectExplorer;
+using namespace ProjectExplorer;
 //using namespace DProjectManager;
 
-//namespace DProjectManager {
+namespace DProjectManager {
 
-//DMakeStep::DMakeStep(BuildStepList *parent) :
-//		AbstractProcessStep(parent, Id(Constants::D_MS_ID)),
-//		m_targetType(Executable), m_buildPreset(Debug)
-//{
-//	ctor();
-//}
+DMakeStep::DMakeStep(BuildStepList *parent) :
+		//AbstractProcessStep(parent, Id(Constants::D_MS_ID))
+		MakeStep(parent, Constants::D_MS_ID),
+		m_targetType(Executable), m_buildPreset(Debug)
+{
+	setDefaultDisplayName(QLatin1String(Constants::D_MS_DISPLAY_NAME));
 
-//DMakeStep::DMakeStep(BuildStepList *parent, const Id id) :
-//		AbstractProcessStep(parent, id),
-//		m_targetType(Executable), m_buildPreset(Debug)
-//{
-//	ctor();
-//}
+	if (parent->id() == ProjectExplorer::Constants::BUILDSTEPS_BUILD)
+		setBuildTarget("build");
+	else if (parent->id() == ProjectExplorer::Constants::BUILDSTEPS_CLEAN)
+	{
+		setBuildTarget("clean");
+		setClean(true);
+	}
+	setAvailableBuildTargets({"build", "clean"});
 
-//DMakeStep::DMakeStep(BuildStepList *parent, DMakeStep *bs) :
-//		AbstractProcessStep(parent, bs),
-//		m_targetType(bs->m_targetType),
-//		m_buildPreset(bs->m_buildPreset),
-//		m_makeArguments(bs->m_makeArguments),
-//		m_targetName(bs->m_targetName),
-//		m_targetDirName(bs->m_targetDirName),
-//		m_objDirName(bs->m_objDirName)
-//{
-//	ctor();
-//}
 
-//void DMakeStep::ctor()
-//{
-//	setDefaultDisplayName(QCoreApplication::translate("DProjectManager::Internal::DMakeStep",
-//																																																			Constants::D_MS_DISPLAY_NAME));
+	if(m_targetName.length() == 0)
+		m_targetName = project()->displayName();
 
-//	if(m_targetName.length() == 0)
-//		m_targetName =  project()->displayName();
+	QString bname = this->buildConfiguration()->displayName().toLower();
+	QString sep(QDir::separator());
+	if(m_targetDirName.length() == 0)
+		m_targetDirName = QLatin1String("bin") + sep + bname;
+	if(m_objDirName.length() == 0)
+		m_objDirName = QLatin1String("obj") + sep + bname;
 
-//	QString bname = this->buildConfiguration()->displayName().toLower();
-//	QString sep(QDir::separator());
-//	if(m_targetDirName.length() == 0)
-//		m_targetDirName = QLatin1String("bin") + sep + bname;
-//	if(m_objDirName.length() == 0)
-//		m_objDirName = QLatin1String("obj") + sep + bname;
-
-//	if(m_makeArguments.length() == 0)
-//	{
-//		ProjectExplorer::Abi abi = ProjectExplorer::Abi::hostAbi();
-//		if(abi.wordWidth() == 64)
-//			m_makeArguments = QLatin1String("-m64");
-//	}
-//}
+	if(m_makeArguments.length() == 0)
+	{
+		ProjectExplorer::Abi abi = ProjectExplorer::Abi::hostAbi();
+		if(abi.wordWidth() == 64)
+			m_makeArguments = QLatin1String("-m64");
+	}
+}
 
 //DMakeStep::~DMakeStep() { }
 
@@ -110,7 +100,7 @@
 //		appendOutputParser(parser);
 //	outputParser()->setWorkingDirectory(pp->effectiveWorkingDirectory());
 
-// return AbstractProcessStep::init(earlierSteps);
+//	return AbstractProcessStep::init(earlierSteps);
 //}
 
 //QVariantMap DMakeStep::toMap() const
@@ -254,7 +244,7 @@
 //	{
 //		emit addOutput(tr("Configuration is faulty. Check the Issues view for details."), BuildStep::MessageOutput);
 //		fi.reportResult(false);
-//  //emit finished();
+//		//emit finished();
 //		return;
 //	}
 //	AbstractProcessStep::run(fi);
@@ -310,6 +300,17 @@
 //{
 //	return false;
 //}
+
+////-------------------------------------------------------------------------
+////-- DMakeStepFactory
+////-------------------------------------------------------------------------
+DMakeStepFactory::DMakeStepFactory()
+{
+	registerStep<DMakeStep>(Constants::D_MS_ID);
+	setDisplayName(QLatin1String(Constants::D_MS_DISPLAY_NAME)); //MakeStep::defaultDisplayName());
+	setSupportedProjectType(Constants::DPROJECT_ID);
+}
+
 
 ////-------------------------------------------------------------------------
 ////-- DMakeStepConfigWidget
@@ -392,7 +393,7 @@
 //	{
 //		DRunConfiguration * brc = dynamic_cast<DRunConfiguration *>(rc);
 //		if(brc)
-//   brc->updateConfig();
+//			brc->updateConfig();
 //	}
 //}
 
@@ -442,12 +443,12 @@
 
 //QList<BuildStepInfo> DMakeStepFactory::availableSteps(BuildStepList* parent) const
 //{
-// if (parent->target()->project()->id() != Constants::DPROJECT_ID)
-//         return {};
+//	if (parent->target()->project()->id() != Constants::DPROJECT_ID)
+//									return {};
 
-//     return {{ Constants::D_MS_ID,
-//               QCoreApplication::translate("DProjectManager::DMakeStep",
-//               Constants::D_MS_DISPLAY_NAME) }};
+//					return {{ Constants::D_MS_ID,
+//															QCoreApplication::translate("DProjectManager::DMakeStep",
+//															Constants::D_MS_DISPLAY_NAME) }};
 //}
 
 //bool DMakeStepFactory::canCreate(BuildStepList *parent, const Id id) const
@@ -474,7 +475,7 @@
 //BuildStep *DMakeStepFactory::clone(BuildStepList *parent, BuildStep *source)
 //{
 //	if (!canClone(parent, source))
-//		return 0;
+//		return nullptr;
 //	DMakeStep *old(qobject_cast<DMakeStep *>(source));
 //	Q_ASSERT(old);
 //	return new DMakeStep(parent, old);
@@ -488,12 +489,12 @@
 //BuildStep *DMakeStepFactory::restore(BuildStepList *parent, const QVariantMap &map)
 //{
 //	if (!canRestore(parent, map))
-//		return 0;
+//		return nullptr;
 //	DMakeStep *bs(new DMakeStep(parent));
 //	if (bs->fromMap(map))
 //		return bs;
 //	delete bs;
-//	return 0;
+//	return nullptr;
 //}
 
 //QList<Id> DMakeStepFactory::availableCreationIds(BuildStepList *parent) const
@@ -511,4 +512,4 @@
 //	return QString();
 //}
 
-//} // namespace DProjectManager
+} // namespace DProjectManager

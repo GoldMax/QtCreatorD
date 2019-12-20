@@ -1,10 +1,13 @@
-//#include "dbuildconfiguration.h"
+#include "dbuildconfiguration.h"
+#include "dprojectmanagerconstants.h"
 
 //#include "dproject.h"
 //#include "dmakestep.h"
 //#include "drunconfiguration.h"
-//#include "dprojectmanagerconstants.h"
 
+#include <projectexplorer/buildinfo.h>
+#include <projectexplorer/kit.h>
+#include <projectexplorer/project.h>
 //#include <projectexplorer/buildsteplist.h>
 //#include <projectexplorer/kitinformation.h>
 //#include <projectexplorer/projectexplorerconstants.h>
@@ -20,15 +23,19 @@
 //#include <QSettings>
 //#include <QPlainTextEdit>
 
-//using namespace ProjectExplorer;
+using namespace ProjectExplorer;
 //using namespace DProjectManager;
 
-//namespace DProjectManager {
+namespace DProjectManager {
 
-//DBuildConfiguration::DBuildConfiguration(Target *parent)
-//	: BuildConfiguration(parent, Core::Id(Constants::D_BC_ID))
-//{
-//}
+DBuildConfiguration::DBuildConfiguration(Target *parent, Core::Id id)
+	: BuildConfiguration(parent, id) //Core::Id(Constants::D_BC_ID))
+{
+	setConfigWidgetDisplayName(tr("D build Manager"));
+	setBuildDirectoryHistoryCompleter("D.BuildDir.History");
+
+	updateCacheAndEmitEnvironmentChanged();
+}
 
 //DBuildConfiguration::DBuildConfiguration(Target *parent, const Core::Id id)
 //	: BuildConfiguration(parent, id)
@@ -60,8 +67,33 @@
 ////  class DBuildConfigurationFactory
 ////------------------------------------------------------------------------------------------------
 
-//DBuildConfigurationFactory::DBuildConfigurationFactory(QObject *parent) :
-//		IBuildConfigurationFactory(parent) { }
+DBuildConfigurationFactory::DBuildConfigurationFactory() :
+		BuildConfigurationFactory()
+{
+	registerBuildConfiguration<DBuildConfiguration>(Constants::D_BC_ID);
+
+	setSupportedProjectType(Constants::DPROJECT_ID);
+	setSupportedProjectMimeTypeName(Constants::DPROJECT_MIMETYPE);
+
+}
+
+QList<BuildInfo> DBuildConfigurationFactory::availableBuilds
+				(const Kit *k, const Utils::FilePath &projectPath, bool forSetup) const
+{
+	BuildInfo info(this);
+	info.typeName = tr("Build");
+	info.buildDirectory = forSetup ? Project::projectDirectory(projectPath) : projectPath;
+	info.kitId = k->id();
+
+	if (forSetup)
+	{
+		//: The name of the build configuration created by default for a generic project.
+		info.displayName = tr("D Default");
+	}
+
+	return {info};
+}
+
 
 //DBuildConfigurationFactory::~DBuildConfigurationFactory() { }
 
@@ -267,4 +299,4 @@
 //	sets.setValue(QLatin1String(Constants::INI_EXTRA_ARGS_KEY), editExtra->text());
 //	sets.sync();
 //}
-//} // namespace DProjectManager
+} // namespace DProjectManager

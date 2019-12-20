@@ -62,6 +62,7 @@ public:
 protected:
 	QVariantMap toMap() const override;
 	RestoreResult fromMap(const QVariantMap &map, QString* errorMessage) override;
+	bool setupTarget(ProjectExplorer::Target *t) override;
 
 private:
 	bool parseProjectFile(RefreshOptions options);
