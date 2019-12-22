@@ -12,6 +12,7 @@
 #include <projectexplorer/abi.h>
 #include <projectexplorer/buildsteplist.h>
 #include <projectexplorer/buildconfiguration.h>
+#include <projectexplorer/makestep.h>
 #include <projectexplorer/processparameters.h>
 //#include <projectexplorer/gnumakeparser.h>
 //#include <projectexplorer/kitinformation.h>
