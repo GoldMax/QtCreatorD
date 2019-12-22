@@ -1,13 +1,13 @@
 #pragma once
 
 #include <projectexplorer/buildconfiguration.h>
-//#include <projectexplorer/namedwidget.h>
+#include <projectexplorer/namedwidget.h>
 //#include <projectexplorer/buildinfo.h>
 //#include <projectexplorer/target.h>
 
-//#include <QLineEdit>
+#include <QLineEdit>
 
-//namespace Utils { class PathChooser; }
+namespace Utils { class PathChooser; }
 
 using namespace ProjectExplorer;
 
@@ -15,28 +15,24 @@ namespace DProjectManager {
 
 //class DTarget;
 //class DBuildConfigurationFactory;
-//class DBuildSettingsWidget;
+class DBuildSettingsWidget;
 
 class DBuildConfiguration : public BuildConfiguration
 {
-	//Q_OBJECT
+	Q_OBJECT
 //	friend class DBuildConfigurationFactory;
 
 public:
 	DBuildConfiguration(Target *parent, Core::Id id);
 
-//	NamedWidget *createConfigWidget();
-//	BuildType buildType() const { return Unknown; }
-//	bool fromMap(const QVariantMap &map);
+	void initialize() override;
+	ProjectExplorer::NamedWidget *createConfigWidget() override;
+	bool fromMap(const QVariantMap &map) override;
 
-//signals:
-//	void configurationChanged();
+signals:
+	void configurationChanged();
 
-//protected:
-//	DBuildConfiguration(Target *parent, DBuildConfiguration *source);
-//	DBuildConfiguration(Target *parent, const Core::Id id);
-
-//	friend class DBuildSettingsWidget;
+	friend class DBuildSettingsWidget;
 };
 
 class DBuildConfigurationFactory : public BuildConfigurationFactory
@@ -74,25 +70,25 @@ private:
 //	bool canHandle(const Target *t) const;
 };
 
-//class DBuildSettingsWidget : public ProjectExplorer::NamedWidget
-//{
-//	Q_OBJECT
+class DBuildSettingsWidget : public ProjectExplorer::NamedWidget
+{
+	Q_OBJECT
 
-//public:
-//	DBuildSettingsWidget(DBuildConfiguration *bc);
+public:
+	DBuildSettingsWidget(DBuildConfiguration *bc);
 
-//private:
-//	DBuildConfiguration *m_buildConfiguration;
-//	Utils::PathChooser *m_pathChooser;
-//	QLineEdit* editIncludes;
-//	QLineEdit* editLibs;
-//	QLineEdit* editExtra;
+private:
+	DBuildConfiguration *m_buildConfiguration;
+	Utils::PathChooser *m_pathChooser;
+	QLineEdit* editIncludes;
+	QLineEdit* editLibs;
+	QLineEdit* editExtra;
 
-//private slots:
-//	void buildDirectoryChanged();
-//	void editsTextChanged();
-//	void editsEditingFinished();
+private slots:
+	void buildDirectoryChanged();
+	void editsTextChanged();
+	void editsEditingFinished();
 
-//};
+};
 
 } // namespace DProjectManager

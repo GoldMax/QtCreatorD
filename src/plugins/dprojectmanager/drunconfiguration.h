@@ -1,7 +1,7 @@
 #ifndef DRUNCONFIG_H
 #define DRUNCONFIG_H
 
-//#include "dmakestep.h"
+#include "dmakestep.h"
 
 #include <projectexplorer/runconfiguration.h>
 #include <projectexplorer/runconfigurationaspects.h>
@@ -66,7 +66,7 @@ public:
 //				//Abi abi() const override;
 //				QVariantMap toMap() const override;
 
-//				void updateConfig(/*const DMakeStep* makeStep*/);
+				void updateConfig(const DMakeStep* makeStep);
 
 //signals:
 //	void changed();

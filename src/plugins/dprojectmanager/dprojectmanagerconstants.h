@@ -50,6 +50,7 @@ const char INI_SOURCE_ROOT_KEY[]   = "SourceRoot";
 const char INI_INCLUDES_KEY[]   = "Includes";
 const char INI_LIBRARIES_KEY[]   = "Libs";
 const char INI_EXTRA_ARGS_KEY[]   = "ExtraArgs";
+const char INI_FILES_ROOT_KEY[]   = "Files";
 
 //const char INI_MAKE_COMMAND_KEY[]   = "MakeCommand";
 const char INI_BUILD_PRESET_KEY[]   = "BuildPreset";

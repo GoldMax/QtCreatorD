@@ -54,7 +54,7 @@ namespace DProjectManager {
 //--------------------------------------------------------------------------------------
 
 DProject::DProject(const Utils::FilePath &fileName)
-	: Project(Constants::DPROJECT_MIMETYPE, fileName)
+	: ProjectExplorer::Project(Constants::DPROJECT_MIMETYPE, fileName)
 {
 	setId(Constants::DPROJECT_ID);
 	setProjectLanguages(Context(ProjectExplorer::Constants::CXX_LANGUAGE_ID));
@@ -65,36 +65,35 @@ DProject::DProject(const Utils::FilePath &fileName)
 	//DocumentManager::addDocument(m_projectFile);
 	//setDocument(m_projectFile);
 
-	QSettings sets(fileName.toString(), QSettings::IniFormat);
-	QString bds = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
-	Utils::FilePath dir = projectDirectory();
-	if(bds.length() > 0 && bds != QLatin1String("."))
-		dir.pathAppended(bds);
-	m_buildDir.setPath(dir.toString());
-
-
 	if(QcdAssist::isDCDEnabled())
-	{
-		QString path = fileName.parentDir().toString();
-		QcdAssist::sendAddImportToDCD(path);
-		QDir dir(path);
-		foreach(QString s, this->includes().split(QLatin1Char(' '), QString::SkipEmptyParts))
-		{
-			if(s.startsWith(QLatin1String("-I")))
-				s = s.remove(0,2);
-			if(QDir::isAbsolutePath(s))
-				QcdAssist::sendAddImportToDCD(path);
-			else
-				QcdAssist::sendAddImportToDCD(dir.absoluteFilePath(s));
-		}
-	}
-
+		QcdAssist::sendAddImportToDCD(fileName.parentDir().toString());
 }
 
 DProject::~DProject()
 {
 //	m_codeModelFuture.cancel();
 	setRootProjectNode(nullptr);
+}
+
+void DProject::setIncludes(QString value)
+{
+	if(m_includes == value)
+		return;
+
+	m_includes = value;
+	if(QcdAssist::isDCDEnabled())
+	{
+		QDir dir(this->projectDirectory().toString());
+		foreach(QString s, this->includes().split(QLatin1Char(' '), QString::SkipEmptyParts))
+		{
+			if(s.startsWith(QLatin1String("-I")))
+				s = s.remove(0,2);
+			if(QDir::isAbsolutePath(s))
+				QcdAssist::sendAddImportToDCD(s);
+			else
+				QcdAssist::sendAddImportToDCD(dir.absoluteFilePath(s));
+		}
+	}
 }
 
 bool DProject::addFiles(const QStringList& filePaths)
@@ -104,7 +103,7 @@ bool DProject::addFiles(const QStringList& filePaths)
 	foreach (const QString &filePath, filePaths)
 	{
 		if(m_files.contains(filePath) == false)
-			projectFiles.setValue(m_buildDir.relativeFilePath(filePath), 0);
+			projectFiles.setValue(buildDirectory().relativeFilePath(filePath), 0);
 	}
 	refresh(Files);
 	return true;
@@ -128,8 +127,8 @@ bool DProject::renameFile(const QString &filePath, const QString &newFilePath)
 {
 	QSettings projectFiles(projectFilePath().toString(), QSettings::IniFormat);
 	projectFiles.beginGroup(QLatin1String("Files"));
-	projectFiles.remove(m_buildDir.relativeFilePath(filePath));
-	projectFiles.setValue(m_buildDir.relativeFilePath(newFilePath), 0);
+	projectFiles.remove(buildDirectory().relativeFilePath(filePath));
+	projectFiles.setValue(buildDirectory().relativeFilePath(newFilePath), 0);
 	refresh(Files);
 	return true;
 }
@@ -270,27 +269,30 @@ bool DProject::parseProjectFile(RefreshOptions options)
 {
 	QSettings sets(projectFilePath().toString(), QSettings::IniFormat);
 
-	QDir old = m_buildDir;
+	QDir old = buildDirectory();
 	bool needRebuild = false;
 	if (options & Configuration)
 	{
-		m_libs = sets.value(QLatin1String(Constants::INI_LIBRARIES_KEY)).toString();
-		m_includes = sets.value(QLatin1String(Constants::INI_INCLUDES_KEY)).toString();
-		m_extraArgs = sets.value(QLatin1String(Constants::INI_EXTRA_ARGS_KEY)).toString();
+		setSourcesDirectory(sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString());
+		setLibraries(sets.value(QLatin1String(Constants::INI_LIBRARIES_KEY)).toString());
+		setIncludes(sets.value(QLatin1String(Constants::INI_INCLUDES_KEY)).toString());
+		setExtraArgs(sets.value(QLatin1String(Constants::INI_EXTRA_ARGS_KEY)).toString());
 
-		QString bds = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
 		Utils::FilePath dir = projectDirectory();
-		if(bds.length() > 0 && bds != QLatin1String("."))
-			dir.pathAppended(bds);
-		if((needRebuild = (dir.toString() != m_buildDir.path())))
-			m_buildDir.setPath(dir.toString());
+		if(sourcesDirectory().length() > 0 && sourcesDirectory() != QLatin1String("."))
+			dir = dir.pathAppended(sourcesDirectory());
+
+		if((needRebuild = (dir.toString() != buildDirectory().path())))
+			m_buildRootDir.setPath(dir.toString());
 	}
 
 	if (needRebuild || (options & Files))
 	{
 		m_files.clear();
+		if(needRebuild && old.path() == ".") // при инициализации проекта
+			needRebuild = false;
 
-		sets.beginGroup(QLatin1String("Files"));
+		sets.beginGroup(QLatin1String(Constants::INI_FILES_ROOT_KEY));
 		foreach(QString rel, sets.allKeys())
 		{
 			QString abs;
@@ -298,11 +300,11 @@ bool DProject::parseProjectFile(RefreshOptions options)
 			{
 				abs = old.absoluteFilePath(rel);
 				sets.remove(rel);
-				rel = m_buildDir.relativeFilePath(abs);
+				rel = buildDirectory().relativeFilePath(abs);
 				sets.setValue(rel,0);
 			}
 			else
-				abs = m_buildDir.absoluteFilePath(rel);
+				abs = buildDirectory().absoluteFilePath(rel);
 			m_files[abs] = rel;
 		}
 		emit fileListChanged();
@@ -378,38 +380,38 @@ bool DProject::setupTarget(Target *t)
 }
 
 
-//--------------------------------------------------------------------------------------
-//
-// DProjectFile
-//
-//--------------------------------------------------------------------------------------
+////--------------------------------------------------------------------------------------
+////
+//// DProjectFile
+////
+////--------------------------------------------------------------------------------------
 
-DProjectFile::DProjectFile(DProject *parent, const FilePath& fileName,
-																											DProject::RefreshOptions options)
-	: IDocument(parent),
-			m_project(parent),
-			m_options(options)
-{
-	setId(Constants::DPROJECTFILE_ID);
-	setMimeType(Constants::DPROJECT_MIMETYPE);
-	setFilePath(fileName);
-}
+//DProjectFile::DProjectFile(DProject *parent, const FilePath& fileName,
+//																											DProject::RefreshOptions options)
+//	: IDocument(parent),
+//			m_project(parent),
+//			m_options(options)
+//{
+//	setId(Constants::DPROJECTFILE_ID);
+//	setMimeType(Constants::DPROJECT_MIMETYPE);
+//	setFilePath(fileName);
+//}
 
-IDocument::ReloadBehavior DProjectFile::reloadBehavior(ChangeTrigger state, ChangeType type) const
-{
-	Q_UNUSED(state)
-	Q_UNUSED(type)
-	return BehaviorSilent;
-}
+//IDocument::ReloadBehavior DProjectFile::reloadBehavior(ChangeTrigger state, ChangeType type) const
+//{
+//	Q_UNUSED(state)
+//	Q_UNUSED(type)
+//	return BehaviorSilent;
+//}
 
-bool DProjectFile::reload(QString *errorString, ReloadFlag flag, ChangeType type)
-{
-	Q_UNUSED(errorString)
-	Q_UNUSED(flag)
-	if (type == TypePermissions)
-		return true;
-	m_project->refresh(m_options);
-	return true;
-}
+//bool DProjectFile::reload(QString *errorString, ReloadFlag flag, ChangeType type)
+//{
+//	Q_UNUSED(errorString)
+//	Q_UNUSED(flag)
+//	if (type == TypePermissions)
+//		return true;
+//	m_project->refresh(m_options);
+//	return true;
+//}
 
 } // namespace DProjectManager

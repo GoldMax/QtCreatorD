@@ -1,21 +1,21 @@
 #include "dmakestep.h"
 #include "dprojectmanagerconstants.h"
-//#include "dproject.h"
-//#include "ui_dmakestep.h"
-//#include "dbuildconfiguration.h"
-//#include "drunconfiguration.h"
+#include "dproject.h"
+#include "ui_dmakestep.h"
+#include "dbuildconfiguration.h"
+#include "drunconfiguration.h"
 
+#include <projectexplorer/projectexplorer.h>
 #include <projectexplorer/projectexplorerconstants.h>
 #include <projectexplorer/project.h>
+#include <projectexplorer/target.h>
 #include <projectexplorer/abi.h>
 #include <projectexplorer/buildsteplist.h>
 #include <projectexplorer/buildconfiguration.h>
+#include <projectexplorer/processparameters.h>
 //#include <projectexplorer/gnumakeparser.h>
 //#include <projectexplorer/kitinformation.h>
-//#include <projectexplorer/projectexplorer.h>
-//#include <projectexplorer/projectexplorerconstants.h>
-//#include <projectexplorer/toolchain.h>
-//#include <projectexplorer/target.h>
+#include <projectexplorer/toolchain.h>
 //#include <qtsupport/qtkitinformation.h>
 //#include <qtsupport/qtparser.h>
 //#include <utils/stringutils.h>
@@ -26,7 +26,7 @@
 
 //using namespace Core;
 using namespace ProjectExplorer;
-//using namespace DProjectManager;
+using namespace DProjectManager;
 
 namespace DProjectManager {
 
@@ -67,11 +67,11 @@ DMakeStep::DMakeStep(BuildStepList *parent) :
 
 //DMakeStep::~DMakeStep() { }
 
-//bool DMakeStep::init(QList<const BuildStep *> &earlierSteps)
-//{
-//	BuildConfiguration *bc = buildConfiguration();
-//	if (!bc)
-//		bc = target()->activeBuildConfiguration();
+bool DMakeStep::init()
+{
+	BuildConfiguration *bc = buildConfiguration();
+	if (!bc)
+		bc = target()->activeBuildConfiguration();
 
 //	m_tasks.clear();
 //	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit(), ToolChain::Language::Cxx);
@@ -100,8 +100,8 @@ DMakeStep::DMakeStep(BuildStepList *parent) :
 //		appendOutputParser(parser);
 //	outputParser()->setWorkingDirectory(pp->effectiveWorkingDirectory());
 
-//	return AbstractProcessStep::init(earlierSteps);
-//}
+	return MakeStep::init();
+}
 
 //QVariantMap DMakeStep::toMap() const
 //{
@@ -126,20 +126,20 @@ DMakeStep::DMakeStep(BuildStepList *parent) :
 //	return BuildStep::fromMap(map);
 //}
 
-//QString DMakeStep::makeCommand(const Utils::Environment &environment) const
-//{
+QString DMakeStep::makeCommand(const Utils::Environment &/*environment*/) const
+{
 //	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit(), ToolChain::Language::Cxx);
 //	if (tc)
 //		return tc->makeCommand(environment);
 //	else
-//		return QLatin1String("dmd");
-//}
+		return QLatin1String("dmd");
+}
 
-//QString DMakeStep::allArguments() const
-//{
-//	QString bname = this->buildConfiguration()->displayName().toLower();
+QString DMakeStep::allArguments() const
+{
+	QString bname = this->buildConfiguration()->displayName().toLower();
 
-//	QString args;
+	QString args;
 
 //	if(m_buildPreset == Debug)
 //		args += QLatin1String("-debug -g");
@@ -208,12 +208,12 @@ DMakeStep::DMakeStep(BuildStepList *parent) :
 //		if(file.endsWith(dotd) || file.endsWith(dotdi))
 //			srcs.append(file).append(space);
 //	Utils::QtcProcess::addArgs(&args, srcs);
-//	return args;
-//}
+	return args;
+}
 
-//QString DMakeStep::outFileName() const
-//{
-//	QString outName = m_targetName;
+QString DMakeStep::outFileName() const
+{
+	QString outName = m_targetName;
 //	if(m_targetType > 0)
 //	{
 //		QString fix = QLatin1String("lib");
@@ -229,8 +229,8 @@ DMakeStep::DMakeStep(BuildStepList *parent) :
 //			outName.append(fix);
 //	}
 
-//	return outName;
-//}
+	return outName;
+}
 
 //void DMakeStep::run(QFutureInterface<bool> &fi)
 //{
@@ -291,10 +291,10 @@ DMakeStep::DMakeStep(BuildStepList *parent) :
 //	AbstractProcessStep::stdError(res);
 //}
 
-//BuildStepConfigWidget *DMakeStep::createConfigWidget()
-//{
-//	return new DMakeStepConfigWidget(this);
-//}
+BuildStepConfigWidget *DMakeStep::createConfigWidget()
+{
+	return new DMakeStepConfigWidget(this);
+}
 
 //bool DMakeStep::immutable() const
 //{
@@ -310,136 +310,6 @@ DMakeStepFactory::DMakeStepFactory()
 	setDisplayName(QLatin1String(Constants::D_MS_DISPLAY_NAME)); //MakeStep::defaultDisplayName());
 	setSupportedProjectType(Constants::DPROJECT_ID);
 }
-
-
-////-------------------------------------------------------------------------
-////-- DMakeStepConfigWidget
-////-------------------------------------------------------------------------
-
-//DMakeStepConfigWidget::DMakeStepConfigWidget(DMakeStep *makeStep)
-//	: m_makeStep(makeStep)
-//{
-//	Project *pro = m_makeStep->target()->project();
-//	m_ui = new DProjectManager::Ui::DMakeStepUi;
-//	m_ui->setupUi(this);
-
-//	m_ui->targetTypeComboBox->addItem(QLatin1String("Executable"));
-//	m_ui->targetTypeComboBox->addItem(QLatin1String("Static Library"));
-//	m_ui->targetTypeComboBox->addItem(QLatin1String("Shared Library"));
-
-//	m_ui->buildPresetComboBox->addItem(QLatin1String("Debug"));
-//	m_ui->buildPresetComboBox->addItem(QLatin1String("Release"));
-//	m_ui->buildPresetComboBox->addItem(QLatin1String("Unittest"));
-//	m_ui->buildPresetComboBox->addItem(QLatin1String("None"));
-
-//	m_ui->targetTypeComboBox->setCurrentIndex((int)m_makeStep->m_targetType);
-//	m_ui->buildPresetComboBox->setCurrentIndex((int)m_makeStep->m_buildPreset);
-//	m_ui->makeArgumentsLineEdit->setPlainText(m_makeStep->m_makeArguments);
-//	m_ui->targetNameLineEdit->setText(m_makeStep->m_targetName);
-//	m_ui->targetDirLineEdit->setText(m_makeStep->m_targetDirName);
-//	m_ui->objDirLineEdit->setText(m_makeStep->m_objDirName);
-
-//	updateDetails();
-
-//	connect(m_ui->targetTypeComboBox, SIGNAL(currentIndexChanged (int)),
-//									this, SLOT(targetTypeComboBoxSelectItem(int)));
-//	connect(m_ui->buildPresetComboBox, SIGNAL(currentIndexChanged (int)),
-//									this, SLOT(buildPresetComboBoxSelectItem(int)));
-//	connect(m_ui->targetNameLineEdit, SIGNAL(textEdited(QString)),
-//									this, SLOT(targetNameLineEditTextEdited()));
-//	connect(m_ui->targetDirLineEdit, SIGNAL(textEdited(QString)),
-//									this, SLOT(targetDirNameLineEditTextEdited()));
-//	connect(m_ui->objDirLineEdit, SIGNAL(textEdited(QString)),
-//									this, SLOT(objDirLineEditTextEdited()));
-//	connect(m_ui->makeArgumentsLineEdit, SIGNAL(textChanged()),
-//									this, SLOT(makeArgumentsLineEditTextEdited()));
-
-//	connect(ProjectExplorerPlugin::instance(), SIGNAL(settingsChanged()),
-//									this, SLOT(updateDetails()));
-//	connect(pro, SIGNAL(environmentChanged()),
-//									this, SLOT(updateDetails()));
-//	connect(m_makeStep->buildConfiguration(), SIGNAL(buildDirectoryChanged()),
-//									this, SLOT(updateDetails()));
-//	connect(m_makeStep->buildConfiguration(), SIGNAL(configurationChanged()),
-//									this, SLOT(updateDetails()));
-//}
-
-//DMakeStepConfigWidget::~DMakeStepConfigWidget()
-//{
-//	delete m_ui;
-//}
-
-//QString DMakeStepConfigWidget::displayName() const
-//{
-//	return tr("Make", "D Makestep");
-//}
-
-//void DMakeStepConfigWidget::updateDetails()
-//{
-//	BuildConfiguration *bc = m_makeStep->buildConfiguration();
-//	if (!bc)
-//		bc = m_makeStep->target()->activeBuildConfiguration();
-
-//	ProcessParameters param;
-//	param.setMacroExpander(bc->macroExpander());
-//	param.setWorkingDirectory(bc->buildDirectory().toString());
-//	param.setEnvironment(bc->environment());
-//	param.setCommand(m_makeStep->makeCommand(bc->environment()));
-//	param.setArguments(m_makeStep->allArguments());
-//	m_summaryText = param.summary(displayName());
-//	emit updateSummary();
-
-//	foreach(RunConfiguration* rc, m_makeStep->target()->runConfigurations())
-//	{
-//		DRunConfiguration * brc = dynamic_cast<DRunConfiguration *>(rc);
-//		if(brc)
-//			brc->updateConfig();
-//	}
-//}
-
-//QString DMakeStepConfigWidget::summaryText() const
-//{
-//	return m_summaryText;
-//}
-
-//void DMakeStepConfigWidget::targetTypeComboBoxSelectItem(int index)
-//{
-//	m_makeStep->m_targetType = (DMakeStep::TargetType)index;
-//	updateDetails();
-//}
-//void DMakeStepConfigWidget::buildPresetComboBoxSelectItem(int index)
-//{
-//	m_makeStep->m_buildPreset = (DMakeStep::BuildPreset)index;
-//	updateDetails();
-//}
-//void DMakeStepConfigWidget::makeArgumentsLineEditTextEdited()
-//{
-//	m_makeStep->m_makeArguments = m_ui->makeArgumentsLineEdit->toPlainText();
-//	updateDetails();
-//}
-//void DMakeStepConfigWidget::targetNameLineEditTextEdited()
-//{
-//	m_makeStep->m_targetName = m_ui->targetNameLineEdit->text();
-//	updateDetails();
-//}
-//void DMakeStepConfigWidget::targetDirNameLineEditTextEdited()
-//{
-//	m_makeStep->m_targetDirName = m_ui->targetDirLineEdit->text();
-//	updateDetails();
-//}
-//void DMakeStepConfigWidget::objDirLineEditTextEdited()
-//{
-//	m_makeStep->m_objDirName = m_ui->objDirLineEdit->text();
-//	updateDetails();
-//}
-
-////--------------------------------------------------------------------------
-////-- DMakeStepFactory
-////--------------------------------------------------------------------------
-//DMakeStepFactory::DMakeStepFactory(QObject *parent) :
-//		IBuildStepFactory(parent)
-//{
-//}
 
 //QList<BuildStepInfo> DMakeStepFactory::availableSteps(BuildStepList* parent) const
 //{
@@ -511,5 +381,129 @@ DMakeStepFactory::DMakeStepFactory()
 //																																					Constants::D_MS_DISPLAY_NAME);
 //	return QString();
 //}
+
+//-------------------------------------------------------------------------
+//-- DMakeStepConfigWidget
+//-------------------------------------------------------------------------
+
+DMakeStepConfigWidget::DMakeStepConfigWidget(DMakeStep *makeStep)
+	: BuildStepConfigWidget(makeStep)
+			, m_makeStep(makeStep)
+{
+	Project *pro = m_makeStep->target()->project();
+	m_ui = new DProjectManager::Ui::DMakeStepUi;
+	m_ui->setupUi(this);
+
+	m_ui->targetTypeComboBox->addItem(QLatin1String("Executable"));
+	m_ui->targetTypeComboBox->addItem(QLatin1String("Static Library"));
+	m_ui->targetTypeComboBox->addItem(QLatin1String("Shared Library"));
+
+	m_ui->buildPresetComboBox->addItem(QLatin1String("Debug"));
+	m_ui->buildPresetComboBox->addItem(QLatin1String("Release"));
+	m_ui->buildPresetComboBox->addItem(QLatin1String("Unittest"));
+	m_ui->buildPresetComboBox->addItem(QLatin1String("None"));
+
+	m_ui->targetTypeComboBox->setCurrentIndex(static_cast<int>(m_makeStep->m_targetType));
+	m_ui->buildPresetComboBox->setCurrentIndex(static_cast<int>(m_makeStep->m_buildPreset));
+	m_ui->makeArgumentsLineEdit->setPlainText(m_makeStep->m_makeArguments);
+	m_ui->targetNameLineEdit->setText(m_makeStep->m_targetName);
+	m_ui->targetDirLineEdit->setText(m_makeStep->m_targetDirName);
+	m_ui->objDirLineEdit->setText(m_makeStep->m_objDirName);
+
+	updateDetails();
+
+	connect(m_ui->targetTypeComboBox, SIGNAL(currentIndexChanged (int)),
+									this, SLOT(targetTypeComboBoxSelectItem(int)));
+	connect(m_ui->buildPresetComboBox, SIGNAL(currentIndexChanged (int)),
+									this, SLOT(buildPresetComboBoxSelectItem(int)));
+	connect(m_ui->targetNameLineEdit, SIGNAL(textEdited(QString)),
+									this, SLOT(targetNameLineEditTextEdited()));
+	connect(m_ui->targetDirLineEdit, SIGNAL(textEdited(QString)),
+									this, SLOT(targetDirNameLineEditTextEdited()));
+	connect(m_ui->objDirLineEdit, SIGNAL(textEdited(QString)),
+									this, SLOT(objDirLineEditTextEdited()));
+	connect(m_ui->makeArgumentsLineEdit, SIGNAL(textChanged()),
+									this, SLOT(makeArgumentsLineEditTextEdited()));
+
+	connect(ProjectExplorerPlugin::instance(), SIGNAL(settingsChanged()),
+									this, SLOT(updateDetails()));
+	connect(pro, SIGNAL(environmentChanged()),
+									this, SLOT(updateDetails()));
+	connect(m_makeStep->buildConfiguration(), SIGNAL(buildDirectoryChanged()),
+									this, SLOT(updateDetails()));
+	connect(m_makeStep->buildConfiguration(), SIGNAL(configurationChanged()),
+									this, SLOT(updateDetails()));
+}
+
+DMakeStepConfigWidget::~DMakeStepConfigWidget()
+{
+	delete m_ui;
+}
+
+QString DMakeStepConfigWidget::displayName() const
+{
+	return tr("Make", "D Makestep");
+}
+
+void DMakeStepConfigWidget::updateDetails()
+{
+	BuildConfiguration *bc = m_makeStep->buildConfiguration();
+	if (!bc)
+		bc = m_makeStep->target()->activeBuildConfiguration();
+
+	ProcessParameters param;
+	param.setMacroExpander(bc->macroExpander());
+	param.setWorkingDirectory(bc->buildDirectory());
+	param.setEnvironment(bc->environment());
+	Utils::CommandLine cmd = Utils::CommandLine(m_makeStep->makeCommand(bc->environment()));
+	cmd.addArg(m_makeStep->allArguments());
+	param.setCommandLine(cmd);
+	m_summaryText = param.summary(displayName());
+	emit updateSummary();
+
+	foreach(RunConfiguration* rc, m_makeStep->target()->runConfigurations())
+	{
+		DRunConfiguration * brc = dynamic_cast<DRunConfiguration *>(rc);
+		if(brc)
+			brc->updateConfig(m_makeStep);
+	}
+}
+
+QString DMakeStepConfigWidget::summaryText() const
+{
+	return m_summaryText;
+}
+
+void DMakeStepConfigWidget::targetTypeComboBoxSelectItem(int index)
+{
+	m_makeStep->m_targetType = static_cast<DMakeStep::TargetType>(index);
+	updateDetails();
+}
+void DMakeStepConfigWidget::buildPresetComboBoxSelectItem(int index)
+{
+	m_makeStep->m_buildPreset = static_cast<DMakeStep::BuildPreset>(index);
+	updateDetails();
+}
+void DMakeStepConfigWidget::makeArgumentsLineEditTextEdited()
+{
+	m_makeStep->m_makeArguments = m_ui->makeArgumentsLineEdit->toPlainText();
+	updateDetails();
+}
+void DMakeStepConfigWidget::targetNameLineEditTextEdited()
+{
+	m_makeStep->m_targetName = m_ui->targetNameLineEdit->text();
+	updateDetails();
+}
+void DMakeStepConfigWidget::targetDirNameLineEditTextEdited()
+{
+	m_makeStep->m_targetDirName = m_ui->targetDirLineEdit->text();
+	updateDetails();
+}
+void DMakeStepConfigWidget::objDirLineEditTextEdited()
+{
+	m_makeStep->m_objDirName = m_ui->objDirLineEdit->text();
+	updateDetails();
+}
+
 
 } // namespace DProjectManager

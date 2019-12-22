@@ -132,6 +132,32 @@ DRunConfiguration::DRunConfiguration(Target *target, Core::Id id) :
 		m_workingDirectory = ProjectExplorer::Constants::DEFAULT_WORKING_DIR_ALTERNATE;
 }
 
+void DRunConfiguration::updateConfig(const DMakeStep* makeStep)
+{
+	BuildConfiguration* build = this->activeBuildConfiguration();
+	if(!build)
+		return;
+
+//	BuildStepList* bsl = build->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
+//	Q_ASSERT(bsl);
+//	auto makeStep = bsl->firstOfType<DMakeStep>();
+//	if (!makeStep)
+//		return;
+
+//	QString outDir = makeStep->targetDirName();
+//	if(outDir.startsWith(QDir::separator()) == false)
+//	{
+//		QString projDir = makeStep->target()->project()->projectDirectory().toString();
+//		outDir = projDir + QDir::separator() + outDir;
+//	}
+//	m_workingDirectory = outDir;
+//	setBaseWorkingDirectory(outDir);
+//	outDir.append(QDir::separator() + makeStep->outFileName());
+//	m_executable = outDir;
+//	setExecutable(outDir);
+}
+
+
 // Note: Qt4Project deletes all empty customexecrunconfigs for which isConfigured() == false.
 //DRunConfiguration::~DRunConfiguration()
 //{
@@ -309,30 +335,6 @@ DRunConfiguration::DRunConfiguration(Target *target, Core::Id id) :
 ////	return Abi(); // return an invalid ABI: We do not know what we will end up running!
 ////}
 
-//void DRunConfiguration::updateConfig(/*const DMakeStep* makeStep*/)
-//{
-//	BuildConfiguration* build = this->activeBuildConfiguration();
-//	if(!build)
-//		return;
-
-////	BuildStepList* bsl = build->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
-////	Q_ASSERT(bsl);
-////	auto makeStep = bsl->firstOfType<DMakeStep>();
-////	if (!makeStep)
-////		return;
-
-////	QString outDir = makeStep->targetDirName();
-////	if(outDir.startsWith(QDir::separator()) == false)
-////	{
-////		QString projDir = makeStep->target()->project()->projectDirectory().toString();
-////		outDir = projDir + QDir::separator() + outDir;
-////	}
-////	m_workingDirectory = outDir;
-////	setBaseWorkingDirectory(outDir);
-////	outDir.append(QDir::separator() + makeStep->outFileName());
-////	m_executable = outDir;
-////	setExecutable(outDir);
-//}
 //---------------------------------------------------------------------------------
 //--- DRunConfigurationFactory
 //---------------------------------------------------------------------------------
@@ -417,6 +419,7 @@ DRunConfigurationFactory::DRunConfigurationFactory() : RunConfigurationFactory()
 DRunConfigurationWidget::DRunConfigurationWidget(DRunConfiguration *rc, ApplyMode mode)
 	: m_runConfiguration(rc)
 {
+	Q_UNUSED(mode)
 //	auto layout = new QFormLayout;
 //	layout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
 //	layout->setMargin(0);

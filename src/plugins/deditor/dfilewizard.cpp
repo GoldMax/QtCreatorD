@@ -2,7 +2,7 @@
 #include "dfilewizard.h"
 
 #include <projectexplorer/projectexplorerconstants.h>
-#include <projectexplorer/projectnodes.h>
+#include <projectexplorer/project.h>
 #include <utils/filewizardpage.h>
 #include <utils/qtcassert.h>
 #include <utils/fileutils.h>
@@ -93,17 +93,27 @@ Core::BaseFileWizard* DFileWizardFactory::create(QWidget *parent,
 {
 	DFileWizardDialog* wizard = new DFileWizardDialog(this, params.extraValues(), parent);
 
-	QLatin1String key(ProjectExplorer::Constants::PREFERRED_PROJECT_NODE);
+	QLatin1String key(ProjectExplorer::Constants::PROJECT_POINTER);
 	QVariant qnode = params.extraValues().value(key);
 	if(qnode.isNull() == false)
 	{
-		ProjectExplorer::Node* node = qnode.value<ProjectExplorer::Node*>();
-		if(node && node->isProjectNodeType())
-		{
-			ProjectExplorer::ProjectNode* projNode = node->asProjectNode();
-			wizard->projFile = projNode->filePath().toString();
-		}
+		auto project = static_cast<ProjectExplorer::Project *>(qnode.value<void *>());
+		if(project)
+			wizard->projFile = project->projectFilePath().toString();
 	}
+
+//	QLatin1String key(ProjectExplorer::Constants::PREFERRED_PROJECT_NODE);
+//	QVariant qnode = params.extraValues().value(key);
+//	if(qnode.isNull() == false)
+//	{
+//		//ProjectExplorer::Node* node = qnode.value<ProjectExplorer::Node*>();
+//		auto node = static_cast<ProjectExplorer::Node *>(qnode.value<void *>());
+//		if(node && node->isProjectNodeType())
+//		{
+//			ProjectExplorer::ProjectNode* projNode = node->asProjectNode();
+//			wizard->projFile = projNode->filePath().toString();
+//		}
+//	}
 
 	wizard->setWindowTitle(tr("New %1").arg(displayName()));
 	wizard->setPath(params.defaultPath());
@@ -133,7 +143,7 @@ Core::GeneratedFiles DFileWizardFactory::generateFiles(const QWizard *w,	QString
 		Utils::FilePath dir = Utils::FilePath::fromString(modul);
 		dir = dir.parentDir();
 		if(bds.length() > 0 && bds != QLatin1String("."))
-			dir.pathAppended(bds);
+			dir = dir.pathAppended(bds);
 
 		QDir buildDir(dir.toString());
 		modul = buildDir.relativeFilePath(wizardDialog->path());
