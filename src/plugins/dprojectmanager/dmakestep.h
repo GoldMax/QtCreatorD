@@ -1,26 +1,17 @@
 #pragma once
 
-#include <projectexplorer/makestep.h>
-//#include <projectexplorer/abstractprocessstep.h>
-//#include <projectexplorer/buildstep.h>
-
-
-//QT_BEGIN_NAMESPACE
-//class QListWidgetItem;
-//QT_END_NAMESPACE
+#include <projectexplorer/abstractprocessstep.h>
+//#include <projectexplorer/task.h>
 
 namespace DProjectManager {
 
-//class DMakeStepConfigWidget;
-//class DMakeStepFactory;
 namespace Ui { class DMakeStepUi; }
 
-class DMakeStep : public ProjectExplorer::MakeStep // AbstractProcessStep
+class DMakeStep : public ProjectExplorer::AbstractProcessStep
 {
 	Q_OBJECT
 
 	friend class DMakeStepConfigWidget;
-//	friend class DMakeStepFactory;
 
 public:
 	enum TargetType
@@ -39,26 +30,23 @@ public:
 
 	explicit DMakeStep(ProjectExplorer::BuildStepList *parent);
 	//	virtual ~DMakeStep();
-	bool init() override;
 
 public:
+	QVariantMap toMap() const override;
+	bool fromMap(const QVariantMap &map) override;
 	ProjectExplorer::BuildStepConfigWidget *createConfigWidget() override;
-//	bool immutable() const;
-//	QVariantMap toMap() const;
-//	bool fromMap(const QVariantMap &map);
-//	void stdError(const QString &line);
-//	void stdOutput(const QString &line);
+	void stdError(const QString &line) override;
+	void stdOutput(const QString &line) override;
 
 	QString allArguments() const;
 	QString outFileName() const;
 	QString targetDirName() const { return m_targetDirName; }
-	QString makeCommand(const Utils::Environment &environment) const;
+	Utils::FilePath makeCommand() const;
 	void setMakeArguments(const QString val) { m_makeArguments = val; }
 	void setBuildPreset(BuildPreset pres) { m_buildPreset = pres; }
 
-//protected:
-//	DMakeStep(ProjectExplorer::BuildStepList *parent, DMakeStep *bs);
-//	DMakeStep(ProjectExplorer::BuildStepList *parent, const Core::Id id);
+	bool init() override;
+	void doRun() override;
 
 private:
 	TargetType m_targetType;
@@ -67,8 +55,7 @@ private:
 	QString m_targetDirName;
 	QString m_objDirName;
 	QString m_makeArguments;
-//	void run(QFutureInterface<bool> &fi);
-//	QList<ProjectExplorer::Task> m_tasks;
+	//QList<ProjectExplorer::Task> m_tasks;
 };
 
 class DMakeStepFactory : public ProjectExplorer::BuildStepFactory
@@ -101,8 +88,6 @@ class DMakeStepConfigWidget : public ProjectExplorer::BuildStepConfigWidget
 public:
 	DMakeStepConfigWidget(DMakeStep *makeStep);
 	~DMakeStepConfigWidget();
-	QString displayName() const;
-	QString summaryText() const;
 
 public slots:
 	void updateDetails();
@@ -118,7 +103,6 @@ private slots:
 private:
 	Ui::DMakeStepUi *m_ui;
 	DMakeStep *m_makeStep;
-	QString m_summaryText;
 };
 
 } // namespace DProjectManager

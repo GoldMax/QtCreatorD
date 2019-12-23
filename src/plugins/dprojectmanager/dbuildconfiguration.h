@@ -29,6 +29,8 @@ public:
 	ProjectExplorer::NamedWidget *createConfigWidget() override;
 	bool fromMap(const QVariantMap &map) override;
 
+	bool isEnabled() const  override;
+
 signals:
 	void configurationChanged();
 

@@ -17,7 +17,7 @@
 #include <utils/pathchooser.h>
 //#include <utils/qtcassert.h>
 //#include <utils/fileutils.h>
-
+#include <utils/qtcassert.h>
 
 #include <QFormLayout>
 #include <QLabel>
@@ -52,7 +52,6 @@ void DBuildConfiguration::initialize()
 
 	updateCacheAndEmitEnvironmentChanged();
 }
-
 NamedWidget* DBuildConfiguration::createConfigWidget()
 {
 	return new DBuildSettingsWidget(this);
@@ -63,9 +62,17 @@ bool DBuildConfiguration::fromMap(const QVariantMap &map)
 	if(BuildConfiguration::fromMap(map) == false)
 		return false;
 	DProject* prj = static_cast<DProject*>(target()->project());
+	QTC_CHECK(prj);
 	Utils::FilePath fn = 	Utils::FilePath::fromString(prj->buildDirectory().path());
 	setBuildDirectory(fn);
 	return true;
+}
+
+bool DBuildConfiguration::isEnabled() const
+{
+	DProject* prj = static_cast<DProject*>(project());
+	QTC_CHECK(prj);
+	return prj->files().count() > 0;
 }
 
 //------------------------------------------------------------------------------------------------
@@ -87,11 +94,9 @@ QList<BuildInfo> DBuildConfigurationFactory::availableBuilds
 {
 	BuildInfo info(this);
 	info.typeName = tr("D Build");
+	info.displayName = tr("Debug");
 	info.buildDirectory = forSetup ? Project::projectDirectory(projectPath) : projectPath;
 	info.kitId = k->id();
-
-	if (forSetup)
-		info.displayName = tr("D Build Default");
 
 	return {info};
 }
@@ -228,8 +233,6 @@ DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
 	m_pathChooser->setExpectedKind(Utils::PathChooser::ExistingDirectory);
 	m_pathChooser->setBaseDirectory(projectDir);
 	m_pathChooser->setEnvironment(bc->environment());
-	//QSettings sets(proj->projectFilePath().toString(), QSettings::IniFormat);
-	//QString root = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
 	QString srcRoot = proj->sourcesDirectory();
 	m_pathChooser->setPath(srcRoot.length() ? srcRoot : QLatin1String("."));
 	connect(m_pathChooser, SIGNAL(pathChanged(QString)), this, SLOT(buildDirectoryChanged()));
@@ -278,12 +281,12 @@ void DBuildSettingsWidget::buildDirectoryChanged()
 
 void DBuildSettingsWidget::editsTextChanged()
 {
-//	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
-//	Q_ASSERT(proj);
-//	proj->setIncludes(editIncludes->text());
-//	proj->setLibraries(editLibs->text());
-//	proj->setExtraArgs(editExtra->text());
-//	emit m_buildConfiguration->configurationChanged();
+	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
+	Q_ASSERT(proj);
+	proj->setIncludes(editIncludes->text());
+	proj->setLibraries(editLibs->text());
+	proj->setExtraArgs(editExtra->text());
+	emit m_buildConfiguration->configurationChanged();
 }
 void DBuildSettingsWidget::editsEditingFinished()
 {
