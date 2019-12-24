@@ -13,6 +13,7 @@
 
 //#include <projectexplorer/projectexplorerconstants.h>
 #include <projectexplorer/projectmanager.h>
+#include <projectexplorer/runcontrol.h>
 //#include <projectexplorer/projecttree.h>
 //#include <projectexplorer/selectablefilesmodel.h>
 
@@ -36,6 +37,16 @@ public:
 	DMakeStepFactory makeStepFactory;
 	DBuildConfigurationFactory buildConfigFactory;
 	DRunConfigurationFactory runConfigFactory;
+
+	RunWorkerFactory runWorkerFactory
+	{
+		RunWorkerFactory::make<SimpleTargetRunner>(),
+		{
+			ProjectExplorer::Constants::NORMAL_RUN_MODE,
+					ProjectExplorer::Constants::DEBUG_RUN_MODE
+		},
+		{ runConfigFactory.id() }
+	};
 
 //    QAction editFilesAction{GenericProjectPlugin::tr("Edit Files..."), nullptr};
 };

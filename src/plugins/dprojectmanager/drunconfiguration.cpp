@@ -5,41 +5,42 @@
 
 //#include <qtsupport/qtkitinformation.h>
 
+#include <projectexplorer/runconfigurationaspects.h>
 //#include <projectexplorer/buildconfiguration.h>
 #include <projectexplorer/runconfiguration.h>
 //#include <projectexplorer/runconfigurationaspects.h>
 
 #include <projectexplorer/target.h>
 #include <projectexplorer/project.h>
-//#include <projectexplorer/buildconfiguration.h>
+#include <projectexplorer/buildconfiguration.h>
 //#include <projectexplorer/buildstep.h>
 #include <projectexplorer/buildsteplist.h>
 //#include <projectexplorer/environmentaspect.h>
-#include <projectexplorer/localenvironmentaspect.h>
+//#include <projectexplorer/localenvironmentaspect.h>
 //#include <projectexplorer/abi.h>
 //#include <projectexplorer/devicesupport/devicemanager.h>
 //#include <projectexplorer/runcontrol.h>
 //#include <projectexplorer/applicationlauncher.h>
 
 //#include <coreplugin/icore.h>
-#include <coreplugin/variablechooser.h>
+//#include <coreplugin/variablechooser.h>
 
-#include <utils/qtcassert.h>
+//#include <utils/qtcassert.h>
 //#include <utils/qtcprocess.h>
 //#include <utils/stringutils.h>
 //#include <utils/detailswidget.h>
 //#include <utils/pathchooser.h>
 
-#include <QDialog>
-#include <QDialogButtonBox>
+//#include <QDialog>
+//#include <QDialogButtonBox>
 //#include <QDir>
 //#include <QKeyEvent>
-#include <QLabel>
-#include <QPushButton>
-#include <QVBoxLayout>
+//#include <QLabel>
+//#include <QPushButton>
+//#include <QVBoxLayout>
 //#include <QCheckBox>
 //#include <QComboBox>
-#include <QFormLayout>
+//#include <QFormLayout>
 //#include <QHBoxLayout>
 //#include <QLabel>
 //#include <QLineEdit>
@@ -50,7 +51,7 @@ using namespace ProjectExplorer;
 namespace DProjectManager
 {
 
-//-----------------------------------------------------------------------------
+/*//-----------------------------------------------------------------------------
 //--- DCustomExecutableDialog
 //-----------------------------------------------------------------------------
 // Dialog embedding the DRunConfigurationWidget
@@ -111,35 +112,36 @@ private:
 
 	QDialogButtonBox *m_dialogButtonBox;
 	DRunConfigurationWidget *m_widget;
-};
+};*/
 //-----------------------------------------------------------------------------
 //--- DRunConfiguration
 //-----------------------------------------------------------------------------
-DRunConfiguration::DRunConfiguration(Target *target, Core::Id id) :
-		RunConfiguration(target, id)/*,
+DRunConfiguration::DRunConfiguration(Target *target, Core::Id /*id*/) :
+		CustomExecutableRunConfiguration(target, Core::Id(Constants::BUILDRUN_CONFIG_ID))/*,
 		m_dialog(nullptr)*/
 {
 	setDefaultDisplayName(defaultDisplayName());
-	/*auto execAspect = */addAspect<ExecutableAspect>();
-	addAspect<LocalEnvironmentAspect>(target);
-	auto argumentsAspect = addAspect<ArgumentsAspect>();
-	addAspect<WorkingDirectoryAspect>();
-	addAspect<TerminalAspect>();
+//	/*auto execAspect = */addAspect<ExecutableAspect>();
+//	addAspect<LocalEnvironmentAspect>(target);
+//	auto argumentsAspect = addAspect<ArgumentsAspect>();
+//	addAspect<WorkingDirectoryAspect>();
+//	addAspect<TerminalAspect>();
 
-	if (target->activeBuildConfiguration())
-		m_workingDirectory = ProjectExplorer::Constants::DEFAULT_WORKING_DIR;
-	else
-		m_workingDirectory = ProjectExplorer::Constants::DEFAULT_WORKING_DIR_ALTERNATE;
+//	if (target->activeBuildConfiguration())
+//		m_workingDirectory = ProjectExplorer::Constants::DEFAULT_WORKING_DIR;
+//	else
+//		m_workingDirectory = ProjectExplorer::Constants::DEFAULT_WORKING_DIR_ALTERNATE;
 
-	setCommandLineGetter([this, /*execAspect,*/ argumentsAspect]
+	setCommandLineGetter([this/*, execAspect, argumentsAspect*/]
 	{
 		auto exec = this->aspect<ExecutableAspect>()->executable();
 		CommandLine cmd = CommandLine(exec/*execAspect->executable()*/);
+		auto argumentsAspect = this->aspect<ArgumentsAspect>();
 		cmd.addArgs(argumentsAspect->arguments(macroExpander()), CommandLine::Raw);
 		return cmd;
 	});
 
-	//setConfigWidgetCreator([this] { return new DRunConfigurationWidget(this); });
+//	//setConfigWidgetCreator([this] { return new DRunConfigurationWidget(this); });
 }
 
 /*DRunConfiguration::~DRunConfiguration()
@@ -175,14 +177,12 @@ void DRunConfiguration::updateConfig(const DMakeStep* makeStep)
 	}
 	else
 		outDir = Utils::FilePath::fromString(makeStep->targetDirName());
-	m_workingDirectory = outDir.toString();
+	//m_workingDirectory = outDir.toString();
 	this->aspect<WorkingDirectoryAspect>()->setDefaultWorkingDirectory(outDir);
-	//setBaseWorkingDirectory(outDir);
 	outDir = outDir.pathAppended(makeStep->outFileName());
-	m_executable = outDir.toString();
-	//setExecutable(outDir);
-	this->aspect<ExecutableAspect>()->setExecutable(outDir);
+	//m_executable = outDir.toString();
 	//auto exec = this->aspect<ExecutableAspect>()->executable();
+	this->aspect<ExecutableAspect>()->setExecutable(outDir);
 }
 
 bool DRunConfiguration::isConfigured() const
@@ -353,7 +353,8 @@ void DRunConfiguration::updateEnabledState()
 //--- DRunConfigurationFactory
 //---------------------------------------------------------------------------------
 
-DRunConfigurationFactory::DRunConfigurationFactory() : RunConfigurationFactory()
+DRunConfigurationFactory::DRunConfigurationFactory() :
+		FixedRunConfigurationFactory(QLatin1String("Build Run"))
 {
 	registerRunConfiguration<DRunConfiguration>(Constants::BUILDRUN_CONFIG_ID);
 	addSupportedProjectType(Constants::DPROJECT_ID);
@@ -426,117 +427,119 @@ DRunConfigurationFactory::DRunConfigurationFactory() : RunConfigurationFactory()
 //	return QString();
 //}
 
-//-------------------------------------------------------------------------------
-//-- DRunConfigurationWidget
-//-------------------------------------------------------------------------------
+////-------------------------------------------------------------------------------
+////-- DRunConfigurationWidget
+////-------------------------------------------------------------------------------
 
-DRunConfigurationWidget::DRunConfigurationWidget(DRunConfiguration *rc)
-	: m_runConfiguration(rc)
-{
-	auto layout = new QFormLayout;
-	layout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
-	layout->setMargin(0);
+//DRunConfigurationWidget::DRunConfigurationWidget(DRunConfiguration *rc)
+//	: m_runConfiguration(rc)
+//{
+//	auto layout = new QFormLayout;
+//	layout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
+//	layout->setMargin(0);
 
-	m_executableChooser = new PathChooser(this);
-	m_executableChooser->setHistoryCompleter(QLatin1String("Qt.CustomExecutable.History"));
-	m_executableChooser->setExpectedKind(PathChooser::ExistingCommand);
-	layout->addRow(tr("Executable:"), m_executableChooser);
+//	m_executableChooser = new PathChooser(this);
+//	m_executableChooser->setHistoryCompleter(QLatin1String("Qt.CustomExecutable.History"));
+//	m_executableChooser->setExpectedKind(PathChooser::ExistingCommand);
+//	layout->addRow(tr("Executable:"), m_executableChooser);
 
-	auto argumentsAspect = rc->aspect<ArgumentsAspect>();
-	argumentsAspect->addToConfigurationLayout(layout);
+//	auto argumentsAspect = rc->aspect<ArgumentsAspect>();
+//	argumentsAspect->addToConfigurationLayout(layout);
 
-	m_workingDirectory = new PathChooser(this);
-	m_workingDirectory->setHistoryCompleter(QLatin1String("Qt.WorkingDir.History"));
-	m_workingDirectory->setExpectedKind(PathChooser::Directory);
-	m_workingDirectory->setBaseFileName(rc->target()->project()->projectDirectory());
-	layout->addRow(tr("Working directory:"), m_workingDirectory);
+//	m_workingDirectory = new PathChooser(this);
+//	m_workingDirectory->setHistoryCompleter(QLatin1String("Qt.WorkingDir.History"));
+//	m_workingDirectory->setExpectedKind(PathChooser::Directory);
+//	m_workingDirectory->setBaseFileName(rc->target()->project()->projectDirectory());
+//	layout->addRow(tr("Working directory:"), m_workingDirectory);
 
-	auto terminalAspect = rc->aspect<TerminalAspect>();
-	terminalAspect->addToConfigurationLayout(layout);
+//	auto terminalAspect = rc->aspect<TerminalAspect>();
+//	terminalAspect->addToConfigurationLayout(layout);
 
-//	auto vbox = new QVBoxLayout(this);
-//	vbox->setMargin(0);
+////	auto vbox = new QVBoxLayout(this);
+////	vbox->setMargin(0);
 
-//	m_detailsContainer = new DetailsWidget(this);
-//	m_detailsContainer->setState(DetailsWidget::NoSummary);
-//	vbox->addWidget(m_detailsContainer);
+////	m_detailsContainer = new DetailsWidget(this);
+////	m_detailsContainer->setState(DetailsWidget::NoSummary);
+////	vbox->addWidget(m_detailsContainer);
 
-//	auto detailsWidget = new QWidget(m_detailsContainer);
-//	m_detailsContainer->setWidget(detailsWidget);
-//	detailsWidget->setLayout(layout);
+////	auto detailsWidget = new QWidget(m_detailsContainer);
+////	m_detailsContainer->setWidget(detailsWidget);
+////	detailsWidget->setLayout(layout);
 
-	changed();
+//	changed();
 
-	connect(m_executableChooser, &PathChooser::rawPathChanged,
-									this, &DRunConfigurationWidget::executableEdited);
-	connect(m_workingDirectory, &PathChooser::rawPathChanged,
-									this, &DRunConfigurationWidget::workingDirectoryEdited);
+//	connect(m_executableChooser, &PathChooser::rawPathChanged,
+//									this, &DRunConfigurationWidget::executableEdited);
+//	connect(m_workingDirectory, &PathChooser::rawPathChanged,
+//									this, &DRunConfigurationWidget::workingDirectoryEdited);
 
-	auto enviromentAspect = rc->aspect<EnvironmentAspect>();
-	connect(enviromentAspect, &EnvironmentAspect::environmentChanged,
-									this, &DRunConfigurationWidget::environmentWasChanged);
-										environmentWasChanged();
+//	auto enviromentAspect = rc->aspect<EnvironmentAspect>();
+//	connect(enviromentAspect, &EnvironmentAspect::environmentChanged,
+//									this, &DRunConfigurationWidget::environmentWasChanged);
+//										environmentWasChanged();
 
 
-	connect(m_runConfiguration, &DRunConfiguration::changed,
-									this, &DRunConfigurationWidget::changed);
+//	connect(m_runConfiguration, &DRunConfiguration::changed,
+//									this, &DRunConfigurationWidget::changed);
 
-//	Core::VariableChooser::addSupportForChildWidgets(this, m_runConfiguration->macroExpander());
-}
+////	Core::VariableChooser::addSupportForChildWidgets(this, m_runConfiguration->macroExpander());
+//}
 
-DRunConfigurationWidget::~DRunConfigurationWidget()
-{
-//	delete m_temporaryArgumentsAspect;
-//	delete m_temporaryTerminalAspect;
-}
+//DRunConfigurationWidget::~DRunConfigurationWidget()
+//{
+////	delete m_temporaryArgumentsAspect;
+////	delete m_temporaryTerminalAspect;
+//}
 
-void DRunConfigurationWidget::environmentWasChanged()
-{
-//	auto aspect = m_runConfiguration->extraAspect<EnvironmentAspect>();
-//	QTC_ASSERT(aspect, return);
-//	m_workingDirectory->setEnvironment(aspect->environment());
-//	m_executableChooser->setEnvironment(aspect->environment());
-}
+//void DRunConfigurationWidget::environmentWasChanged()
+//{
+////	auto aspect = m_runConfiguration->extraAspect<EnvironmentAspect>();
+////	QTC_ASSERT(aspect, return);
+////	m_workingDirectory->setEnvironment(aspect->environment());
+////	m_executableChooser->setEnvironment(aspect->environment());
+//}
 
-void DRunConfigurationWidget::executableEdited()
-{
-//	m_ignoreChange = true;
-//	m_runConfiguration->setExecutable(m_executableChooser->rawPath());
-//	m_ignoreChange = false;
-}
+//void DRunConfigurationWidget::executableEdited()
+//{
+////	m_ignoreChange = true;
+////	m_runConfiguration->setExecutable(m_executableChooser->rawPath());
+////	m_ignoreChange = false;
+//}
 
-void DRunConfigurationWidget::workingDirectoryEdited()
-{
-//	m_ignoreChange = true;
-//	m_runConfiguration->setBaseWorkingDirectory(m_workingDirectory->rawPath());
-//	m_ignoreChange = false;
-}
+//void DRunConfigurationWidget::workingDirectoryEdited()
+//{
+////	m_ignoreChange = true;
+////	m_runConfiguration->setBaseWorkingDirectory(m_workingDirectory->rawPath());
+////	m_ignoreChange = false;
+//}
 
-void DRunConfigurationWidget::changed()
-{
-	// We triggered the change, don't update us
-//	if (m_ignoreChange)
-//		return;
+//void DRunConfigurationWidget::changed()
+//{
+//	// We triggered the change, don't update us
+////	if (m_ignoreChange)
+////		return;
 
-//	m_executableChooser->setPath(m_runConfiguration->rawExecutable());
-//	m_workingDirectory->setPath(m_runConfiguration->baseWorkingDirectory());
-}
+////	m_executableChooser->setPath(m_runConfiguration->rawExecutable());
+////	m_workingDirectory->setPath(m_runConfiguration->baseWorkingDirectory());
+//}
 
-void DRunConfigurationWidget::apply()
-{
-//	m_ignoreChange = true;
-//	m_runConfiguration->setExecutable(m_executableChooser->rawPath());
-//	m_runConfiguration->setCommandLineArguments(m_temporaryArgumentsAspect->unexpandedArguments());
-//	m_runConfiguration->setBaseWorkingDirectory(m_workingDirectory->rawPath());
-//	m_runConfiguration->setRunMode(m_temporaryTerminalAspect->runMode());
-//	m_ignoreChange = false;
-}
+//void DRunConfigurationWidget::apply()
+//{
+////	m_ignoreChange = true;
+////	m_runConfiguration->setExecutable(m_executableChooser->rawPath());
+////	m_runConfiguration->setCommandLineArguments(m_temporaryArgumentsAspect->unexpandedArguments());
+////	m_runConfiguration->setBaseWorkingDirectory(m_workingDirectory->rawPath());
+////	m_runConfiguration->setRunMode(m_temporaryTerminalAspect->runMode());
+////	m_ignoreChange = false;
+//}
 
-bool DRunConfigurationWidget::isValid() const
-{
-	return true;
-	//return !m_executableChooser->rawPath().isEmpty();
-}
+//bool DRunConfigurationWidget::isValid() const
+//{
+//	return true;
+//	//return !m_executableChooser->rawPath().isEmpty();
+//}
+
+
 } // namespace DProjectManager
 
 //#include "drunconfiguration.moc"
