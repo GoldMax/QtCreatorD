@@ -193,7 +193,7 @@ QString DMakeStep::allArguments() const
 	const QHash<QString,QString>& files = static_cast<DProject*>(project())->files();
 	foreach(QString file, files.values())
 		if(file.endsWith(dotd) || file.endsWith(dotdi))
-			srcs.append(QLatin1String("src/")).append(file).append(space);
+			srcs.append(file).append(space);
 	Utils::QtcProcess::addArgs(&args, srcs);
 	return args;
 }

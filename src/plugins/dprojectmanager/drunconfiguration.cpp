@@ -1,6 +1,6 @@
 #include "drunconfiguration.h"
 #include "dprojectmanagerconstants.h"
-//#include "dmakestep.h"
+#include "dmakestep.h"
 //#include "dprojectnodes.h"
 
 //#include <qtsupport/qtkitinformation.h>
@@ -13,7 +13,7 @@
 #include <projectexplorer/project.h>
 //#include <projectexplorer/buildconfiguration.h>
 //#include <projectexplorer/buildstep.h>
-//#include <projectexplorer/buildsteplist.h>
+#include <projectexplorer/buildsteplist.h>
 //#include <projectexplorer/environmentaspect.h>
 #include <projectexplorer/localenvironmentaspect.h>
 //#include <projectexplorer/abi.h>
@@ -24,6 +24,7 @@
 //#include <coreplugin/icore.h>
 #include <coreplugin/variablechooser.h>
 
+#include <utils/qtcassert.h>
 //#include <utils/qtcprocess.h>
 //#include <utils/stringutils.h>
 //#include <utils/detailswidget.h>
@@ -67,7 +68,7 @@ public:
 		QLabel *label = new QLabel(tr("Could not find the executable, please specify one."));
 		label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 		layout->addWidget(label);
-		m_widget = new DRunConfigurationWidget(rc, DRunConfigurationWidget::DelayedApply);
+		m_widget = new DRunConfigurationWidget(rc);
 		m_widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 		connect(m_widget, &DRunConfigurationWidget::validChanged,
 										this, &DCustomExecutableDialog::changed);
@@ -119,10 +120,9 @@ DRunConfiguration::DRunConfiguration(Target *target, Core::Id id) :
 		m_dialog(nullptr)*/
 {
 	setDefaultDisplayName(defaultDisplayName());
+	/*auto execAspect = */addAspect<ExecutableAspect>();
 	addAspect<LocalEnvironmentAspect>(target);
-// addExtraAspect(new ArgumentsAspect(this, "DProjectManager.DRunConfiguration.Arguments"));
-// addExtraAspect(new TerminalAspect(this, "DProjectManager.DRunConfiguration.UseTerminal"));
-	/*auto argumentsAspect = */addAspect<ArgumentsAspect>();
+	auto argumentsAspect = addAspect<ArgumentsAspect>();
 	addAspect<WorkingDirectoryAspect>();
 	addAspect<TerminalAspect>();
 
@@ -130,45 +130,73 @@ DRunConfiguration::DRunConfiguration(Target *target, Core::Id id) :
 		m_workingDirectory = ProjectExplorer::Constants::DEFAULT_WORKING_DIR;
 	else
 		m_workingDirectory = ProjectExplorer::Constants::DEFAULT_WORKING_DIR_ALTERNATE;
+
+	setCommandLineGetter([this, /*execAspect,*/ argumentsAspect]
+	{
+		auto exec = this->aspect<ExecutableAspect>()->executable();
+		CommandLine cmd = CommandLine(exec/*execAspect->executable()*/);
+		cmd.addArgs(argumentsAspect->arguments(macroExpander()), CommandLine::Raw);
+		return cmd;
+	});
+
+	//setConfigWidgetCreator([this] { return new DRunConfigurationWidget(this); });
 }
+
+/*DRunConfiguration::~DRunConfiguration()
+{
+// Note: Qt4Project deletes all empty customexecrunconfigs for which isConfigured() == false.
+	if (m_dialog)
+	{
+		emit configurationFinished();
+		disconnect(m_dialog, &QDialog::finished,
+													this, &DRunConfiguration::configurationDialogFinished);
+		delete m_dialog;
+	}
+}*/
 
 void DRunConfiguration::updateConfig(const DMakeStep* makeStep)
 {
-	BuildConfiguration* build = this->activeBuildConfiguration();
-	if(!build)
-		return;
+	if(makeStep == nullptr)
+	{
+		BuildConfiguration* build = this->activeBuildConfiguration();
+		if(!build)
+			return;
+		BuildStepList* bsl = build->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
+		Q_ASSERT(bsl);
+		auto makeStep = bsl->firstOfType<DMakeStep>();
+		Q_ASSERT(makeStep);
+	}
 
-//	BuildStepList* bsl = build->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
-//	Q_ASSERT(bsl);
-//	auto makeStep = bsl->firstOfType<DMakeStep>();
-//	if (!makeStep)
-//		return;
-
-//	QString outDir = makeStep->targetDirName();
-//	if(outDir.startsWith(QDir::separator()) == false)
-//	{
-//		QString projDir = makeStep->target()->project()->projectDirectory().toString();
-//		outDir = projDir + QDir::separator() + outDir;
-//	}
-//	m_workingDirectory = outDir;
-//	setBaseWorkingDirectory(outDir);
-//	outDir.append(QDir::separator() + makeStep->outFileName());
-//	m_executable = outDir;
-//	setExecutable(outDir);
+	Utils::FilePath outDir;
+	if(FileUtils::isRelativePath(makeStep->targetDirName()))
+	{
+		outDir = makeStep->target()->project()->projectDirectory();
+		outDir = outDir.pathAppended(makeStep->targetDirName());
+	}
+	else
+		outDir = Utils::FilePath::fromString(makeStep->targetDirName());
+	m_workingDirectory = outDir.toString();
+	this->aspect<WorkingDirectoryAspect>()->setDefaultWorkingDirectory(outDir);
+	//setBaseWorkingDirectory(outDir);
+	outDir = outDir.pathAppended(makeStep->outFileName());
+	m_executable = outDir.toString();
+	//setExecutable(outDir);
+	this->aspect<ExecutableAspect>()->setExecutable(outDir);
+	//auto exec = this->aspect<ExecutableAspect>()->executable();
 }
 
+bool DRunConfiguration::isConfigured() const
+{
+	//return !m_executable.isEmpty();
+	//return this->aspect<ExecutableAspect>()->executable().isEmpty() == false;
+	return true;
+}
 
-// Note: Qt4Project deletes all empty customexecrunconfigs for which isConfigured() == false.
-//DRunConfiguration::~DRunConfiguration()
-//{
-////	if (m_dialog)
-////	{
-////		emit configurationFinished();
-////		disconnect(m_dialog, &QDialog::finished,
-////													this, &DRunConfiguration::configurationDialogFinished);
-////		delete m_dialog;
-////	}
-//}
+void DRunConfiguration::updateEnabledState()
+{
+	setEnabled(isConfigured());
+}
+
 
 
 //RunConfiguration::ConfigurationState DRunConfiguration::ensureConfigured(QString *errorMessage)
@@ -238,11 +266,6 @@ void DRunConfiguration::updateConfig(const DMakeStep* makeStep)
 //QString DRunConfiguration::rawExecutable() const
 //{
 //	return m_executable;
-//}
-
-//bool DRunConfiguration::isConfigured() const
-//{
-//	return !m_executable.isEmpty();
 //}
 
 //QString DRunConfiguration::workingDirectory() const
@@ -325,15 +348,6 @@ void DRunConfiguration::updateConfig(const DMakeStep* makeStep)
 //////	emit changed();
 ////}
 
-//QWidget *DRunConfiguration::createConfigurationWidget()
-//{
-//	return new DRunConfigurationWidget(this, DRunConfigurationWidget::InstantApply);
-//}
-
-////Abi DRunConfiguration::abi() const
-////{
-////	return Abi(); // return an invalid ABI: We do not know what we will end up running!
-////}
 
 //---------------------------------------------------------------------------------
 //--- DRunConfigurationFactory
@@ -416,48 +430,29 @@ DRunConfigurationFactory::DRunConfigurationFactory() : RunConfigurationFactory()
 //-- DRunConfigurationWidget
 //-------------------------------------------------------------------------------
 
-DRunConfigurationWidget::DRunConfigurationWidget(DRunConfiguration *rc, ApplyMode mode)
+DRunConfigurationWidget::DRunConfigurationWidget(DRunConfiguration *rc)
 	: m_runConfiguration(rc)
 {
-	Q_UNUSED(mode)
-//	auto layout = new QFormLayout;
-//	layout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
-//	layout->setMargin(0);
+	auto layout = new QFormLayout;
+	layout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
+	layout->setMargin(0);
 
-//	m_executableChooser = new PathChooser(this);
-//	m_executableChooser->setHistoryCompleter(QLatin1String("Qt.CustomExecutable.History"));
-//	m_executableChooser->setExpectedKind(PathChooser::ExistingCommand);
-//	layout->addRow(tr("Executable:"), m_executableChooser);
+	m_executableChooser = new PathChooser(this);
+	m_executableChooser->setHistoryCompleter(QLatin1String("Qt.CustomExecutable.History"));
+	m_executableChooser->setExpectedKind(PathChooser::ExistingCommand);
+	layout->addRow(tr("Executable:"), m_executableChooser);
 
-////	auto argumentsAspect = rc->aspect<ArgumentsAspect>();
-////	if (mode == InstantApply)
-////	{
-////		argumentsAspect->addToMainConfigurationWidget(this, layout);
-////	}
-////	else
-////	{
-////		m_temporaryArgumentsAspect = argumentsAspect->clone(rc);
-////		m_temporaryArgumentsAspect->addToMainConfigurationWidget(this, layout);
-////		connect(m_temporaryArgumentsAspect, &ArgumentsAspect::argumentsChanged,
-////										this, &DRunConfigurationWidget::validChanged);
-////	}
+	auto argumentsAspect = rc->aspect<ArgumentsAspect>();
+	argumentsAspect->addToConfigurationLayout(layout);
 
-//	m_workingDirectory = new PathChooser(this);
-//	m_workingDirectory->setHistoryCompleter(QLatin1String("Qt.WorkingDir.History"));
-//	m_workingDirectory->setExpectedKind(PathChooser::Directory);
-//	m_workingDirectory->setBaseFileName(rc->target()->project()->projectDirectory());
+	m_workingDirectory = new PathChooser(this);
+	m_workingDirectory->setHistoryCompleter(QLatin1String("Qt.WorkingDir.History"));
+	m_workingDirectory->setExpectedKind(PathChooser::Directory);
+	m_workingDirectory->setBaseFileName(rc->target()->project()->projectDirectory());
+	layout->addRow(tr("Working directory:"), m_workingDirectory);
 
-//	layout->addRow(tr("Working directory:"), m_workingDirectory);
-
-////	auto terminalAspect = rc->extraAspect<TerminalAspect>();
-////	if (mode == InstantApply) {
-////		terminalAspect->addToMainConfigurationWidget(this, layout);
-////	} else {
-////		m_temporaryTerminalAspect = terminalAspect->clone(rc);
-////		m_temporaryTerminalAspect->addToMainConfigurationWidget(this, layout);
-////		connect(m_temporaryTerminalAspect, &TerminalAspect::useTerminalChanged,
-////										this, &DRunConfigurationWidget::validChanged);
-////	}
+	auto terminalAspect = rc->aspect<TerminalAspect>();
+	terminalAspect->addToConfigurationLayout(layout);
 
 //	auto vbox = new QVBoxLayout(this);
 //	vbox->setMargin(0);
@@ -470,32 +465,21 @@ DRunConfigurationWidget::DRunConfigurationWidget(DRunConfiguration *rc, ApplyMod
 //	m_detailsContainer->setWidget(detailsWidget);
 //	detailsWidget->setLayout(layout);
 
-//	changed();
+	changed();
 
-//	if (mode == InstantApply) {
-//		connect(m_executableChooser, &PathChooser::rawPathChanged,
-//										this, &DRunConfigurationWidget::executableEdited);
-//		connect(m_workingDirectory, &PathChooser::rawPathChanged,
-//										this, &DRunConfigurationWidget::workingDirectoryEdited);
-//	} else {
-//		connect(m_executableChooser, &PathChooser::rawPathChanged,
-//										this, &DRunConfigurationWidget::validChanged);
-//		connect(m_workingDirectory, &PathChooser::rawPathChanged,
-//										this, &DRunConfigurationWidget::validChanged);
-//	}
+	connect(m_executableChooser, &PathChooser::rawPathChanged,
+									this, &DRunConfigurationWidget::executableEdited);
+	connect(m_workingDirectory, &PathChooser::rawPathChanged,
+									this, &DRunConfigurationWidget::workingDirectoryEdited);
 
-////	auto enviromentAspect = rc->extraAspect<EnvironmentAspect>();
-////	connect(enviromentAspect, &EnvironmentAspect::environmentChanged,
-////									this, &DRunConfigurationWidget::environmentWasChanged);
-////	environmentWasChanged();
+	auto enviromentAspect = rc->aspect<EnvironmentAspect>();
+	connect(enviromentAspect, &EnvironmentAspect::environmentChanged,
+									this, &DRunConfigurationWidget::environmentWasChanged);
+										environmentWasChanged();
 
-//	// If we are in InstantApply mode, we keep us in sync with the rc
-//	// otherwise we ignore changes to the rc and override them on apply,
-//	// or keep them on cancel
-//	if (mode == InstantApply) {
-//		connect(m_runConfiguration, &DRunConfiguration::changed,
-//										this, &DRunConfigurationWidget::changed);
-//	}
+
+	connect(m_runConfiguration, &DRunConfiguration::changed,
+									this, &DRunConfigurationWidget::changed);
 
 //	Core::VariableChooser::addSupportForChildWidgets(this, m_runConfiguration->macroExpander());
 }

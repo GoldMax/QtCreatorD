@@ -46,30 +46,22 @@ public:
 	DRunConfiguration(Target *parent, Core::Id id);
 	//~DRunConfiguration() override;
 
+	QString defaultDisplayName() const { return tr("Build Run"); }
 	QString executable() const { return m_executable; }
 	QString workingDirectory() const { return m_workingDirectory; }
 
-	QString defaultDisplayName() const { return tr("Build Run"); }
+	void updateConfig(const DMakeStep* makeStep);
+	bool isConfigured() const override;
+	void updateEnabledState() override;
 
 //				Runnable runnable() const override;
-//				bool isConfigured() const override;
 //				ConfigurationState ensureConfigured(QString *errorMessage) override;
 
-//				/**
-//				* Returns the executable, looks in the environment for it and might even
-//				* ask the user if none is specified
-//				*/
-
-//				/** Returns whether this runconfiguration ever was configured with an executable
-//					*/
-//				QWidget *createConfigurationWidget() override;
-//				//Abi abi() const override;
 //				QVariantMap toMap() const override;
 
-				void updateConfig(const DMakeStep* makeStep);
 
-//signals:
-//	void changed();
+signals:
+	void changed();
 
 //protected:
 //				DRunConfiguration(Target *parent,
@@ -114,32 +106,31 @@ public:
 
 class DRunConfigurationWidget : public QWidget
 {
-				Q_OBJECT
+	Q_OBJECT
 
 public:
-				enum ApplyMode { InstantApply, DelayedApply};
-				DRunConfigurationWidget(DRunConfiguration *rc, ApplyMode mode);
-				~DRunConfigurationWidget();
+	DRunConfigurationWidget(DRunConfiguration *rc);
+	~DRunConfigurationWidget();
 
-				void apply(); // only used for DelayedApply
-				bool isValid() const;
+	void apply(); // only used for DelayedApply
+	bool isValid() const;
 
 signals:
-				void validChanged();
+	void validChanged();
 
 private:
-				void changed();
-				void executableEdited();
-				void workingDirectoryEdited();
-				void environmentWasChanged();
+	void changed();
+	void executableEdited();
+	void workingDirectoryEdited();
+	void environmentWasChanged();
 
-				bool m_ignoreChange = false;
-				DRunConfiguration *m_runConfiguration = nullptr;
-				ProjectExplorer::ArgumentsAspect *m_temporaryArgumentsAspect = nullptr;
-				ProjectExplorer::TerminalAspect *m_temporaryTerminalAspect = nullptr;
-				Utils::PathChooser *m_executableChooser = nullptr;
-				Utils::PathChooser *m_workingDirectory = nullptr;
-				Utils::DetailsWidget *m_detailsContainer = nullptr;
+	bool m_ignoreChange = false;
+	DRunConfiguration *m_runConfiguration = nullptr;
+	ProjectExplorer::ArgumentsAspect *m_temporaryArgumentsAspect = nullptr;
+	ProjectExplorer::TerminalAspect *m_temporaryTerminalAspect = nullptr;
+	Utils::PathChooser *m_executableChooser = nullptr;
+	Utils::PathChooser *m_workingDirectory = nullptr;
+	Utils::DetailsWidget *m_detailsContainer = nullptr;
 };
 
 } // namespace DProjectManager
