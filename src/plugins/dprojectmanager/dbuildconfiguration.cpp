@@ -48,17 +48,6 @@ NamedWidget* DBuildConfiguration::createConfigWidget()
 	return new DBuildSettingsWidget(this);
 }
 
-bool DBuildConfiguration::fromMap(const QVariantMap &map)
-{
-	if(BuildConfiguration::fromMap(map) == false)
-		return false;
-	DProject* prj = static_cast<DProject*>(target()->project());
-	QTC_CHECK(prj);
-	Utils::FilePath fn = 	Utils::FilePath::fromString(prj->buildDirectory().path());
-	setBuildDirectory(fn);
-	return true;
-}
-
 bool DBuildConfiguration::isEnabled() const
 {
 	DProject* prj = static_cast<DProject*>(project());

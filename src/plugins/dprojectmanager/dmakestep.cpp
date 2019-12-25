@@ -289,7 +289,6 @@ DMakeStepConfigWidget::DMakeStepConfigWidget(DMakeStep *makeStep)
 {
 	setDisplayName("D make");
 
-	Project *pro = m_makeStep->target()->project();
 	m_ui = new DProjectManager::Ui::DMakeStepUi;
 	m_ui->setupUi(this);
 
@@ -325,8 +324,6 @@ DMakeStepConfigWidget::DMakeStepConfigWidget(DMakeStep *makeStep)
 									this, SLOT(makeArgumentsLineEditTextEdited()));
 
 	connect(ProjectExplorerPlugin::instance(), SIGNAL(settingsChanged()),
-									this, SLOT(updateDetails()));
-	connect(pro, SIGNAL(environmentChanged()),
 									this, SLOT(updateDetails()));
 	connect(m_makeStep->buildConfiguration(), SIGNAL(buildDirectoryChanged()),
 									this, SLOT(updateDetails()));

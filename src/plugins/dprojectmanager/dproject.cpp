@@ -227,7 +227,13 @@ bool DProject::parseProjectFile(RefreshOptions options)
 			dir = dir.pathAppended(sourcesDirectory());
 
 		if((needRebuild = (dir.toString() != buildDirectory().path())))
+		{
 			m_buildRootDir.setPath(dir.toString());
+			for(Target* t : this->targets())
+				for(BuildConfiguration* bc : t->buildConfigurations())
+					if(bc->id() == Core::Id(Constants::D_BC_ID))
+						bc->setBuildDirectory(dir);
+		}
 	}
 
 	if (needRebuild || (options & Files))
