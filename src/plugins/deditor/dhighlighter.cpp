@@ -15,23 +15,6 @@ using namespace CPlusPlus;
 
 DHighlighter::DHighlighter()
 {
-	//	static QVector<TextStyle> categories;
-	//	if (categories.isEmpty())
-	//	{
-	//		categories << C_NUMBER
-	//													<< C_STRING
-	//													<< C_TYPE
-	//													<< C_KEYWORD
-	//													<< C_PRIMITIVE_TYPE
-	//													<< C_OPERATOR
-	//													<< C_PREPROCESSOR
-	//													<< C_LABEL
-	//													<< C_COMMENT
-	//													<< C_DOXYGEN_COMMENT
-	//													<< C_DOXYGEN_TAG
-	//													<< C_VISUAL_WHITESPACE;
-	//	}
-	//	setTextFormatCategories(categories);
 	setDefaultTextFormatCategories();
 }
 
@@ -224,7 +207,6 @@ void DHighlighter::highlightBlock(const QString &text)
 	TextDocumentLayout::setParentheses(currentBlock(), parentheses);
 
 	// if the block is ifdefed out, we only store the parentheses, but
-
 	// do not adjust the brace depth.
 	if (TextDocumentLayout::ifdefedOut(currentBlock())) {
 		braceDepth = initialBraceDepth;

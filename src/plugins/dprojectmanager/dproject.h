@@ -2,21 +2,10 @@
 #define DPROJECT_H
 
 #include "dprojectmanagerconstants.h"
-//#include "dprojectmanager.h"
 #include "dprojectnodes.h"
 
 #include <projectexplorer/project.h>
-
-//#include <projectexplorer/projectmanager.h>
-//#include <projectexplorer/project.h>
 #include <projectexplorer/projectnodes.h>
-//#include <projectexplorer/target.h>
-//#include <projectexplorer/toolchain.h>
-//#include <projectexplorer/buildconfiguration.h>
-//#include <coreplugin/idocument.h>
-
-//#include <QFuture>
-//#include <QSet>
 
 #include <utils/fileutils.h>
 
@@ -42,8 +31,6 @@ public:
 public:
 	DProject(const Utils::FilePath &filename);
 	~DProject() override;
-
-//	bool setupTarget(ProjectExplorer::Target *t) override;
 
 	bool addFiles(const QStringList &filePaths);
 	bool removeFiles(const QStringList &filePaths);
@@ -71,8 +58,6 @@ protected:
 private:
 	bool parseProjectFile(RefreshOptions options);
 
-//	QStringList processEntries(const QStringList &paths,
-//																												QHash<QString, QString> *map = nullptr) const;
 	QString m_srcDir;
 	QString m_libs;
 	QString m_includes;
@@ -80,33 +65,7 @@ private:
 	QHash<QString, QString> m_files;
 
 	QDir m_buildRootDir;
-
-//	QFuture<void> m_codeModelFuture;
 };
-
-////---------------------------------------------------------
-//class DProjectFile : public Core::IDocument
-//{
-//	Q_OBJECT
-
-//public:
-//	DProjectFile(DProject *parent, const Utils::FilePath &fileName,
-//														DProject::RefreshOptions options);
-
-//// QString defaultPath() const { return QString(); }
-////	QString suggestedFileName() const { return QString(); }
-////	QString mimeType() const	{ return QLatin1String(Constants::DPROJECT_MIMETYPE); }
-////	bool isModified() const { return false; }
-////	bool isSaveAsAllowed() const { return false; }
-////	bool save(QString *errorString, const QString &fileName, bool autoSave) { return false; }
-
-//	ReloadBehavior reloadBehavior(ChangeTrigger state, ChangeType type) const;
-//	bool reload(QString *errorString, ReloadFlag flag, ChangeType type);
-
-//private:
-//	DProject *m_project;
-//	DProject::RefreshOptions m_options;
-//};
 
 } // namespace DProjectManager
 

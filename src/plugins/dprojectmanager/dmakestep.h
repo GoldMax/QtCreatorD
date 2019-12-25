@@ -1,7 +1,6 @@
 #pragma once
 
 #include <projectexplorer/abstractprocessstep.h>
-//#include <projectexplorer/task.h>
 
 namespace DProjectManager {
 
@@ -29,7 +28,6 @@ public:
 	};
 
 	explicit DMakeStep(ProjectExplorer::BuildStepList *parent);
-	//	virtual ~DMakeStep();
 
 public:
 	QVariantMap toMap() const override;
@@ -55,30 +53,12 @@ private:
 	QString m_targetDirName;
 	QString m_objDirName;
 	QString m_makeArguments;
-	//QList<ProjectExplorer::Task> m_tasks;
 };
 
 class DMakeStepFactory : public ProjectExplorer::BuildStepFactory
 {
 public:
 	DMakeStepFactory();
-
-	//	QList<ProjectExplorer::BuildStepInfo> availableSteps(ProjectExplorer::BuildStepList *parent) const;
-
-
-	//	bool canCreate(ProjectExplorer::BuildStepList *parent, const Core::Id id) const;
-	//	ProjectExplorer::BuildStep *create(ProjectExplorer::BuildStepList *parent, const Core::Id id);
-	//	bool canClone(ProjectExplorer::BuildStepList *parent,
-	//															ProjectExplorer::BuildStep *source) const;
-	//	ProjectExplorer::BuildStep *clone(ProjectExplorer::BuildStepList *parent,
-	//																																			ProjectExplorer::BuildStep *source);
-	//	bool canRestore(ProjectExplorer::BuildStepList *parent, const QVariantMap &map) const;
-	//	ProjectExplorer::BuildStep *restore(ProjectExplorer::BuildStepList *parent,
-	//																																					const QVariantMap &map);
-
-	//	QList<Core::Id> availableCreationIds(ProjectExplorer::BuildStepList *bc) const;
-	//	QString displayNameForId(const Core::Id id) const;
-
 };
 
 class DMakeStepConfigWidget : public ProjectExplorer::BuildStepConfigWidget

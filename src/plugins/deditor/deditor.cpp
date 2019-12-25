@@ -4,23 +4,16 @@
 #include "dindenter.h"
 #include "dcompletionassist.h"
 #include "dautocompleter.h"
-//#include "dhoverhandler.h"
 
 #include <texteditor/textdocument.h>
 #include <texteditor/texteditorsettings.h>
 #include <texteditor/completionsettings.h>
-
-//#include <cppeditor/cppdocumentationcommenthelper.h>
 
 #include <cplusplus/MatchingText.h>
 #include <cplusplus/CppDocument.h>
 #include <cpptools/cppsemanticinfo.h>
 
 #include <QDebug>
-//#include <QCoreApplication>
-//#include <QFileInfo>
-//#include <QTextDocument>
-//#include <QTextBlock>
 
 using namespace DEditor;
 using namespace TextEditor;
@@ -66,7 +59,7 @@ void DEditorWidget::keyPressEvent(QKeyEvent *e)
 	if(handleStringSplitting(e))
 		return;
 
-//
+// TODO : split comment
 //	if(e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter)
 //	{
 //		if(CppEditor::Internal::trySplitComment(this, semanticInfo().snapshot))
@@ -99,7 +92,7 @@ bool DEditorWidget::handleStringSplitting(QKeyEvent *e) const
 			isString = (all - esced)%2 > 0;
 		}
 
-		//if (autoCompleter()->isInString(cursor))
+		//if (autoCompleter()->isInString(cursor))  --- не работает
 		if(isString)
 		{
 			cursor.beginEditBlock();

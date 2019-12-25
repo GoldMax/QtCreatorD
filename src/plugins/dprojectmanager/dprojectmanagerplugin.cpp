@@ -7,29 +7,19 @@
 #include "drunconfiguration.h"
 
 #include <coreplugin/icore.h>
-//#include <coreplugin/actionmanager/actionmanager.h>
-//#include <coreplugin/actionmanager/actioncontainer.h>
-//#include <coreplugin/actionmanager/command.h>
 
-//#include <projectexplorer/projectexplorerconstants.h>
 #include <projectexplorer/projectmanager.h>
 #include <projectexplorer/runcontrol.h>
-//#include <projectexplorer/projecttree.h>
-//#include <projectexplorer/selectablefilesmodel.h>
 
 #include <utils/stringutils.h>
 #include <utils/mimetypes/mimedatabase.h>
-
-//#include <QtPlugin>
-//#include <QDebug>
-
 
 using namespace Core;
 using namespace ProjectExplorer;
 using namespace DProjectManager;
 
 
-class DProjectPluginPrivate /*: public QObject*/
+class DProjectPluginPrivate
 {
 public:
 	DProjectPluginPrivate();
@@ -47,8 +37,6 @@ public:
 		},
 		{ runConfigFactory.id() }
 	};
-
-//    QAction editFilesAction{GenericProjectPlugin::tr("Edit Files..."), nullptr};
 };
 DProjectPluginPrivate::DProjectPluginPrivate()
 {
@@ -88,10 +76,6 @@ bool DProjectManagerPlugin::initialize(const QStringList &arguments, QString *er
 	if(data.isEmpty() == false)
 		Utils::addMimeTypes(Constants::DPROJECT_ID,data);
 
-//	addAutoReleasedObject(new DManager);
-//	addAutoReleasedObject(new DMakeStepFactory);
-//	addAutoReleasedObject(new DBuildConfigurationFactory);
-//	addAutoReleasedObject(new DRunConfigurationFactory);
 	dd = new DProjectPluginPrivate;
 
 	return true;

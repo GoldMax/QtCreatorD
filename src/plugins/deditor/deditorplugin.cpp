@@ -22,22 +22,13 @@
 #include <texteditor/texteditoractionhandler.h>
 #include <texteditor/snippets/snippetprovider.h>
 
-//#include <utils/qtcassert.h>
-//#include <utils/mimetypes/mimedatabase.h>
-
 #include <QCoreApplication>
 #include <QAction>
 #include <QMenu>
 #include <QList>
-//#include <QMessageBox>
-//#include <QMainWindow>
-//#include <QtPlugin>
-//#include <QShortcut>
 
 using namespace Core;
 using namespace TextEditor;
-//using namespace TextEditor::Internal;
-
 using namespace DEditor;
 
 namespace DEditor

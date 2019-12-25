@@ -53,10 +53,4 @@ bool DProjectNode::renameFile(const QString &filePath, const QString &newFilePat
 	return m_project->renameFile(filePath, newFilePath);
 }
 
-//QList<RunConfiguration *> DProjectNode::runConfigurationsFor(Node *node)
-//{
-//	Q_UNUSED(node)
-//	return QList<RunConfiguration *>();
-//}
-
 } // namespace DProjectManager

@@ -1,6 +1,5 @@
 #include "deditorconstants.h"
 #include "dcompletionassist.h"
-//#include "deditorplugin.h"
 #include "qcdassist.h"
 
 #include <coreplugin/idocument.h>
@@ -227,7 +226,7 @@ IAssistProposal *DCompletionAssistProcessor::perform(const AssistInterface *inte
 	QTextDocument* doc = interface->textDocument();
 	QByteArray arr;
 	toUtf8(arr, doc, pos);
-	DCDCompletion c = QcdAssist::sendRequestToDCD(arr, pos);
+	DCDCompletion c = QcdAssist::sendRequestToDCD(arr, static_cast<unsigned>(pos));
 	//qDebug() <<  "DCD items: " << c.completions.length();
 	foreach(DCDCompletionItem i, c.completions)
 	{
@@ -275,11 +274,6 @@ void DCompletionAssistProcessor::toUtf8(QByteArray& arr, QTextDocument* doc, int
 
 IAssistProposal* DCompletionAssistProcessor::createContentProposal()
 {
-//	GenericProposalModel* model = new GenericProposalModel();
-//	model->loadContent(m_completions);
-//			//new BasicProposalItemListModel(m_completions);
-//	IAssistProposal *proposal = new GenericProposal(m_startPosition, model);
-//	return proposal;
 	addSnippets();
 	return new GenericProposal(m_startPosition, m_completions);
 }

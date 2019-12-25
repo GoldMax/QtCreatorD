@@ -18,13 +18,7 @@
 #include <projectexplorer/gnumakeparser.h>
 #include <projectexplorer/kitinformation.h>
 #include <projectexplorer/toolchain.h>
-//#include <qtsupport/qtkitinformation.h>
-//#include <qtsupport/qtparser.h>
-//#include <utils/stringutils.h>
-//#include <utils/qtcassert.h>
 #include <utils/qtcprocess.h>
-
-//#include <QSettings>
 
 using namespace ProjectExplorer;
 using namespace DProjectManager;
@@ -56,8 +50,6 @@ DMakeStep::DMakeStep(BuildStepList *parent) :
 			m_makeArguments = QLatin1String("-m64");
 	}
 }
-
-//DMakeStep::~DMakeStep() { }
 
 QVariantMap DMakeStep::toMap() const
 {
@@ -286,77 +278,6 @@ DMakeStepFactory::DMakeStepFactory()
 	setDisplayName(QLatin1String(Constants::D_MS_DISPLAY_NAME)); //MakeStep::defaultDisplayName());
 	setSupportedProjectType(Constants::DPROJECT_ID);
 }
-
-//QList<BuildStepInfo> DMakeStepFactory::availableSteps(BuildStepList* parent) const
-//{
-//	if (parent->target()->project()->id() != Constants::DPROJECT_ID)
-//									return {};
-
-//					return {{ Constants::D_MS_ID,
-//															QCoreApplication::translate("DProjectManager::DMakeStep",
-//															Constants::D_MS_DISPLAY_NAME) }};
-//}
-
-//bool DMakeStepFactory::canCreate(BuildStepList *parent, const Id id) const
-//{
-//	Core::Id idd = parent->target()->project()->id();
-//	if (idd == Constants::DPROJECT_ID)
-//		return id == Constants::D_MS_ID;
-//	return false;
-//}
-
-//BuildStep *DMakeStepFactory::create(BuildStepList *parent, const Id id)
-//{
-//	if (!canCreate(parent, id))
-//		return 0;
-//	DMakeStep *step = new DMakeStep(parent);
-//	return step;
-//}
-
-//bool DMakeStepFactory::canClone(BuildStepList *parent, BuildStep *source) const
-//{
-//	return canCreate(parent, source->id());
-//}
-
-//BuildStep *DMakeStepFactory::clone(BuildStepList *parent, BuildStep *source)
-//{
-//	if (!canClone(parent, source))
-//		return nullptr;
-//	DMakeStep *old(qobject_cast<DMakeStep *>(source));
-//	Q_ASSERT(old);
-//	return new DMakeStep(parent, old);
-//}
-
-//bool DMakeStepFactory::canRestore(BuildStepList *parent, const QVariantMap &map) const
-//{
-//	return canCreate(parent, idFromMap(map));
-//}
-
-//BuildStep *DMakeStepFactory::restore(BuildStepList *parent, const QVariantMap &map)
-//{
-//	if (!canRestore(parent, map))
-//		return nullptr;
-//	DMakeStep *bs(new DMakeStep(parent));
-//	if (bs->fromMap(map))
-//		return bs;
-//	delete bs;
-//	return nullptr;
-//}
-
-//QList<Id> DMakeStepFactory::availableCreationIds(BuildStepList *parent) const
-//{
-//	if (parent->target()->project()->id() == Constants::DPROJECT_ID)
-//		return QList<Id>() << Id(Constants::D_MS_ID);
-//	return QList<Id>();
-//}
-
-//QString DMakeStepFactory::displayNameForId(const Id id) const
-//{
-//	if (id == Constants::D_MS_ID)
-//		return QCoreApplication::translate("DProjectManager::DMakeStep",
-//																																					Constants::D_MS_DISPLAY_NAME);
-//	return QString();
-//}
 
 //-------------------------------------------------------------------------
 //-- DMakeStepConfigWidget

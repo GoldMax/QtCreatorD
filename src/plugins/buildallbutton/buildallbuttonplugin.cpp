@@ -1,7 +1,6 @@
 #include "buildallbuttonplugin.h"
 #include "buildallbuttonconstants.h"
 
-//#include <coreplugin/icore.h>
 #include <coreplugin/icontext.h>
 #include <coreplugin/actionmanager/actionmanager.h>
 #include <coreplugin/actionmanager/command.h>
@@ -43,8 +42,6 @@ bool BuildAllButtonPlugin::initialize(const QStringList &arguments, QString *err
 	Q_UNUSED(errorString)
 
  QIcon rebuildIcon = ProjectExplorer::Icons::REBUILD.icon();
-   //QIcon(QLatin1String(ProjectExplorer::Constants::ICON_REBUILD));
- //rebuildIcon.addFile(QLatin1String(ProjectExplorer::Constants::ICON_REBUILD_SMALL));
 
 	Command* cmd = ActionManager::command(Constants::BUILDSESSION);
 	if(cmd)

@@ -8,7 +8,6 @@
 #include <utils/fileutils.h>
 #include <projectexplorer/customwizard/customwizard.h>
 
-
 #include <QFileInfo>
 #include <QTextStream>
 #include <QWizard>
@@ -67,7 +66,6 @@ DFileWizardFactory::DFileWizardFactory(FileType fileType) :
 	if(fileType == FileType::Header)
 	{
 		setId("B.Header");
-  //setWizardKind(FileWizard);
 		setDisplayName(tr("D Header File"));
 		setDescription(tr("Creates a D header file."));
 		setCategory(QLatin1String(Constants::WIZARD_CATEGORY_D));
@@ -78,7 +76,6 @@ DFileWizardFactory::DFileWizardFactory(FileType fileType) :
 	else
 	{
 		setId("A.Source");
-  //setWizardKind(FileWizard);
 		setDisplayName(tr("D Source File"));
 		setDescription(tr("Creates a D source file."));
 		setCategory(QLatin1String(Constants::WIZARD_CATEGORY_D));
@@ -101,19 +98,6 @@ Core::BaseFileWizard* DFileWizardFactory::create(QWidget *parent,
 		if(project)
 			wizard->projFile = project->projectFilePath().toString();
 	}
-
-//	QLatin1String key(ProjectExplorer::Constants::PREFERRED_PROJECT_NODE);
-//	QVariant qnode = params.extraValues().value(key);
-//	if(qnode.isNull() == false)
-//	{
-//		//ProjectExplorer::Node* node = qnode.value<ProjectExplorer::Node*>();
-//		auto node = static_cast<ProjectExplorer::Node *>(qnode.value<void *>());
-//		if(node && node->isProjectNodeType())
-//		{
-//			ProjectExplorer::ProjectNode* projNode = node->asProjectNode();
-//			wizard->projFile = projNode->filePath().toString();
-//		}
-//	}
 
 	wizard->setWindowTitle(tr("New %1").arg(displayName()));
 	wizard->setPath(params.defaultPath());

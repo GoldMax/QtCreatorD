@@ -4,11 +4,6 @@
 #include "dprojectmanager/dproject.h"
 
 #include <projectexplorer/projectnodes.h>
-//#include <projectexplorer/runconfiguration.h>
-
-//#include <QStringList>
-//#include <QHash>
-//#include <QSet>
 
 namespace Core
 {
@@ -26,7 +21,6 @@ class DProjectNode : public ProjectExplorer::ProjectNode
 public:
 	DProjectNode(DProject* project);
 
-		//bool hasBuildTargets() const { return true; }
 	bool canAddSubProject(const QString &) const override { return false; }
 	bool addSubProject(const QString &) override { return false; }
 	bool removeSubProject(const QString &) override { return false; }
@@ -37,9 +31,6 @@ public:
 	bool deleteFiles(const QStringList &) override { return false; }
 	bool canRenameFile(const QString &, const QString &) override { return true; }
 	bool renameFile(const QString &filePath, const QString &newFilePath) override;
-
-//	QList<ProjectExplorer::ProjectAction> supportedActions(Node *node) const;
-//	QList<ProjectExplorer::RunConfiguration *> runConfigurationsFor(Node *node);
 
 private:
 	DProject *m_project;

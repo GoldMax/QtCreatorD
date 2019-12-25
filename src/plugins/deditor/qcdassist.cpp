@@ -2,18 +2,11 @@
 
 #include <coreplugin/messagemanager.h>
 #include <utils/environment.h>
-//#include <QAbstractSocket>
-//#include <QHostAddress>
-//#include <QDebug>
 #include <QProcess>
-//#include <msgpack.hpp>
 
 namespace QcdAssist
 {
 	static bool _DCDEnabled = true;
-//static QTcpSocket* dcdSocket = 0;
-//static int waitForConnectedTimeout = 1000;
-//static int waitForWriteTimeout = 5000;
 	static int waitForReadyReadTimeout = 10000;
 }
 
@@ -35,48 +28,6 @@ QString QcdAssist::dcdClient()
 }
 
 DCDCompletionItem::DCDCompletionItem(DCDCompletionItemType t, QString s) : type(t), name(s) {}
-//--------------------
-//--- Socket Funcs ---
-//--------------------
-//bool QcdAssist::openDcdSocket()
-//{
-// if(dcdSocket == 0)
-//  dcdSocket = new QTcpSocket();
-// if(dcdSocket->state() != QAbstractSocket::ConnectedState)
-// {
-//  dcdSocket->connectToHost(QHostAddress::LocalHost,dcdPort);
-//  if(dcdSocket->waitForConnected(waitForConnectedTimeout))
-//   qDebug("Connected to DCD ...");
-//  else
-//   qDebug("Connection to DCD fails!");
-// }
-// return dcdSocket->state() == QAbstractSocket::ConnectedState;
-//}
-//QByteArray QcdAssist::sendRequestToDCD(const char* data, qint64 len)
-//{
-// if(openDcdSocket() == false)
-//  return QByteArray();
-// dcdSocket->write(data, len);
-// if(dcdSocket->waitForBytesWritten(waitForWriteTimeout) == false)
-// {
-//  qDebug("Write to DCD timeout!");
-//  return QByteArray();
-// }
-// if(dcdSocket->waitForReadyRead(waitForReadyReadTimeout) == false)
-// {
-//  qDebug("waitForReadyRead timeout!");
-//  return QByteArray();
-// }
-// return dcdSocket->readAll();
-//}
-//QByteArray QcdAssist::sendRequestToDCD(AutocompleteRequest& req)
-//{
-//// // Serialize it.
-//// msgpack::sbuffer sbuf;  // simple buffer
-//// msgpack::pack(&sbuf, req);
-
-//// return sendRequestToDCD(sbuf.data(), sbuf.size());
-//}
 void QcdAssist::sendClearChache()
 {
 	QProcess proc;
@@ -121,9 +72,7 @@ DCDCompletion QcdAssist::sendRequestToDCD(QByteArray& filedata, uint pos)
 	QProcess proc;
 	proc.setProcessChannelMode(QProcess::MergedChannels);
 	proc.start(QcdAssist::dcdClient(),
-		QStringList()
-			//<< QString(QLatin1String("-p%1")).arg(QcdAssist::dcdPort)
-			<< QString(QLatin1String("-c%1")).arg(pos)
+		QStringList() << QString(QLatin1String("-c%1")).arg(pos)
 	);
 	proc.write(filedata);
 	proc.closeWriteChannel();

@@ -11,40 +11,22 @@
 
 #include <coreplugin/icontext.h>
 #include <coreplugin/documentmanager.h>
-//#include <coreplugin/icore.h>
-//#include <cpptools/cpptoolsconstants.h>
-//#include <extensionsystem/pluginmanager.h>
 #include <projectexplorer/projectexplorerconstants.h>
 #include <projectexplorer/projectmanager.h>
 #include <projectexplorer/kitmanager.h>
-//#include <projectexplorer/abi.h>
 #include <projectexplorer/buildinfo.h>
 #include <projectexplorer/buildconfiguration.h>
 #include <projectexplorer/runconfiguration.h>
 #include <projectexplorer/kitinformation.h>
 #include <projectexplorer/target.h>
-//#include <projectexplorer/projectexplorerconstants.h>
-//#include <projectexplorer/editorconfiguration.h>
 #include <projectexplorer/session.h>
-//#include <qtsupport/customexecutablerunconfiguration.h>
 #include <utils/fileutils.h>
-//#include <utils/qtcassert.h>
 
-//#include <QDir>
-//#include <QProcessEnvironment>
 #include <QSettings>
 
 using namespace Core;
 using namespace ProjectExplorer;
 using namespace Utils;
-
-//namespace {
-//const char ACTIVE_TARGET_KEY[] = "ProjectExplorer.Project.ActiveTarget";
-//const char TARGET_KEY_PREFIX[] = "ProjectExplorer.Project.Target.";
-//const char TARGET_COUNT_KEY[] = "ProjectExplorer.Project.TargetCount";
-//const char EDITOR_SETTINGS_KEY[] = "ProjectExplorer.Project.EditorSettings";
-//const char PLUGIN_SETTINGS_KEY[] = "ProjectExplorer.Project.PluginSettings";
-//} // namespace
 
 namespace DProjectManager {
 //--------------------------------------------------------------------------------------
@@ -52,7 +34,6 @@ namespace DProjectManager {
 // DProject
 //
 //--------------------------------------------------------------------------------------
-
 DProject::DProject(const Utils::FilePath &fileName)
 	: ProjectExplorer::Project(Constants::DPROJECT_MIMETYPE, fileName)
 {
@@ -60,18 +41,12 @@ DProject::DProject(const Utils::FilePath &fileName)
 	setProjectLanguages(Context(ProjectExplorer::Constants::CXX_LANGUAGE_ID));
 	setDisplayName(fileName.toFileInfo().completeBaseName());
 
-//	setProjectContext(Context(DProjectManager::Constants::DPROJECTCONTEXT));
-	//auto	m_projectFile  = new DProjectFile(this, fileName, RefreshOptions::Everything);
-	//DocumentManager::addDocument(m_projectFile);
-	//setDocument(m_projectFile);
-
 	if(QcdAssist::isDCDEnabled())
 		QcdAssist::sendAddImportToDCD(fileName.parentDir().toString());
 }
 
 DProject::~DProject()
 {
-//	m_codeModelFuture.cancel();
 	setRootProjectNode(nullptr);
 }
 
@@ -163,36 +138,6 @@ Project::RestoreResult DProject::fromMap(const QVariantMap &map, QString *errorM
 		if (!t->activeRunConfiguration())
 			t->addRunConfiguration(new DRunConfiguration(t, Constants::BUILDRUN_CONFIG_ID));
 	}
-		/*// Sanity check: We need both a buildconfiguration and a runconfiguration!
-		QList<Target *> targetList = targets();
-		foreach (Target *t, targetList)
-		{
-			if (!t->activeBuildConfiguration())
-			{
-				removeTarget(t);
-				try {
-					delete t;
-				} catch(...) {}
-				continue;
-			}
-			if (!t->activeRunConfiguration())
-			{
-				QList<IRunConfigurationFactory *> rfs = IRunConfigurationFactory::find(t);
-				if (rfs.length() > 0 )
-					foreach(IRunConfigurationFactory* rf, rfs)
-					{
-						RunConfiguration* rc = rf->create(t,Core::Id(Constants::BUILDRUN_CONFIG_ID));
-						if(rc)
-						{
-							t->addRunConfiguration(rf->create(t, ProjectExplorer::Constants::BUILDSTEPS_BUILD));
-							break;
-						}
-					}
-
-			}
-		}
-		*/
-
 	refresh(Everything);
 	return result;
 }
@@ -233,7 +178,6 @@ void DProject::refresh(RefreshOptions options)
 				folder = fn;
 			}
 			FileNode* node = nullptr;
-			//foreach(FileNode* n, folder->fileNodes())
 			for (Node* n : folder->nodes())
 				if(n->filePath().toString() == kv.key() && n->asFileNode() != nullptr)
 				{
@@ -314,9 +258,6 @@ bool DProject::parseProjectFile(RefreshOptions options)
 
 bool DProject::setupTarget(Target *t)
 {
-	//refresh(RefreshOptions::Everything);
-	//return Project::setupTarget(t);
-
 	BuildConfigurationFactory *factory = BuildConfigurationFactory::find(t);
 	if (!factory)
 		return false;
@@ -357,61 +298,9 @@ bool DProject::setupTarget(Target *t)
 		return false;
 	t->addBuildConfiguration(bc);
 
-//	QList<RunConfigurationFactory *> rfs = RunConfigurationFactory::find(t);
-//	if (rfs.length() == 0 )
-//		return false;
-
-//	RunConfiguration* rc = 0;
-//	foreach(IRunConfigurationFactory* rf, rfs)
-//	{
-//		rc = rf->create(t,Core::Id(Constants::BUILDRUN_CONFIG_ID));
-//		if(rc)
-//			break;
-//	}
-//	if (!rc)
-//		return false;
-
-//	t->addRunConfiguration(rc);
-//	t->setActiveRunConfiguration(rc);
-
 	SessionManager::instance()->setActiveTarget(this, t, SetActive::Cascade);
 
 	return true;
 }
-
-
-////--------------------------------------------------------------------------------------
-////
-//// DProjectFile
-////
-////--------------------------------------------------------------------------------------
-
-//DProjectFile::DProjectFile(DProject *parent, const FilePath& fileName,
-//																											DProject::RefreshOptions options)
-//	: IDocument(parent),
-//			m_project(parent),
-//			m_options(options)
-//{
-//	setId(Constants::DPROJECTFILE_ID);
-//	setMimeType(Constants::DPROJECT_MIMETYPE);
-//	setFilePath(fileName);
-//}
-
-//IDocument::ReloadBehavior DProjectFile::reloadBehavior(ChangeTrigger state, ChangeType type) const
-//{
-//	Q_UNUSED(state)
-//	Q_UNUSED(type)
-//	return BehaviorSilent;
-//}
-
-//bool DProjectFile::reload(QString *errorString, ReloadFlag flag, ChangeType type)
-//{
-//	Q_UNUSED(errorString)
-//	Q_UNUSED(flag)
-//	if (type == TypePermissions)
-//		return true;
-//	m_project->refresh(m_options);
-//	return true;
-//}
 
 } // namespace DProjectManager
