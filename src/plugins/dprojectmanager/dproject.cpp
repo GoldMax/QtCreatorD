@@ -75,35 +75,40 @@ bool DProject::addFiles(const QStringList& filePaths)
 {
 	QSettings projectFiles(projectFilePath().toString(), QSettings::IniFormat);
 	projectFiles.beginGroup(QLatin1String("Files"));
+
+	QDir projDir(projectDirectory().toString());
 	foreach (const QString &filePath, filePaths)
 	{
-		if(m_files.contains(filePath) == false)
-			projectFiles.setValue(buildDirectory().relativeFilePath(filePath), 0);
+		QString fp = projDir.relativeFilePath(filePath);
+		if(files().contains(fp) == false)
+			projectFiles.setValue(fp, 0);
 	}
 	refresh(Files);
 	return true;
 }
-
 bool DProject::removeFiles(const QStringList &filePaths)
 {
 	QSettings projectFiles(projectFilePath().toString(), QSettings::IniFormat);
 	projectFiles.beginGroup(QLatin1String("Files"));
+
+	QDir projDir(projectDirectory().toString());
 	foreach (const QString &filePath, filePaths)
-		if(m_files.contains(filePath))
-		{
-			projectFiles.remove(m_files[filePath]);
-			m_files.remove(filePath);
-		}
+	{
+		QString fp = projDir.relativeFilePath(filePath);
+		if(files().contains(fp))
+			projectFiles.remove(fp);
+	}
 	refresh(Files);
 	return true;
 }
-
 bool DProject::renameFile(const QString &filePath, const QString &newFilePath)
 {
 	QSettings projectFiles(projectFilePath().toString(), QSettings::IniFormat);
 	projectFiles.beginGroup(QLatin1String("Files"));
-	projectFiles.remove(buildDirectory().relativeFilePath(filePath));
-	projectFiles.setValue(buildDirectory().relativeFilePath(newFilePath), 0);
+
+	QDir projDir(projectDirectory().toString());
+	projectFiles.remove(projDir.relativeFilePath(filePath));
+	projectFiles.setValue(projDir.relativeFilePath(newFilePath), 0);
 	refresh(Files);
 	return true;
 }
@@ -112,7 +117,6 @@ QVariantMap DProject::toMap() const
 {
 	return Project::toMap();
 }
-
 Project::RestoreResult DProject::fromMap(const QVariantMap &map, QString *errorMessage)
 {
 	RestoreResult result = Project::fromMap(map, errorMessage);
@@ -146,22 +150,33 @@ void DProject::refresh(RefreshOptions options)
 {
 	bool needRebuildTree = parseProjectFile(options);
 
-	if (needRebuildTree || (options & Files))
+	if (needRebuildTree)
 	{
 		auto root = std::make_unique<DProjectNode>(this);
 
+		FilePath src;
+		if(sourcesDirectory() != ".")
+			src = FilePath::fromString(sourcesDirectory());
+		FilePath srcAbs = projectDirectory().pathAppended(src.toString());
+		QDir srcDir(srcAbs.toString());
+
 		// adding
-		typedef QHash<QString, QString>::ConstIterator FilesKeyValue;
-		for (FilesKeyValue kv = files().constBegin(); kv != files().constEnd(); ++kv)
+		for (QString relS : m_files)
 		{
+			relS = projectDirectory().pathAppended(relS).toString();
+			relS = srcDir.relativeFilePath(relS);
+			FilePath	rel = FilePath::fromString(relS);
+
 			FolderNode* folder = root->asFolderNode();
-			QStringList parts = kv.value().split(QDir::separator());
-			QString absFolderPath = this->buildDirectory().path();
+			FilePath absPath = srcAbs;
+
+			QStringList parts = rel.toString().split(QDir::separator());
+			QString fileName = parts.back();
 			parts.pop_back();
-			foreach(QString part, parts)
+			for(QString part : parts)
 			{
 				FolderNode* fn = nullptr;
-				absFolderPath.append(QDir::separator()).append(part);
+				absPath = absPath.pathAppended(part);
 
 				for (Node* f : folder->nodes())
 					if(f->displayName() == part && f->asFolderNode() != nullptr)
@@ -171,15 +186,18 @@ void DProject::refresh(RefreshOptions options)
 					}
 				if(fn == nullptr)
 				{
-					fn = new FolderNode(Utils::FilePath::fromString(absFolderPath));
+					fn = new FolderNode(absPath);
 					fn->setDisplayName(part);
 					folder->addNode(std::unique_ptr<FolderNode>(fn));
 				}
 				folder = fn;
 			}
+
+			//QString fileName = rel.fileName();
+			absPath = absPath.pathAppended(fileName);
 			FileNode* node = nullptr;
 			for (Node* n : folder->nodes())
-				if(n->filePath().toString() == kv.key() && n->asFileNode() != nullptr)
+				if(n->filePath() == absPath && n->asFileNode() != nullptr)
 				{
 					node = n->asFileNode();
 					break;
@@ -187,14 +205,14 @@ void DProject::refresh(RefreshOptions options)
 			if(node == nullptr)
 			{
 				FileType type = FileType::Unknown;
-				if(kv.key().endsWith(QLatin1String(".d")))
+				if(fileName.endsWith(QLatin1String(".d")))
 					type = FileType::Source;
-				else if(kv.key().endsWith(QLatin1String(".ui")))
+				else if(fileName.endsWith(QLatin1String(".ui")))
 					type = FileType::Form;
-				else if(kv.key().endsWith(QLatin1String(".di")))
+				else if(fileName.endsWith(QLatin1String(".di")))
 					type = FileType::Header;
 
-				FileNode* fn = new FileNode(Utils::FilePath::fromString(kv.key()), type);
+				FileNode* fn = new FileNode(absPath, type);
 				folder->addNode(std::unique_ptr<FileNode>(fn));
 			}
 		}
@@ -208,58 +226,37 @@ void DProject::refresh(RefreshOptions options)
 		setRootProjectNode(std::move(root));
 	}
 }
-
 bool DProject::parseProjectFile(RefreshOptions options)
 {
 	QSettings sets(projectFilePath().toString(), QSettings::IniFormat);
 
-	QDir old = buildDirectory();
-	bool needRebuild = false;
 	if (options & Configuration)
 	{
+		QString old = this->sourcesDirectory();
 		setSourcesDirectory(sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString());
 		setLibraries(sets.value(QLatin1String(Constants::INI_LIBRARIES_KEY)).toString());
 		setIncludes(sets.value(QLatin1String(Constants::INI_INCLUDES_KEY)).toString());
 		setExtraArgs(sets.value(QLatin1String(Constants::INI_EXTRA_ARGS_KEY)).toString());
 
-		Utils::FilePath dir = projectDirectory();
-		if(sourcesDirectory().length() > 0 && sourcesDirectory() != QLatin1String("."))
-			dir = dir.pathAppended(sourcesDirectory());
-
-		if((needRebuild = (dir.toString() != buildDirectory().path())))
-		{
-			m_buildRootDir.setPath(dir.toString());
-			for(Target* t : this->targets())
-				for(BuildConfiguration* bc : t->buildConfigurations())
-					if(bc->id() == Core::Id(Constants::D_BC_ID))
-						bc->setBuildDirectory(dir);
-		}
+		if(old != sourcesDirectory())
+			options = static_cast<RefreshOptions>(options | RefreshOptions::Files);
 	}
 
-	if (needRebuild || (options & Files))
+	if(options & Files)
 	{
 		m_files.clear();
-		if(needRebuild && old.path() == ".") // при инициализации проекта
-			needRebuild = false;
+
+		FilePath src;
+		if(sourcesDirectory() != ".")
+			src = FilePath::fromString(sourcesDirectory());
 
 		sets.beginGroup(QLatin1String(Constants::INI_FILES_ROOT_KEY));
 		foreach(QString rel, sets.allKeys())
-		{
-			QString abs;
-			if(needRebuild)
-			{
-				abs = old.absoluteFilePath(rel);
-				sets.remove(rel);
-				rel = buildDirectory().relativeFilePath(abs);
-				sets.setValue(rel,0);
-			}
-			else
-				abs = buildDirectory().absoluteFilePath(rel);
-			m_files[abs] = rel;
-		}
+			m_files.append(rel);
+
 		emit fileListChanged();
 	}
-	return needRebuild;
+	return options & Files;
 }
 
 bool DProject::setupTarget(Target *t)

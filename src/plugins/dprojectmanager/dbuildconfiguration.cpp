@@ -140,7 +140,6 @@ void DBuildSettingsWidget::buildDirectoryChanged()
 
 	QDir d(proj->projectDirectory().toString());
 	QString rel = d.relativeFilePath(m_pathChooser->rawPath());
-	proj->setSourcesDirectory(rel);
 
 	m_pathChooser->setPath(rel);
 	QSettings sets(proj->projectFilePath().toString(),	QSettings::IniFormat);

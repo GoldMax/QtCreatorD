@@ -182,8 +182,7 @@ QString DMakeStep::allArguments() const
 	static QLatin1String dotdi(".di");
 	static QLatin1String space(" ");
 	QString srcs = QLatin1String(" ");
-	const QHash<QString,QString>& files = static_cast<DProject*>(project())->files();
-	foreach(QString file, files.values())
+	for(QString file : static_cast<DProject*>(project())->files())
 		if(file.endsWith(dotd) || file.endsWith(dotdi))
 			srcs.append(file).append(space);
 	Utils::QtcProcess::addArgs(&args, srcs);

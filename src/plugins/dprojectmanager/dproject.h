@@ -46,9 +46,7 @@ public:
 	void setIncludes(QString value); // { m_includes = value; }
 	const QString& extraArgs() const { return m_extraArgs; }
 	void setExtraArgs(QString value) { m_extraArgs = value; }
-	const QHash<QString,QString>& files() { return m_files; }
-
-	const QDir buildDirectory() const { return m_buildRootDir; }
+	const QList<QString>& files() { return m_files; }
 
 protected:
 	QVariantMap toMap() const override;
@@ -62,9 +60,7 @@ private:
 	QString m_libs;
 	QString m_includes;
 	QString m_extraArgs;
-	QHash<QString, QString> m_files;
-
-	QDir m_buildRootDir;
+	QList<QString> m_files;
 };
 
 } // namespace DProjectManager
