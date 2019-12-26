@@ -11,7 +11,6 @@
 
 namespace DProjectManager {
 
-class DProjectFile;
 class DProjectNode;
 
 class DProject : public ProjectExplorer::Project
@@ -46,6 +45,8 @@ public:
 	void setIncludes(QString value); // { m_includes = value; }
 	const QString& extraArgs() const { return m_extraArgs; }
 	void setExtraArgs(QString value) { m_extraArgs = value; }
+	uint compilePriority() const { return m_priority; }
+	void setCompilePriority(uint value) { m_priority = value; }
 	const QList<QString>& files() { return m_files; }
 
 protected:
@@ -60,6 +61,7 @@ private:
 	QString m_libs;
 	QString m_includes;
 	QString m_extraArgs;
+	uint m_priority;
 	QList<QString> m_files;
 };
 

@@ -4,6 +4,7 @@
 #include <projectexplorer/namedwidget.h>
 
 #include <QLineEdit>
+#include <QSpinBox>
 
 namespace Utils { class PathChooser; }
 
@@ -55,10 +56,12 @@ private:
 	QLineEdit* editIncludes;
 	QLineEdit* editLibs;
 	QLineEdit* editExtra;
+	QSpinBox* editPriority;
 
 private slots:
 	void buildDirectoryChanged();
-	void editsTextChanged();
+	//void editsTextChanged();
+	//void priorityValueChanged(int);
 	void editsEditingFinished();
 
 };

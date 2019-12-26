@@ -34,23 +34,55 @@ bool DProjectNode::supportsAction(ProjectExplorer::ProjectAction action, const N
 			|| action == RemoveFile
 			|| action == Rename;
 }
-
 bool DProjectNode::addFiles(const QStringList &filePaths, QStringList *notAdded)
 {
 	Q_UNUSED(notAdded)
 	return m_project->addFiles(filePaths);
 }
-
 RemovedFilesFromProject DProjectNode::removeFiles(const QStringList &filePaths, QStringList *notRemoved)
 {
 	Q_UNUSED(notRemoved)
 	m_project->removeFiles(filePaths);
 	return RemovedFilesFromProject::Ok;
 }
-
 bool DProjectNode::renameFile(const QString &filePath, const QString &newFilePath)
 {
 	return m_project->renameFile(filePath, newFilePath);
 }
+
+
+DProjectGroupNode::DProjectGroupNode(QString name)
+	: ProjectNode(Utils::FilePath::fromString(""))
+{
+	//static int count = 0;
+	setDisplayName(name);
+	//setIcon(QIcon(QLatin1String(Constants::ICON_D_PROJECT)));
+	//setAbsoluteFilePathAndLine(project->projectFilePath(),++count);
+	setShowWhenEmpty(true);
+}
+
+bool DProjectGroupNode::supportsAction(ProjectExplorer::ProjectAction action, const Node *) const
+{
+	return
+						action == InheritedFromParent
+			|| action == AddSubProject
+			|| action == AddExistingProject
+			|| action == RemoveSubProject
+			;
+
+}
+bool DProjectGroupNode::canAddSubProject(const QString &) const
+{
+	return true;
+}
+bool DProjectGroupNode::addSubProject(const QString &)
+{
+	return true;
+}
+bool DProjectGroupNode::removeSubProject(const QString &)
+{
+	return false;
+}
+
 
 } // namespace DProjectManager

@@ -115,6 +115,14 @@ bool DProject::renameFile(const QString &filePath, const QString &newFilePath)
 
 QVariantMap DProject::toMap() const
 {
+	QSettings sets(projectFilePath().toString(),	QSettings::IniFormat);
+	sets.setValue(QLatin1String(Constants::INI_SOURCE_ROOT_KEY), sourcesDirectory());
+	sets.setValue(QLatin1String(Constants::INI_INCLUDES_KEY), includes());
+	sets.setValue(QLatin1String(Constants::INI_LIBRARIES_KEY), libraries());
+	sets.setValue(QLatin1String(Constants::INI_EXTRA_ARGS_KEY), extraArgs());
+	sets.setValue(QLatin1String(Constants::INI_COMPILE_PRIORITY_KEY), compilePriority());
+	sets.sync();
+
 	return Project::toMap();
 }
 Project::RestoreResult DProject::fromMap(const QVariantMap &map, QString *errorMessage)
@@ -146,6 +154,43 @@ Project::RestoreResult DProject::fromMap(const QVariantMap &map, QString *errorM
 	return result;
 }
 
+bool DProject::parseProjectFile(RefreshOptions options)
+{
+	QSettings sets(projectFilePath().toString(), QSettings::IniFormat);
+
+	bool result = false;
+	if (options & Configuration)
+	{
+		QString oldSD = this->sourcesDirectory();
+		uint oldCP = this->compilePriority();
+		setSourcesDirectory(sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString());
+		setLibraries(sets.value(QLatin1String(Constants::INI_LIBRARIES_KEY)).toString());
+		setIncludes(sets.value(QLatin1String(Constants::INI_INCLUDES_KEY)).toString());
+		setExtraArgs(sets.value(QLatin1String(Constants::INI_EXTRA_ARGS_KEY)).toString());
+		setCompilePriority(sets.value(QLatin1String(Constants::INI_COMPILE_PRIORITY_KEY)).toInt());
+
+		if(oldSD != sourcesDirectory())
+			options = static_cast<RefreshOptions>(options | RefreshOptions::Files);
+		else if(oldCP != compilePriority())
+			result = true;
+	}
+
+	if(options & Files)
+	{
+		m_files.clear();
+
+		FilePath src;
+		if(sourcesDirectory() != ".")
+			src = FilePath::fromString(sourcesDirectory());
+
+		sets.beginGroup(QLatin1String(Constants::INI_FILES_ROOT_KEY));
+		foreach(QString rel, sets.allKeys())
+			m_files.append(rel);
+
+		emit fileListChanged();
+	}
+	return result || (options & Files);
+}
 void DProject::refresh(RefreshOptions options)
 {
 	bool needRebuildTree = parseProjectFile(options);
@@ -153,6 +198,7 @@ void DProject::refresh(RefreshOptions options)
 	if (needRebuildTree)
 	{
 		auto root = std::make_unique<DProjectNode>(this);
+		root->setPriority(static_cast<int>(this->compilePriority()));
 
 		FilePath src;
 		if(sourcesDirectory() != ".")
@@ -225,38 +271,6 @@ void DProject::refresh(RefreshOptions options)
 		}
 		setRootProjectNode(std::move(root));
 	}
-}
-bool DProject::parseProjectFile(RefreshOptions options)
-{
-	QSettings sets(projectFilePath().toString(), QSettings::IniFormat);
-
-	if (options & Configuration)
-	{
-		QString old = this->sourcesDirectory();
-		setSourcesDirectory(sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString());
-		setLibraries(sets.value(QLatin1String(Constants::INI_LIBRARIES_KEY)).toString());
-		setIncludes(sets.value(QLatin1String(Constants::INI_INCLUDES_KEY)).toString());
-		setExtraArgs(sets.value(QLatin1String(Constants::INI_EXTRA_ARGS_KEY)).toString());
-
-		if(old != sourcesDirectory())
-			options = static_cast<RefreshOptions>(options | RefreshOptions::Files);
-	}
-
-	if(options & Files)
-	{
-		m_files.clear();
-
-		FilePath src;
-		if(sourcesDirectory() != ".")
-			src = FilePath::fromString(sourcesDirectory());
-
-		sets.beginGroup(QLatin1String(Constants::INI_FILES_ROOT_KEY));
-		foreach(QString rel, sets.allKeys())
-			m_files.append(rel);
-
-		emit fileListChanged();
-	}
-	return options & Files;
 }
 
 bool DProject::setupTarget(Target *t)

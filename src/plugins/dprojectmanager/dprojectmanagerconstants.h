@@ -7,6 +7,7 @@ namespace Constants {
 // Contexts
 const char DPROJECT_ID[] = "DProjectManager.DProject";
 const char DPROJECTFILE_ID[] = "DProjectManager.DProjectFile";
+const char DPROJECTGROUP_ID[] = "DProjectManager.DProjectGroup";
 
 // MIME types:
 const char DPROJECT_MIMETYPE[] = "text/x-dproject";
@@ -50,6 +51,7 @@ const char INI_SOURCE_ROOT_KEY[]   = "SourceRoot";
 const char INI_INCLUDES_KEY[]   = "Includes";
 const char INI_LIBRARIES_KEY[]   = "Libs";
 const char INI_EXTRA_ARGS_KEY[]   = "ExtraArgs";
+const char INI_COMPILE_PRIORITY_KEY[]   = "CompilePriority";
 const char INI_FILES_ROOT_KEY[]   = "Files";
 
 //const char INI_MAKE_COMMAND_KEY[]   = "MakeCommand";

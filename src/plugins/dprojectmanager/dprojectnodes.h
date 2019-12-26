@@ -36,6 +36,18 @@ private:
 	DProject *m_project;
 };
 
+class DProjectGroupNode : public ProjectExplorer::ProjectNode
+{
+public:
+	DProjectGroupNode(QString name);
+
+	bool supportsAction(ProjectExplorer::ProjectAction action, const Node *) const override;
+	bool canAddSubProject(const QString &) const override;
+	bool addSubProject(const QString &) override ;
+	bool removeSubProject(const QString &) override ;
+
+};
+
 } // namespace DProjectManager
 
 #endif // DPROJECTNODE_H

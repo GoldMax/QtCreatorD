@@ -33,7 +33,7 @@ public:
 		RunWorkerFactory::make<SimpleTargetRunner>(),
 		{
 			ProjectExplorer::Constants::NORMAL_RUN_MODE,
-					ProjectExplorer::Constants::DEBUG_RUN_MODE
+			ProjectExplorer::Constants::DEBUG_RUN_MODE
 		},
 		{ runConfigFactory.id() }
 	};

@@ -16,6 +16,7 @@
 #include <QInputDialog>
 #include <QSettings>
 #include <QPlainTextEdit>
+#include <QSpinBox>
 
 using namespace ProjectExplorer;
 
@@ -113,24 +114,32 @@ DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
 	// Includes
 	editIncludes = new QLineEdit(this);
 	editIncludes->setText(proj->includes());
-	connect(editIncludes, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
+	//connect(editIncludes, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
 	connect(editIncludes, SIGNAL(editingFinished()),	this, SLOT(editsEditingFinished()));
 	fl->addRow(tr("Include paths:"), editIncludes);
 
 	// Libs
 	editLibs = new QLineEdit(this);
 	editLibs->setText(proj->libraries());
-	connect(editLibs, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
+	//connect(editLibs, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
 	connect(editLibs, SIGNAL(editingFinished()),	this, SLOT(editsEditingFinished()));
 	fl->addRow(tr("Libraries:"), editLibs);
 
 	// ExtraArgs
 	editExtra = new QLineEdit(this);
 	editExtra->setText(proj->extraArgs());
-	connect(editExtra, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
+	//connect(editExtra, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
 	connect(editExtra, SIGNAL(editingFinished()),	this, SLOT(editsEditingFinished()));
 	fl->addRow(tr("Extra args:"), editExtra);
 
+	// CompilePriority
+	editPriority = new QSpinBox(this);
+	editPriority->setMinimum(0);
+	editPriority->setMaximum(1000);
+	editPriority->setValue(proj->compilePriority());
+	//connect(editPriority, SIGNAL(valueChanged(int)),	this, SLOT(priorityValueChanged(int)));
+	connect(editPriority, SIGNAL(editingFinished()),	this, SLOT(editsEditingFinished()));
+	fl->addRow(tr("Compile priority:"), editPriority);
 
 }
 void DBuildSettingsWidget::buildDirectoryChanged()
@@ -140,35 +149,43 @@ void DBuildSettingsWidget::buildDirectoryChanged()
 
 	QDir d(proj->projectDirectory().toString());
 	QString rel = d.relativeFilePath(m_pathChooser->rawPath());
-
 	m_pathChooser->setPath(rel);
-	QSettings sets(proj->projectFilePath().toString(),	QSettings::IniFormat);
-	sets.setValue(QLatin1String(Constants::INI_SOURCE_ROOT_KEY), rel);
-	sets.sync();
-	emit m_buildConfiguration->configurationChanged();
-	proj->refresh(DProject::Project);
-}
+	proj->setSourcesDirectory(rel);
 
-void DBuildSettingsWidget::editsTextChanged()
-{
-	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
-	Q_ASSERT(proj);
-	proj->setIncludes(editIncludes->text());
-	proj->setLibraries(editLibs->text());
-	proj->setExtraArgs(editExtra->text());
+	proj->saveSettings();
+	proj->refresh(DProject::Project);
 	emit m_buildConfiguration->configurationChanged();
 }
+//void DBuildSettingsWidget::priorityValueChanged(int val)
+//{
+//	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
+//	Q_ASSERT(proj);
+
+//	proj->setCompilePriority(val);
+//	emit m_buildConfiguration->configurationChanged();
+//}
+//void DBuildSettingsWidget::editsTextChanged()
+//{
+//	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
+//	Q_ASSERT(proj);
+//	proj->setIncludes(editIncludes->text());
+//	proj->setLibraries(editLibs->text());
+//	proj->setExtraArgs(editExtra->text());
+//	emit m_buildConfiguration->configurationChanged();
+//}
 void DBuildSettingsWidget::editsEditingFinished()
 {
 	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
 	Q_ASSERT(proj);
-	QSettings sets(proj->projectFilePath().toString(),	QSettings::IniFormat);
-	sets.setValue(QLatin1String(Constants::INI_INCLUDES_KEY), editIncludes->text());
-	sets.setValue(QLatin1String(Constants::INI_LIBRARIES_KEY), editLibs->text());
-	sets.setValue(QLatin1String(Constants::INI_EXTRA_ARGS_KEY), editExtra->text());
-	sets.sync();
-	emit m_buildConfiguration->configurationChanged();
+
+	proj->setIncludes(editIncludes->text());
+	proj->setLibraries(editLibs->text());
+	proj->setExtraArgs(editExtra->text());
+	proj->setCompilePriority(editPriority->value());
+
+	proj->saveSettings();
 	proj->refresh(DProject::Project);
+	emit m_buildConfiguration->configurationChanged();
 }
 
 } // namespace DProjectManager
