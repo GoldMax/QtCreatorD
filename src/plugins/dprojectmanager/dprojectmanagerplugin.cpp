@@ -40,10 +40,17 @@ public:
 };
 DProjectPluginPrivate::DProjectPluginPrivate()
 {
-	ProjectManager::registerProjectType<DProject>(DProjectManager::Constants::DPROJECT_MIMETYPE);
+	ProjectManager::registerProjectType<DProject>(
+				DProjectManager::Constants::DPROJECT_MIMETYPE);
+	ProjectManager::registerProjectType<DProjectGroup>(
+				DProjectManager::Constants::DPROJECTGROUP_MIMETYPE);
 	IWizardFactory::registerFactoryCreator([]()
 	{
-		return QList<IWizardFactory *>{ new DProjectWizard };
+		return QList<IWizardFactory *>
+		{
+			new DProjectWizard,
+			new DProjectGroupWizard
+		};
 	});
 
 }
@@ -75,6 +82,16 @@ bool DProjectManagerPlugin::initialize(const QStringList &arguments, QString *er
 	}
 	if(data.isEmpty() == false)
 		Utils::addMimeTypes(Constants::DPROJECT_ID,data);
+
+	const QLatin1String gmimetypesXml(":/dprojectmanager/DProjectGroup.mimetypes.xml");
+	QFile gf(gmimetypesXml);
+	if(gf.open(QIODevice::OpenModeFlag::ReadOnly))
+	{
+		data = gf.readAll();
+		gf.close();
+	}
+	if(data.isEmpty() == false)
+		Utils::addMimeTypes(Constants::DPROJECTGROUP_ID,data);
 
 	dd = new DProjectPluginPrivate;
 

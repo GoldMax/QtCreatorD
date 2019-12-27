@@ -22,7 +22,7 @@ DProjectNode::DProjectNode(DProject* project)
 {
 	static int count = 0;
 	setDisplayName(project->projectFilePath().toFileInfo().completeBaseName());
-	setIcon(QIcon(QLatin1String(Constants::ICON_D_PROJECT)));
+	setIcon(QIcon(QLatin1String(Constants::ICON_DPROJECT)));
 	setAbsoluteFilePathAndLine(project->projectFilePath(),++count);
 	setShowWhenEmpty(true);
 }
@@ -51,13 +51,14 @@ bool DProjectNode::renameFile(const QString &filePath, const QString &newFilePat
 }
 
 
-DProjectGroupNode::DProjectGroupNode(QString name)
-	: ProjectNode(Utils::FilePath::fromString(""))
+DProjectGroupNode::DProjectGroupNode(DProjectGroup* project)
+	: ProjectNode(project->projectFilePath())
+	, m_project(project)
 {
 	//static int count = 0;
-	setDisplayName(name);
-	//setIcon(QIcon(QLatin1String(Constants::ICON_D_PROJECT)));
-	//setAbsoluteFilePathAndLine(project->projectFilePath(),++count);
+	setDisplayName(project->projectFilePath().toFileInfo().completeBaseName());
+	setIcon(QIcon(QLatin1String(Constants::ICON_DPROJECTGROUP)));
+	setAbsoluteFilePathAndLine(project->projectFilePath(),0);
 	setShowWhenEmpty(true);
 }
 
@@ -71,13 +72,14 @@ bool DProjectGroupNode::supportsAction(ProjectExplorer::ProjectAction action, co
 			;
 
 }
-bool DProjectGroupNode::canAddSubProject(const QString &) const
+bool DProjectGroupNode::canAddSubProject(const QString &) const { return true; }
+QStringList DProjectGroupNode::subProjectFileNamePatterns() const
 {
-	return true;
+	return QStringList() << "*.qcd";
 }
-bool DProjectGroupNode::addSubProject(const QString &)
+bool DProjectGroupNode::addSubProject(const QString &projFilePath)
 {
-	return true;
+	return m_project->addSubProject(projFilePath);
 }
 bool DProjectGroupNode::removeSubProject(const QString &)
 {

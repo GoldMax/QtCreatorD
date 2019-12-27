@@ -12,6 +12,7 @@
 namespace DProjectManager {
 
 class DProjectNode;
+class DProjectGroupNode;
 
 class DProject : public ProjectExplorer::Project
 {
@@ -47,7 +48,7 @@ public:
 	void setExtraArgs(QString value) { m_extraArgs = value; }
 	uint compilePriority() const { return m_priority; }
 	void setCompilePriority(uint value) { m_priority = value; }
-	const QList<QString>& files() { return m_files; }
+	const QList<QString>& files() const { return m_files; }
 
 protected:
 	QVariantMap toMap() const override;
@@ -63,6 +64,29 @@ private:
 	QString m_extraArgs;
 	uint m_priority;
 	QList<QString> m_files;
+};
+
+class DProjectGroup : public ProjectExplorer::Project
+{
+	Q_OBJECT
+
+public:
+	DProjectGroup(const Utils::FilePath &filename);
+	~DProjectGroup() override;
+
+public:
+	const QList<Project*>& projects() const { return m_projects; }
+
+	bool addSubProject(const QString &projFilePath);
+
+	void refresh(QString *errorMessage);
+
+protected:
+	QVariantMap toMap() const override;
+	RestoreResult fromMap(const QVariantMap &map, QString* errorMessage) override;
+
+private:
+	QList<Project*> m_projects;
 };
 
 } // namespace DProjectManager

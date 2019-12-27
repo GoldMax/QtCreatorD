@@ -42,9 +42,12 @@ QTC_PLUGIN_RECOMMENDS += \
 RESOURCES += \
 				dprojectmanager.qrc
 
-OTHER_FILES += \
-				DProjectManager.mimetypes.xml
+OTHER_FILES +=
 
 FORMS += \
 				dmakestep.ui
+
+DISTFILES += \
+	DProjectGroup.mimetypes.xml \
+	DProjectManager.mimetypes.xml
 

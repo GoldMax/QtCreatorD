@@ -15,6 +15,7 @@ using namespace ProjectExplorer;
 namespace DProjectManager {
 
 class DProject;
+class DProjectGroup;
 
 class DProjectNode : public ProjectExplorer::ProjectNode
 {
@@ -39,13 +40,16 @@ private:
 class DProjectGroupNode : public ProjectExplorer::ProjectNode
 {
 public:
-	DProjectGroupNode(QString name);
+	DProjectGroupNode(DProjectGroup* project);
 
 	bool supportsAction(ProjectExplorer::ProjectAction action, const Node *) const override;
 	bool canAddSubProject(const QString &) const override;
+	QStringList subProjectFileNamePatterns() const override;
 	bool addSubProject(const QString &) override ;
 	bool removeSubProject(const QString &) override ;
 
+private:
+	DProjectGroup *m_project;
 };
 
 } // namespace DProjectManager
