@@ -29,6 +29,9 @@ public:
 signals:
 	void configurationChanged();
 
+private:
+	void emitConfigurationChanged(bool);
+
 	friend class DBuildSettingsWidget;
 };
 

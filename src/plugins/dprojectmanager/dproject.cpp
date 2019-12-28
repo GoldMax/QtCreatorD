@@ -164,7 +164,6 @@ bool DProject::parseProjectFile(RefreshOptions options)
 	if (options & Configuration)
 	{
 		QString oldSD = this->sourcesDirectory();
-		uint oldCP = this->compilePriority();
 		setSourcesDirectory(sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString());
 		setLibraries(sets.value(QLatin1String(Constants::INI_LIBRARIES_KEY)).toString());
 		setIncludes(sets.value(QLatin1String(Constants::INI_INCLUDES_KEY)).toString());
@@ -173,7 +172,7 @@ bool DProject::parseProjectFile(RefreshOptions options)
 
 		if(oldSD != sourcesDirectory())
 			options = static_cast<RefreshOptions>(options | RefreshOptions::Files);
-		else if(oldCP != compilePriority())
+		else if(this->containerNode() && this->containerNode()->priority() != compilePriority())
 			result = true;
 	}
 
@@ -199,8 +198,9 @@ void DProject::refresh(RefreshOptions options)
 
 	if (needRebuildTree)
 	{
-		auto root = std::make_unique<DProjectNode>(this);
-		root->setPriority(static_cast<int>(this->compilePriority()));
+		auto root = new DProjectNode(this);
+		int prior = Node::PriorityLevel::DefaultProjectPriority + this->compilePriority();
+		root->setPriority(prior);
 
 		FilePath src;
 		if(sourcesDirectory() != ".")
@@ -271,7 +271,8 @@ void DProject::refresh(RefreshOptions options)
 			auto prjNone = std::make_unique<FileNode>(projectFilePath(),	FileType::Project);
 			root->addNestedNode(std::move(prjNone), projectDirectory());
 		}
-		setRootProjectNode(std::move(root));
+		setRootProjectNode(std::unique_ptr<ProjectNode>(root));
+		this->containerNode()->setPriority(prior);
 	}
 }
 

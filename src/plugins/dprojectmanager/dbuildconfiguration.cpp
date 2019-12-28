@@ -8,6 +8,7 @@
 #include <projectexplorer/buildsteplist.h>
 #include <projectexplorer/projectexplorerconstants.h>
 #include <projectexplorer/target.h>
+#include <coreplugin/navigationwidget.h>
 #include <utils/pathchooser.h>
 #include <utils/qtcassert.h>
 
@@ -56,6 +57,17 @@ bool DBuildConfiguration::isEnabled() const
 	return prj->files().count() > 0;
 }
 
+void DBuildConfiguration::emitConfigurationChanged(bool rebuildProjectTree)
+{
+	if(rebuildProjectTree)
+	{
+		auto navWidget = Core::NavigationWidget::instance(Core::Side::Left);
+		//navWidget->closeSubWidgets();
+		QWidget* widget = navWidget->activateSubWidget(ProjectExplorer::Constants::PROJECTTREE_ID, Core::Side::Left);
+		widget = nullptr;
+	}
+	emit configurationChanged();
+}
 //------------------------------------------------------------------------------------------------
 //  class DBuildConfigurationFactory
 //------------------------------------------------------------------------------------------------
@@ -154,25 +166,25 @@ void DBuildSettingsWidget::buildDirectoryChanged()
 
 	proj->saveSettings();
 	proj->refresh(DProject::Project);
+	m_buildConfiguration->emitConfigurationChanged(false);
+}
+/*void DBuildSettingsWidget::priorityValueChanged(int val)
+{
+	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
+	Q_ASSERT(proj);
+
+	proj->setCompilePriority(val);
 	emit m_buildConfiguration->configurationChanged();
 }
-//void DBuildSettingsWidget::priorityValueChanged(int val)
-//{
-//	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
-//	Q_ASSERT(proj);
-
-//	proj->setCompilePriority(val);
-//	emit m_buildConfiguration->configurationChanged();
-//}
-//void DBuildSettingsWidget::editsTextChanged()
-//{
-//	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
-//	Q_ASSERT(proj);
-//	proj->setIncludes(editIncludes->text());
-//	proj->setLibraries(editLibs->text());
-//	proj->setExtraArgs(editExtra->text());
-//	emit m_buildConfiguration->configurationChanged();
-//}
+void DBuildSettingsWidget::editsTextChanged()
+{
+	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
+	Q_ASSERT(proj);
+	proj->setIncludes(editIncludes->text());
+	proj->setLibraries(editLibs->text());
+	proj->setExtraArgs(editExtra->text());
+	emit m_buildConfiguration->configurationChanged();
+}*/
 void DBuildSettingsWidget::editsEditingFinished()
 {
 	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
@@ -185,7 +197,7 @@ void DBuildSettingsWidget::editsEditingFinished()
 
 	proj->saveSettings();
 	proj->refresh(DProject::Project);
-	emit m_buildConfiguration->configurationChanged();
+	m_buildConfiguration->emitConfigurationChanged(QObject::sender() == editPriority);
 }
 
 } // namespace DProjectManager

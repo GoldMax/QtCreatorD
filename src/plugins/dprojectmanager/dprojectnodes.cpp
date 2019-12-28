@@ -26,7 +26,6 @@ DProjectNode::DProjectNode(DProject* project)
 	setAbsoluteFilePathAndLine(project->projectFilePath(),++count);
 	setShowWhenEmpty(true);
 }
-
 bool DProjectNode::supportsAction(ProjectExplorer::ProjectAction action, const Node *) const
 {
 	return action == AddNewFile
@@ -50,6 +49,7 @@ bool DProjectNode::renameFile(const QString &filePath, const QString &newFilePat
 	return m_project->renameFile(filePath, newFilePath);
 }
 
+//--- DProjectGroupNode ---------------------
 
 DProjectGroupNode::DProjectGroupNode(DProjectGroup* project)
 	: ProjectNode(project->projectFilePath())
@@ -61,7 +61,6 @@ DProjectGroupNode::DProjectGroupNode(DProjectGroup* project)
 	setAbsoluteFilePathAndLine(project->projectFilePath(),0);
 	setShowWhenEmpty(true);
 }
-
 bool DProjectGroupNode::supportsAction(ProjectExplorer::ProjectAction action, const Node *) const
 {
 	return
@@ -85,6 +84,5 @@ bool DProjectGroupNode::removeSubProject(const QString &)
 {
 	return false;
 }
-
 
 } // namespace DProjectManager
