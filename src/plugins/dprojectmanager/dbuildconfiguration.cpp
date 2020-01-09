@@ -61,10 +61,11 @@ void DBuildConfiguration::emitConfigurationChanged(bool rebuildProjectTree)
 {
 	if(rebuildProjectTree)
 	{
-		auto navWidget = Core::NavigationWidget::instance(Core::Side::Left);
+		// TODO : Это не работает, окно Projects не обновляется
+		//auto navWidget = Core::NavigationWidget::instance(Core::Side::Left);
 		//navWidget->closeSubWidgets();
-		QWidget* widget = navWidget->activateSubWidget(ProjectExplorer::Constants::PROJECTTREE_ID, Core::Side::Left);
-		widget = nullptr;
+		//QWidget* widget = navWidget->activateSubWidget(ProjectExplorer::Constants::PROJECTTREE_ID, Core::Side::Left);
+		//widget = nullptr;
 	}
 	emit configurationChanged();
 }
@@ -83,12 +84,12 @@ DBuildConfigurationFactory::DBuildConfigurationFactory() :
 }
 
 QList<BuildInfo> DBuildConfigurationFactory::availableBuilds
-				(const Kit *k, const Utils::FilePath &projectPath, bool forSetup) const
+				(const Kit *k, const Utils::FilePath &projectPath, bool /*forSetup*/) const
 {
 	BuildInfo info(this);
 	info.typeName = tr("D Build");
 	info.displayName = tr("Debug");
-	info.buildDirectory = forSetup ? Project::projectDirectory(projectPath) : projectPath;
+	info.buildDirectory = Project::projectDirectory(projectPath);
 	info.kitId = k->id();
 
 	return {info};
@@ -111,7 +112,7 @@ DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
 		QString projectDir = proj->projectDirectory().toString();
 	fl->addRow(tr("Project directory:"), new QLabel(projectDir));
 
-	// build directory
+	// source directory
 	m_pathChooser = new Utils::PathChooser(this);
 	m_pathChooser->setEnabled(true);
 	m_pathChooser->lineEdit()->setReadOnly(true);
@@ -120,7 +121,7 @@ DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
 	m_pathChooser->setEnvironment(bc->environment());
 	QString srcRoot = proj->sourcesDirectory();
 	m_pathChooser->setPath(srcRoot.length() ? srcRoot : QLatin1String("."));
-	connect(m_pathChooser, SIGNAL(pathChanged(QString)), this, SLOT(buildDirectoryChanged()));
+	connect(m_pathChooser, SIGNAL(pathChanged(QString)), this, SLOT(sourceDirectoryChanged()));
 	fl->addRow(tr("Source directory:"), m_pathChooser);
 
 	// Includes
@@ -154,7 +155,7 @@ DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
 	fl->addRow(tr("Compile priority:"), editPriority);
 
 }
-void DBuildSettingsWidget::buildDirectoryChanged()
+void DBuildSettingsWidget::sourceDirectoryChanged()
 {
 	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
 	Q_ASSERT(proj);

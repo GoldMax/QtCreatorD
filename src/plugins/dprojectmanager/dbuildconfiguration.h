@@ -62,7 +62,7 @@ private:
 	QSpinBox* editPriority;
 
 private slots:
-	void buildDirectoryChanged();
+	void sourceDirectoryChanged();
 	//void editsTextChanged();
 	//void priorityValueChanged(int);
 	void editsEditingFinished();

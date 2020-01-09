@@ -165,6 +165,8 @@ QString DMakeStep::allArguments() const
 			Utils::QtcProcess::addArgs(&args, QLatin1String("-L-l") + s);
 	}
 	// Includes
+	if(proj->sourcesDirectory() != ".")
+		Utils::QtcProcess::addArgs(&args, QLatin1String("-I./") + proj->sourcesDirectory());
 	QStringList incs = proj->includes().split(QLatin1Char(' '), QString::SkipEmptyParts);
 	foreach(QString s, incs)
 	{
