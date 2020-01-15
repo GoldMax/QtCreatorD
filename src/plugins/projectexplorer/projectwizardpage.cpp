@@ -26,7 +26,8 @@
 #include "projectwizardpage.h"
 #include "ui_projectwizardpage.h"
 
-#include "projectexplorer.h"
+#include "project.h"
+#include "projectmodels.h"
 #include "session.h"
 
 #include <coreplugin/icore.h>
@@ -67,8 +68,8 @@ public:
     AddNewTree(FolderNode *node, QList<AddNewTree *> children, const QString &displayName);
     AddNewTree(FolderNode *node, QList<AddNewTree *> children, const FolderNode::AddNewInformation &info);
 
-    QVariant data(int column, int role) const;
-    Qt::ItemFlags flags(int column) const;
+    QVariant data(int column, int role) const override;
+    Qt::ItemFlags flags(int column) const override;
 
     QString displayName() const { return m_displayName; }
     FolderNode *node() const { return m_node; }
@@ -94,7 +95,7 @@ AddNewTree::AddNewTree(FolderNode *node, QList<AddNewTree *> children, const QSt
     m_canAdd(false)
 {
     if (node)
-        m_toolTip = ProjectExplorerPlugin::directoryFor(node);
+        m_toolTip = node->directory();
     foreach (AddNewTree *child, children)
         appendChild(child);
 }
@@ -106,7 +107,7 @@ AddNewTree::AddNewTree(FolderNode *node, QList<AddNewTree *> children,
     m_priority(info.priority)
 {
     if (node)
-        m_toolTip = ProjectExplorerPlugin::directoryFor(node);
+        m_toolTip = node->directory();
     foreach (AddNewTree *child, children)
         appendChild(child);
 }
@@ -170,7 +171,7 @@ BestNodeSelector::BestNodeSelector(const QString &commonDirectory, const QString
 void BestNodeSelector::inspect(AddNewTree *tree, bool isContextNode)
 {
     FolderNode *node = tree->node();
-    if (node->nodeType() == ProjectNodeType) {
+    if (node->isProjectNodeType()) {
         if (static_cast<ProjectNode *>(node)->deploysFolder(m_commonDirectory)) {
             m_deploys = true;
             m_deployText += tree->displayName() + QLatin1Char('\n');
@@ -179,7 +180,7 @@ void BestNodeSelector::inspect(AddNewTree *tree, bool isContextNode)
     if (m_deploys)
         return;
 
-    const QString projectDirectory = ProjectExplorerPlugin::directoryFor(node);
+    const QString projectDirectory = node->directory();
     const int projectDirectorySize = projectDirectory.size();
     if (m_commonDirectory != projectDirectory
             && !m_commonDirectory.startsWith(projectDirectory + QLatin1Char('/'))
@@ -201,7 +202,7 @@ void BestNodeSelector::inspect(AddNewTree *tree, bool isContextNode)
 AddNewTree *BestNodeSelector::bestChoice() const
 {
     if (m_deploys)
-        return 0;
+        return nullptr;
     return m_bestChoice;
 }
 
@@ -232,14 +233,14 @@ static inline AddNewTree *createNoneNode(BestNodeSelector *selector)
 static inline AddNewTree *buildAddProjectTree(ProjectNode *root, const QString &projectPath, Node *contextNode, BestNodeSelector *selector)
 {
     QList<AddNewTree *> children;
-    foreach (ProjectNode *pn, root->subProjectNodes()) {
-        AddNewTree *child = buildAddProjectTree(pn, projectPath, contextNode, selector);
-        if (child)
-            children.append(child);
+    for (Node *node : root->nodes()) {
+        if (ProjectNode *pn = node->asProjectNode()) {
+            if (AddNewTree *child = buildAddProjectTree(pn, projectPath, contextNode, selector))
+                children.append(child);
+        }
     }
 
-    const QList<ProjectAction> &list = root->supportedActions(root);
-    if (list.contains(AddSubProject) && !list.contains(InheritedFromParent)) {
+    if (root->supportsAction(AddSubProject, root) && !root->supportsAction(InheritedFromParent, root)) {
         if (projectPath.isEmpty() || root->canAddSubProject(projectPath)) {
             FolderNode::AddNewInformation info = root->addNewInformation(QStringList() << projectPath, contextNode);
             auto item = new AddNewTree(root, children, info);
@@ -253,30 +254,17 @@ static inline AddNewTree *buildAddProjectTree(ProjectNode *root, const QString &
     return new AddNewTree(root, children, root->displayName());
 }
 
-static inline AddNewTree *buildAddProjectTree(SessionNode *root, const QString &projectPath, Node *contextNode, BestNodeSelector *selector)
-{
-    QList<AddNewTree *> children;
-    foreach (ProjectNode *pn, root->projectNodes()) {
-        AddNewTree *child = buildAddProjectTree(pn, projectPath, contextNode, selector);
-        if (child)
-            children.append(child);
-    }
-    children.prepend(createNoneNode(selector));
-    return new AddNewTree(root, children, root->displayName());
-}
-
 static inline AddNewTree *buildAddFilesTree(FolderNode *root, const QStringList &files,
                                             Node *contextNode, BestNodeSelector *selector)
 {
     QList<AddNewTree *> children;
-    foreach (FolderNode *fn, root->subFolderNodes()) {
+    foreach (FolderNode *fn, root->folderNodes()) {
         AddNewTree *child = buildAddFilesTree(fn, files, contextNode, selector);
         if (child)
             children.append(child);
     }
 
-    const QList<ProjectAction> &list = root->supportedActions(root);
-    if (list.contains(AddNewFile) && !list.contains(InheritedFromParent)) {
+    if (root->supportsAction(AddNewFile, root) && !root->supportsAction(InheritedFromParent, root)) {
         FolderNode::AddNewInformation info = root->addNewInformation(files, contextNode);
         auto item = new AddNewTree(root, children, info);
         selector->inspect(item, root == contextNode);
@@ -285,30 +273,6 @@ static inline AddNewTree *buildAddFilesTree(FolderNode *root, const QStringList 
     if (children.isEmpty())
         return nullptr;
     return new AddNewTree(root, children, root->displayName());
-}
-
-static inline AddNewTree *buildAddFilesTree(SessionNode *root, const QStringList &files,
-                                            Node *contextNode, BestNodeSelector *selector)
-{
-    QList<AddNewTree *> children;
-    foreach (ProjectNode *pn, root->projectNodes()) {
-        AddNewTree *child = buildAddFilesTree(pn, files, contextNode, selector);
-        if (child)
-            children.append(child);
-    }
-    children.prepend(createNoneNode(selector));
-    return new AddNewTree(root, children, root->displayName());
-}
-
-static inline AddNewTree *getChoices(const QStringList &generatedFiles,
-                                     IWizardFactory::WizardKind wizardKind,
-                                     Node *contextNode,
-                                     BestNodeSelector *selector)
-{
-    if (wizardKind == IWizardFactory::ProjectWizard)
-        return buildAddProjectTree(SessionManager::sessionNode(), generatedFiles.first(), contextNode, selector);
-    else
-        return buildAddFilesTree(SessionManager::sessionNode(), generatedFiles, contextNode, selector);
 }
 
 // --------------------------------------------------------------------
@@ -320,36 +284,24 @@ ProjectWizardPage::ProjectWizardPage(QWidget *parent) : WizardPage(parent),
 {
     m_ui->setupUi(this);
     m_ui->vcsManageButton->setText(ICore::msgShowOptionsDialog());
-    connect(m_ui->projectComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+    connect(m_ui->projectComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &ProjectWizardPage::projectChanged);
-    connect(m_ui->addToVersionControlComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+    connect(m_ui->addToVersionControlComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &ProjectWizardPage::versionControlChanged);
     connect(m_ui->vcsManageButton, &QAbstractButton::clicked, this, &ProjectWizardPage::manageVcs);
     setProperty(SHORT_TITLE_PROPERTY, tr("Summary"));
 
     connect(VcsManager::instance(), &VcsManager::configurationChanged,
             this, &ProjectExplorer::Internal::ProjectWizardPage::initializeVersionControls);
+
+    m_ui->projectComboBox->setModel(&m_model);
 }
 
 ProjectWizardPage::~ProjectWizardPage()
 {
-    disconnect(m_ui->projectComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+    disconnect(m_ui->projectComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
                this, &ProjectWizardPage::projectChanged);
-    delete m_model;
     delete m_ui;
-}
-
-void ProjectWizardPage::setModel(Utils::TreeModel<> *model)
-{
-    delete m_model;
-    m_model = model;
-
-    // TODO see OverViewCombo and OverView for click event filter
-    m_ui->projectComboBox->setModel(model);
-    bool enabled = m_model->rowCount(QModelIndex()) > 1;
-    m_ui->projectComboBox->setEnabled(enabled);
-
-    expandTree(QModelIndex());
 }
 
 bool ProjectWizardPage::expandTree(const QModelIndex &root)
@@ -359,9 +311,9 @@ bool ProjectWizardPage::expandTree(const QModelIndex &root)
         expand = true;
 
     // Check children
-    int count = m_model->rowCount(root);
+    int count = m_model.rowCount(root);
     for (int i = 0; i < count; ++i) {
-        if (expandTree(m_model->index(i, 0, root)))
+        if (expandTree(m_model.index(i, 0, root)))
             expand = true;
     }
 
@@ -381,7 +333,7 @@ bool ProjectWizardPage::expandTree(const QModelIndex &root)
 
 void ProjectWizardPage::setBestNode(AddNewTree *tree)
 {
-    QModelIndex index = tree ? m_model->indexForItem(tree) : QModelIndex();
+    QModelIndex index = tree ? m_model.indexForItem(tree) : QModelIndex();
     m_ui->projectComboBox->setCurrentIndex(index);
 
     while (index.isValid()) {
@@ -488,18 +440,46 @@ void ProjectWizardPage::initializeProjectTree(Node *context, const QStringList &
                                               ProjectAction action)
 {
 	//--vvv-- GoldMax --vvv--
-	if(context && context->nodeType() != ProjectNodeType && context->projectNode())
-		context = context->projectNode();
+	if(context && context->isProjectNodeType() == false && context->parentProjectNode() )
+		context = context->parentProjectNode();
 	//--^^^-- GoldMax --^^^--
 
 				BestNodeSelector selector(m_commonDirectory, paths);
-    AddNewTree *tree = getChoices(paths, kind, context, &selector);
+
+    TreeItem *root = m_model.rootItem();
+    root->removeChildren();
+    for (Project *project : SessionManager::projects()) {
+        if (ProjectNode *pn = project->rootProjectNode()) {
+            if (kind == IWizardFactory::ProjectWizard) {
+                if (AddNewTree *child = buildAddProjectTree(pn, paths.first(), context, &selector))
+                    root->appendChild(child);
+            } else {
+                if (AddNewTree *child = buildAddFilesTree(pn, paths, context, &selector))
+                    root->appendChild(child);
+            }
+        }
+    }
+    root->sortChildren([](const TreeItem *ti1, const TreeItem *ti2) {
+        return compareNodes(static_cast<const AddNewTree *>(ti1)->node(),
+                            static_cast<const AddNewTree *>(ti2)->node());
+    });
+    root->prependChild(createNoneNode(&selector));
+
+    // Set combobox to context node if that appears in the tree:
+				auto predicate = [context](TreeItem *ti)
+				{
+					auto n = static_cast<AddNewTree*>(ti)->node();
+					return n == context;
+				};
+    TreeItem *contextItem = root->findAnyChild(predicate);
+    if (contextItem)
+        m_ui->projectComboBox->setCurrentIndex(m_model.indexForItem(contextItem));
 
     setAdditionalInfo(selector.deployingProjects());
-
-    setModel(new TreeModel<>(tree));
     setBestNode(selector.bestChoice());
     setAddingSubProject(action == AddSubProject);
+
+    m_ui->projectComboBox->setEnabled(m_model.rowCount(QModelIndex()) > 1);
 }
 
 void ProjectWizardPage::setNoneLabel(const QString &label)
@@ -555,7 +535,9 @@ void ProjectWizardPage::setFiles(const QStringList &fileNames)
             formattedFiles = fileNames;
         } else {
             str << QDir::toNativeSeparators(m_commonDirectory) << ":\n\n";
-            const int prefixSize = m_commonDirectory.size() + 1;
+            int prefixSize = m_commonDirectory.size();
+            if (!m_commonDirectory.endsWith('/'))
+                ++prefixSize;
             formattedFiles = Utils::transform(fileNames, [prefixSize](const QString &f)
                                                          { return f.mid(prefixSize); });
         }
@@ -565,7 +547,7 @@ void ProjectWizardPage::setFiles(const QStringList &fileNames)
             const bool filePath2HasDir = filePath2.contains(QLatin1Char('/'));
 
             if (filePath1HasDir == filePath2HasDir)
-                return FileName::fromString(filePath1) < FileName::fromString(filePath2);
+                return FilePath::fromString(filePath1) < FilePath::fromString(filePath2);
             return filePath1HasDir;
         }
 );
