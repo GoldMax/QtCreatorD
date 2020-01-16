@@ -121,7 +121,9 @@ void DHighlighter::highlightBlock(const QString &text)
 		if (onlyHighlightComments && !tk.isComment())
 			continue;
 
-		if (tk.is(T_LAST_TOKEN) || (i == 0 && tk.is(T_POUND)))
+		if(tk.is(T___ATTRIBUTE__))
+			setFormat(tk.utf16charsBegin(), tk.utf16chars(),	formatForCategory(C_GLOBAL));
+		else if (tk.is(T_LAST_TOKEN) || (i == 0 && tk.is(T_POUND)))
 		{
 			setFormatWithSpaces(text, tk.utf16charsBegin(), tk.utf16chars(),
 																							formatForCategory(C_PREPROCESSOR));
@@ -390,20 +392,23 @@ void DHighlighter::correctTokens(Tokens& tokens, const QString & text)
 	Kind kind = Kind::T_EOF_SYMBOL;
 	for(int i = 0; i < tokens.length(); i++)
 	{
-		//bool skipReset = false;
+		bool skipReset = false;
 		Token t = tokens[i];
-		//if(kind != T_EOF_SYMBOL)
-		//{
-		/*if(text.at(t.utf16charsBegin()) == QLatin1Char('@'))
-		{
-			kind = T_FIRST_KEYWORD;
-			skipReset = true;
-		}
-		else */
-			if(t.f.kind != T_IDENTIFIER)
-			continue;
 		QStringRef name = text.midRef(t.utf16charsBegin(),t.utf16chars());
-		switch (name.length())
+		if(name.at(0).toLatin1() == QLatin1Char('@'))
+		{
+			if(name == QLatin1String("@property"))
+				kind = T_FIRST_KEYWORD;
+			else
+			{
+				kind = T___ATTRIBUTE__;
+				if(name == QLatin1String("@"))
+					skipReset = true;
+			}
+		}
+		else if(t.f.kind != T_IDENTIFIER)
+			continue;
+		else switch (name.length())
 		{
 			case 2: switch(name.at(0).toLatin1())
 				{
@@ -437,6 +442,9 @@ void DHighlighter::correctTokens(Tokens& tokens, const QString & text)
 					break;
 					case 'c':
 						if (name == QLatin1String("cast")) kind = T_FIRST_KEYWORD;
+					break;
+					case 'e':
+						if (name == QLatin1String("enum")) kind = T_ENUM;
 					break;
 					case 'u':
 						if (name == QLatin1String("uint")) kind = T_FIRST_PRIMITIVE;
@@ -635,8 +643,8 @@ void DHighlighter::correctTokens(Tokens& tokens, const QString & text)
 		{
 			t.f.kind = kind;
 			tokens[i] = t;
-			//if(skipReset == false)
-			kind = T_EOF_SYMBOL;
+			if(skipReset == false)
+				kind = T_EOF_SYMBOL;
 		}
 	}
 }
