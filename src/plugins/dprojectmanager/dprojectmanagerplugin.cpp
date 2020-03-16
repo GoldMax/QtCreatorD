@@ -10,6 +10,7 @@
 
 #include <projectexplorer/projectmanager.h>
 #include <projectexplorer/runcontrol.h>
+#include <projectexplorer/projectexplorerconstants.h>
 
 #include <utils/stringutils.h>
 #include <utils/mimetypes/mimedatabase.h>
@@ -32,10 +33,11 @@ public:
 	{
 		RunWorkerFactory::make<SimpleTargetRunner>(),
 		{
-			ProjectExplorer::Constants::NORMAL_RUN_MODE,
+			//ProjectExplorer::Constants::NORMAL_RUN_MODE,
 			ProjectExplorer::Constants::DEBUG_RUN_MODE
 		},
-		{ runConfigFactory.id() }
+		{ runConfigFactory.id() },
+		{ Id(ProjectExplorer::Constants::DESKTOP_DEVICE_TYPE) }
 	};
 };
 DProjectPluginPrivate::DProjectPluginPrivate()

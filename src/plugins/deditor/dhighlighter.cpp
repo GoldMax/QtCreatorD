@@ -397,14 +397,14 @@ void DHighlighter::correctTokens(Tokens& tokens, const QString & text)
 		QStringRef name = text.midRef(t.utf16charsBegin(),t.utf16chars());
 		if(name.at(0).toLatin1() == QLatin1Char('@'))
 		{
-			if(name == QLatin1String("@property"))
-				kind = T_FIRST_KEYWORD;
-			else
-			{
+//			if(name == QLatin1String("@property"))
+//				kind = T_FIRST_KEYWORD;
+//			else
+//			{
 				kind = T___ATTRIBUTE__;
 				if(name == QLatin1String("@"))
 					skipReset = true;
-			}
+//			}
 		}
 		else if(t.f.kind != T_IDENTIFIER)
 			continue;
