@@ -1,12 +1,10 @@
-#ifndef DBUILDCONFIGURATION_H
-#define DBUILDCONFIGURATION_H
+#pragma once
 
 #include <projectexplorer/buildconfiguration.h>
 #include <projectexplorer/namedwidget.h>
-#include <projectexplorer/buildinfo.h>
-#include <projectexplorer/target.h>
 
 #include <QLineEdit>
+#include <QSpinBox>
 
 namespace Utils { class PathChooser; }
 
@@ -14,64 +12,38 @@ using namespace ProjectExplorer;
 
 namespace DProjectManager {
 
-class DTarget;
-class DBuildConfigurationFactory;
 class DBuildSettingsWidget;
 
-class DBuildConfiguration : public ProjectExplorer::BuildConfiguration
+class DBuildConfiguration : public BuildConfiguration
 {
 	Q_OBJECT
-	friend class DBuildConfigurationFactory;
 
 public:
-	explicit DBuildConfiguration(Target *parent);
+	DBuildConfiguration(Target *parent, Core::Id id);
 
-	NamedWidget *createConfigWidget();
-	BuildType buildType() const { return Unknown; }
-	bool fromMap(const QVariantMap &map);
+	void initialize() override;
+	ProjectExplorer::NamedWidget *createConfigWidget() override;
+
+	bool isEnabled() const  override;
 
 signals:
 	void configurationChanged();
 
-protected:
-	DBuildConfiguration(Target *parent, DBuildConfiguration *source);
-	DBuildConfiguration(Target *parent, const Core::Id id);
+private:
+	void emitConfigurationChanged(bool);
 
 	friend class DBuildSettingsWidget;
 };
 
-class DBuildConfigurationFactory : public ProjectExplorer::IBuildConfigurationFactory
+class DBuildConfigurationFactory : public BuildConfigurationFactory
 {
-	Q_OBJECT
-
 public:
-	explicit DBuildConfigurationFactory(QObject *parent = 0);
-	~DBuildConfigurationFactory();
-
-	int priority(const Target*) const { return 0; }
-	int priority(const Kit*, const QString&) const { return 0; }
-
-
-	bool canCreate(const Target *parent) const;
-	QList<BuildInfo *> availableBuilds(const Target *parent) const;
-	ProjectExplorer::BuildConfiguration *create(Target *parent, const BuildInfo *info) const;
-
-	// Used to see whether this factory can produce any BuildConfigurations for a kit when
-	// setting up the given project.
-	bool canSetup(const Kit *k, const QString &projectPath) const;
-	// List of build information that can be used to initially set up a new build configuration.
-	QList<BuildInfo *> availableSetups(const Kit *k, const QString &projectPath) const;
-
-
-	bool canClone(const Target *parent, BuildConfiguration *source) const;
-	BuildConfiguration *clone(Target *parent, BuildConfiguration *source);
-	bool canRestore(const Target *parent, const QVariantMap &map) const;
-	BuildConfiguration *restore(Target *parent, const QVariantMap &map);
-
+	DBuildConfigurationFactory();
 
 private:
-	bool canHandle(const Target *t) const;
-
+	QList<BuildInfo> availableBuilds(const Kit *k,
+																																		const Utils::FilePath &projectPath,
+																																		bool forSetup) const override;
 };
 
 class DBuildSettingsWidget : public ProjectExplorer::NamedWidget
@@ -87,14 +59,14 @@ private:
 	QLineEdit* editIncludes;
 	QLineEdit* editLibs;
 	QLineEdit* editExtra;
+	QSpinBox* editPriority;
 
 private slots:
-	void buildDirectoryChanged();
-	void editsTextChanged();
+	void sourceDirectoryChanged();
+	//void editsTextChanged();
+	//void priorityValueChanged(int);
 	void editsEditingFinished();
 
 };
 
 } // namespace DProjectManager
-
-#endif // DBUILDCONFIGURATION_H

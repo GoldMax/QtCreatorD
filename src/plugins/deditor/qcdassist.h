@@ -6,19 +6,13 @@
 #include <QtGlobal>
 #include <QString>
 #include <QList>
-//#include <QTcpSocket>
-
 #include <string>
-//#include <msgpack.hpp>
 
 namespace QcdAssist
 {
 	DEDITORSHARED_EXPORT bool isDCDEnabled();
 	void isDCDEnabled(bool value);
-		/// Port of DCD server
-	//static quint16 dcdPort = 9166;
 	QString dcdClient();
-
 
 // struct AutocompleteRequest
 // {
@@ -73,19 +67,12 @@ namespace QcdAssist
 
 		DCDCompletionItemType type;
 		QString name;
-
-		//QIcon icon() const;
 	};
 	struct DCDCompletion
 	{
 		DCDCompletionType type;
 		QList<DCDCompletionItem> completions;
 	};
-
-	//--------------------
-	//--- Socket Funcs ---
-	//--------------------
-	//bool openDcdSocket();
 
 	//-------------------
 	//--- Client Func ---
@@ -94,33 +81,6 @@ namespace QcdAssist
 	DEDITORSHARED_EXPORT void sendAddImportToDCD(QString path);
 	DEDITORSHARED_EXPORT DCDCompletion sendRequestToDCD(QByteArray& filedata, uint pos);
 	DEDITORSHARED_EXPORT DCDCompletion processCompletion(QByteArray dataArray);
-
-	//QByteArray sendRequestToDCD(AutocompleteRequest& req);
-// QByteArray sendRequestToDCD(const char* data, qint64 len);
-// {
-//  ubyte[] message = msgpack.pack(request);
-//  ubyte[] messageBuffer = new ubyte[message.length + message.length.sizeof];
-//  auto messageLength = message.length;
-//  messageBuffer[0 .. size_t.sizeof] = (cast(ubyte*) &messageLength)[0 .. size_t.sizeof];
-//  messageBuffer[size_t.sizeof .. $] = message[];
-//  return socket.send(messageBuffer) == messageBuffer.length;
-// }
-
-// /**
-//  * Gets the response from the server
-//  */
-// AutocompleteResponse getResponse(TcpSocket socket)
-// {
-//  ubyte[1024 * 16] buffer;
-//  auto bytesReceived = socket.receive(buffer);
-//  if (bytesReceived == Socket.ERROR)
-//   throw new Exception("Incorrect number of bytes received");
-//  AutocompleteResponse response;
-//  msgpack.unpack(buffer[0..bytesReceived], response);
-//  return response;
-// }
-
-
 }
 
 #endif // QCDASSIST_H

@@ -25,23 +25,23 @@
 
 #include "session.h"
 
-#include "project.h"
-#include "target.h"
-#include "kit.h"
 #include "buildconfiguration.h"
 #include "deployconfiguration.h"
-#include "projectexplorer.h"
-#include "nodesvisitor.h"
 #include "editorconfiguration.h"
+#include "foldernavigationwidget.h"
+#include "kit.h"
+#include "project.h"
+#include "projectexplorer.h"
 #include "projectnodes.h"
+#include "target.h"
 
+#include <coreplugin/coreconstants.h>
+#include <coreplugin/editormanager/editormanager.h>
 #include <coreplugin/icore.h>
 #include <coreplugin/idocument.h>
 #include <coreplugin/imode.h>
-#include <coreplugin/editormanager/editormanager.h>
-#include <coreplugin/coreconstants.h>
-#include <coreplugin/progressmanager/progressmanager.h>
 #include <coreplugin/modemanager.h>
+#include <coreplugin/progressmanager/progressmanager.h>
 
 #include <texteditor/texteditor.h>
 
@@ -54,6 +54,12 @@
 
 #include <QMessageBox>
 #include <QPushButton>
+
+#ifdef WITH_TESTS
+#include <QTemporaryFile>
+#include <QTest>
+#include <vector>
+#endif
 
 using namespace Core;
 using namespace Utils;
@@ -75,7 +81,6 @@ namespace ProjectExplorer {
 class SessionManagerPrivate
 {
 public:
-    bool projectContainsFile(Project *p, const FileName &fileName) const;
     void restoreValues(const PersistentSettingsReader &reader);
     void restoreDependencies(const PersistentSettingsReader &reader);
     void restoreStartupProject(const PersistentSettingsReader &reader);
@@ -89,10 +94,11 @@ public:
     QStringList dependenciesOrder() const;
     void dependencies(const QString &proName, QStringList &result) const;
 
-public:
     static QString windowTitleAddition(const QString &filePath);
+    static QString sessionTitle(const QString &filePath);
 
-    SessionNode *m_sessionNode = nullptr;
+    bool hasProjects() const { return !m_projects.isEmpty(); }
+
     QString m_sessionName = QLatin1String("default");
     bool m_virginSession = true;
     bool m_loadingSession = false;
@@ -101,8 +107,6 @@ public:
     mutable QStringList m_sessions;
     mutable QHash<QString, QDateTime> m_sessionDateTimes;
 
-    mutable QHash<Project *, QStringList> m_projectFileCache;
-
     Project *m_startupProject = nullptr;
     QList<Project *> m_projects;
     QStringList m_failedProjects;
@@ -110,17 +114,25 @@ public:
     QMap<QString, QVariant> m_values;
     QFutureInterface<void> m_future;
     PersistentSettingsWriter *m_writer = nullptr;
+
+private:
+    static QString locationInProject(const QString &filePath);
 };
 
 static SessionManager *m_instance = nullptr;
 static SessionManagerPrivate *d = nullptr;
 
+static QString projectFolderId(Project *pro)
+{
+    return pro->projectFilePath().toString();
+}
+
+const int PROJECT_SORT_VALUE = 100;
+
 SessionManager::SessionManager(QObject *parent) : QObject(parent)
 {
     m_instance = this;
     d = new SessionManagerPrivate;
-
-    d->m_sessionNode = new SessionNode;
 
     connect(ModeManager::instance(), &ModeManager::currentModeChanged,
             this, &SessionManager::saveActiveMode);
@@ -134,19 +146,22 @@ SessionManager::SessionManager(QObject *parent) : QObject(parent)
     connect(this, &SessionManager::projectDisplayNameChanged,
             EditorManager::instance(), &EditorManager::updateWindowTitles);
     connect(EditorManager::instance(), &EditorManager::editorOpened,
-            [this] { markSessionFileDirty(); });
+            this, &SessionManager::markSessionFileDirty);
     connect(EditorManager::instance(), &EditorManager::editorsClosed,
-            [this] { markSessionFileDirty(); });
+            this, &SessionManager::markSessionFileDirty);
 
     EditorManager::setWindowTitleAdditionHandler(&SessionManagerPrivate::windowTitleAddition);
+    EditorManager::setSessionTitleHandler(&SessionManagerPrivate::sessionTitle);
 }
 
 SessionManager::~SessionManager()
 {
+    EditorManager::setWindowTitleAdditionHandler({});
+    EditorManager::setSessionTitleHandler({});
     emit m_instance->aboutToUnloadSession(d->m_sessionName);
     delete d->m_writer;
-    delete d->m_sessionNode;
     delete d;
+    d = nullptr;
 }
 
 SessionManager *SessionManager::instance()
@@ -168,17 +183,6 @@ void SessionManager::saveActiveMode(Id mode)
 {
     if (mode != Core::Constants::MODE_WELCOME)
         setValue(QLatin1String("ActiveMode"), mode.toString());
-}
-
-void SessionManager::clearProjectFileCache()
-{
-    // If triggered by the fileListChanged signal of one project
-    // only invalidate cache for this project
-    auto pro = qobject_cast<Project*>(m_instance->sender());
-    if (pro)
-        d->m_projectFileCache.remove(pro);
-    else
-        d->m_projectFileCache.clear();
 }
 
 bool SessionManagerPrivate::recursiveDependencyCheck(const QString &newDep, const QString &checkDep) const
@@ -208,7 +212,9 @@ QList<Project *> SessionManager::dependencies(const Project *project)
 
     QList<Project *> projects;
     foreach (const QString &dep, proDeps) {
-        if (Project *pro = projectForFile(Utils::FileName::fromString(dep)))
+        const Utils::FilePath fn = Utils::FilePath::fromString(dep);
+        Project *pro = Utils::findOrDefault(d->m_projects, [&fn](Project *p) { return p->projectFilePath() == fn; });
+        if (pro)
             projects += pro;
     }
 
@@ -289,7 +295,7 @@ void SessionManager::setActiveTarget(Project *project, Target *target, SetActive
         return;
 
     Core::Id kitId = target->kit()->id();
-    foreach (Project *otherProject, SessionManager::projects()) {
+    for (Project *otherProject : SessionManager::projects()) {
         if (otherProject == project)
             continue;
         if (Target *otherTarget = Utils::findOrDefault(otherProject->targets(),
@@ -310,7 +316,7 @@ void SessionManager::setActiveBuildConfiguration(Target *target, BuildConfigurat
 
     Core::Id kitId = target->kit()->id();
     QString name = bc->displayName(); // We match on displayname
-    foreach (Project *otherProject, SessionManager::projects()) {
+    for (Project *otherProject : SessionManager::projects()) {
         if (otherProject == target->project())
             continue;
         Target *otherTarget = otherProject->activeTarget();
@@ -338,7 +344,7 @@ void SessionManager::setActiveDeployConfiguration(Target *target, DeployConfigur
 
     Core::Id kitId = target->kit()->id();
     QString name = dc->displayName(); // We match on displayname
-    foreach (Project *otherProject, SessionManager::projects()) {
+    for (Project *otherProject : SessionManager::projects()) {
         if (otherProject == target->project())
             continue;
         Target *otherTarget = otherProject->activeTarget();
@@ -356,13 +362,17 @@ void SessionManager::setActiveDeployConfiguration(Target *target, DeployConfigur
 
 void SessionManager::setStartupProject(Project *startupProject)
 {
-    QTC_ASSERT((!startupProject)
+    QTC_ASSERT((!startupProject && d->m_projects.isEmpty())
                || (startupProject && d->m_projects.contains(startupProject)), return);
 
     if (d->m_startupProject == startupProject)
         return;
 
     d->m_startupProject = startupProject;
+    if (d->m_startupProject && d->m_startupProject->needsConfiguration()) {
+        ModeManager::activateMode(Constants::MODE_SESSION);
+        ModeManager::setFocusToCurrentMode();
+    }
     emit m_instance->startupProjectChanged(startupProject);
 }
 
@@ -374,31 +384,46 @@ Project *SessionManager::startupProject()
 void SessionManager::addProject(Project *pro)
 {
     QTC_ASSERT(pro, return);
+    QTC_CHECK(!pro->displayName().isEmpty());
+    QTC_CHECK(pro->id().isValid());
 
     d->m_virginSession = false;
     QTC_ASSERT(!d->m_projects.contains(pro), return);
 
     d->m_projects.append(pro);
-    d->m_sessionNode->addProjectNodes(QList<ProjectNode *>() << pro->rootProjectNode());
 
-    connect(pro, &Project::fileListChanged,
-            m_instance, &SessionManager::clearProjectFileCache);
+    connect(pro, &Project::displayNameChanged,
+            m_instance, [pro]() { emit m_instance->projectDisplayNameChanged(pro); });
 
-    connect(pro, &Project::displayNameChanged, m_instance, [pro] {
-        d->m_sessionNode->projectDisplayNameChanged(pro->rootProjectNode());
-        emit m_instance->projectDisplayNameChanged(pro);
-    });
-
-    emit m_instance->projectAdded(pro);
+				emit m_instance->projectAdded(pro);
+    const auto updateFolderNavigation = [pro] {
+        // destructing projects might trigger changes, so check if the project is actually there
+        if (QTC_GUARD(d->m_projects.contains(pro))) {
+            const QIcon icon = pro->rootProjectNode() ? pro->rootProjectNode()->icon() : QIcon();
+            FolderNavigationWidgetFactory::insertRootDirectory({projectFolderId(pro),
+                                                                PROJECT_SORT_VALUE,
+                                                                pro->displayName(),
+                                                                pro->projectFilePath().parentDir(),
+                                                                icon});
+        }
+    };
+				updateFolderNavigation();
     configureEditors(pro);
-    connect(pro, &Project::fileListChanged, [pro](){ configureEditors(pro); });
+    connect(pro, &Project::fileListChanged, m_instance, [pro, updateFolderNavigation]() {
+        configureEditors(pro);
+        updateFolderNavigation(); // update icon
+    });
+    connect(pro, &Project::displayNameChanged, m_instance, updateFolderNavigation);
+
+    if (!startupProject())
+        setStartupProject(pro);
 }
 
 void SessionManager::removeProject(Project *project)
 {
     d->m_virginSession = false;
     QTC_ASSERT(project, return);
-    removeProjects(QList<Project*>() << project);
+    removeProjects({project});
 }
 
 bool SessionManager::loadingSession()
@@ -434,10 +459,8 @@ bool SessionManager::save()
         data.insert(QLatin1String("Color"), tmp);
     }
 
-    QStringList projectFiles;
-    foreach (Project *pro, d->m_projects)
-        projectFiles << pro->projectFilePath().toString();
-
+    QStringList projectFiles
+            = Utils::transform(projects(), [](Project *p) { return p->projectFilePath().toString(); });
     // Restore infromation on projects that failed to load:
     // don't readd projects to the list, which the user loaded
     foreach (const QString &failed, d->m_failedProjects) {
@@ -486,18 +509,22 @@ bool SessionManager::save()
   */
 void SessionManager::closeAllProjects()
 {
-    setStartupProject(nullptr);
     removeProjects(projects());
 }
 
-QList<Project *> SessionManager::projects()
+const QList<Project *> SessionManager::projects()
 {
     return d->m_projects;
 }
 
 bool SessionManager::hasProjects()
 {
-    return !d->m_projects.isEmpty();
+    return d->hasProjects();
+}
+
+bool SessionManager::hasProject(Project *p)
+{
+    return d->m_projects.contains(p);
 }
 
 QStringList SessionManagerPrivate::dependencies(const QString &proName) const
@@ -518,7 +545,7 @@ void SessionManagerPrivate::dependencies(const QString &proName, QStringList &re
         result.append(proName);
 }
 
-QString SessionManagerPrivate::windowTitleAddition(const QString &filePath)
+QString SessionManagerPrivate::sessionTitle(const QString &filePath)
 {
     if (SessionManager::isDefaultSession(d->m_sessionName)) {
         if (filePath.isEmpty()) {
@@ -526,12 +553,6 @@ QString SessionManagerPrivate::windowTitleAddition(const QString &filePath)
             const QList<Project *> projects = SessionManager::projects();
             if (projects.size() == 1)
                 return projects.first()->displayName();
-            return QString();
-        } else if (Project *project = SessionManager::projectForFile(
-                       Utils::FileName::fromString(filePath))) {
-            return project->displayName();
-        } else {
-            return QString();
         }
     } else {
         QString sessionName = d->m_sessionName;
@@ -539,22 +560,49 @@ QString SessionManagerPrivate::windowTitleAddition(const QString &filePath)
             sessionName = SessionManager::tr("Untitled");
         return sessionName;
     }
+    return QString();
+}
+
+QString SessionManagerPrivate::locationInProject(const QString &filePath) {
+    const Project *project = SessionManager::projectForFile(Utils::FilePath::fromString(filePath));
+    if (!project)
+        return QString();
+
+    const Utils::FilePath file = Utils::FilePath::fromString(filePath);
+    const Utils::FilePath parentDir = file.parentDir();
+    if (parentDir == project->projectDirectory())
+        return "@ " + project->displayName();
+
+    if (file.isChildOf(project->projectDirectory())) {
+        const Utils::FilePath dirInProject = parentDir.relativeChildPath(project->projectDirectory());
+        return "(" + dirInProject.toUserOutput() + " @ " + project->displayName() + ")";
+    }
+
+    // For a file that is "outside" the project it belongs to, we display its
+    // dir's full path because it is easier to read than a series of  "../../.".
+    // Example: /home/hugo/GenericProject/App.files lists /home/hugo/lib/Bar.cpp
+   return "(" + parentDir.toUserOutput() + " @ " + project->displayName() + ")";
+}
+
+QString SessionManagerPrivate::windowTitleAddition(const QString &filePath)
+{
+    return locationInProject(filePath);
 }
 
 QStringList SessionManagerPrivate::dependenciesOrder() const
 {
-	//--vvv-- GoldMax --vvv--
-	QStringList ordered;
-	// copy the map to a temporary list
-	foreach (Project *pro, m_projects) {
-					const QString proName = pro->projectFilePath().toString();
-					ordered << proName;
-	}
-			/* QList<QPair<QString, QStringList> > unordered;
+    QList<QPair<QString, QStringList> > unordered;
     QStringList ordered;
 
+				//--vvv-- GoldMax --vvv--
+				SessionManagerPrivate* thiz = (SessionManagerPrivate*)(this);
+				Utils::sort(thiz->m_projects, [](Project *a, Project *b) {
+								return a->containerNode()->priority() < b->containerNode()->priority();
+				});
+				//--^^^-- GoldMax --^^^--
+
     // copy the map to a temporary list
-    foreach (Project *pro, m_projects) {
+    for (const Project *pro : m_projects) {
         const QString proName = pro->projectFilePath().toString();
         unordered << QPair<QString, QStringList>(proName, m_depMap.value(proName));
     }
@@ -576,14 +624,12 @@ QStringList SessionManagerPrivate::dependenciesOrder() const
                 unordered[i].second = depList;
             }
         }
-				}*/
+    }
 
     return ordered;
-	//--^^^-- GoldMax --^^^--
-
 }
 
-QList<Project *> SessionManager::projectOrder(Project *project)
+QList<Project *> SessionManager::projectOrder(const Project *project)
 {
     QList<Project *> result;
 
@@ -594,7 +640,7 @@ QList<Project *> SessionManager::projectOrder(Project *project)
         pros = d->dependenciesOrder();
 
     foreach (const QString &proFile, pros) {
-        foreach (Project *pro, projects()) {
+        for (Project *pro : projects()) {
             if (pro->projectFilePath().toString() == proFile) {
                 result << pro;
                 break;
@@ -605,66 +651,16 @@ QList<Project *> SessionManager::projectOrder(Project *project)
     return result;
 }
 
-QList<Node *> SessionManager::nodesForFile(const Utils::FileName &fileName)
+Project *SessionManager::projectForFile(const Utils::FilePath &fileName)
 {
-    FindNodesForFileVisitor findNodes(fileName);
-    sessionNode()->accept(&findNodes);
-    return findNodes.nodes();
-}
-
-// node for file returns a randomly selected node if there are multiple
-// prefer to use nodesForFile and figure out which node you want
-Node *SessionManager::nodeForFile(const Utils::FileName &fileName)
-{
-    Node *node = nullptr;
-    foreach (Node *n, nodesForFile(fileName)) {
-        // prefer file nodes
-        if (!node || (node->nodeType() != FileNodeType && n->nodeType() == FileNodeType))
-            node = n;
-    }
-    return node;
-}
-
-Project *SessionManager::projectForNode(Node *node)
-{
-    if (!node)
-        return nullptr;
-
-    FolderNode *rootProjectNode = node->asFolderNode();
-    if (!rootProjectNode)
-        rootProjectNode = node->parentFolderNode();
-
-    while (rootProjectNode && rootProjectNode->parentFolderNode() != d->m_sessionNode)
-        rootProjectNode = rootProjectNode->parentFolderNode();
-
-    Q_ASSERT(rootProjectNode);
-
-    return Utils::findOrDefault(d->m_projects, Utils::equal(&Project::rootProjectNode, rootProjectNode));
-}
-
-Project *SessionManager::projectForFile(const Utils::FileName &fileName)
-{
-    const QList<Project *> &projectList = projects();
-    foreach (Project *p, projectList) {
-        if (d->projectContainsFile(p, fileName))
-            return p;
-    }
-
-    return nullptr;
-}
-
-bool SessionManagerPrivate::projectContainsFile(Project *p, const Utils::FileName &fileName) const
-{
-    if (!m_projectFileCache.contains(p))
-        m_projectFileCache.insert(p, p->files(Project::AllFiles));
-
-    return m_projectFileCache.value(p).contains(fileName.toString());
+    return Utils::findOrDefault(SessionManager::projects(),
+                                [&fileName](const Project *p) { return p->isKnownFile(fileName); });
 }
 
 void SessionManager::configureEditor(IEditor *editor, const QString &fileName)
 {
     if (auto textEditor = qobject_cast<TextEditor::BaseTextEditor*>(editor)) {
-        Project *project = projectForFile(Utils::FileName::fromString(fileName));
+        Project *project = projectForFile(Utils::FilePath::fromString(fileName));
         // Global settings are the default.
         if (project)
             project->editorConfiguration()->configureEditor(textEditor);
@@ -674,7 +670,7 @@ void SessionManager::configureEditor(IEditor *editor, const QString &fileName)
 void SessionManager::configureEditors(Project *project)
 {
     foreach (IDocument *document, DocumentModel::openedDocuments()) {
-        if (d->projectContainsFile(project, document->filePath())) {
+        if (project->isKnownFile(document->filePath())) {
             foreach (IEditor *editor, DocumentModel::editorsForDocument(document)) {
                 if (auto textEditor = qobject_cast<TextEditor::BaseTextEditor*>(editor)) {
                         project->editorConfiguration()->configureEditor(textEditor);
@@ -684,16 +680,16 @@ void SessionManager::configureEditors(Project *project)
     }
 }
 
-void SessionManager::removeProjects(QList<Project *> remove)
+void SessionManager::removeProjects(const QList<Project *> &remove)
 {
     QMap<QString, QStringList> resMap;
 
-    foreach (Project *pro, remove)
+    for (Project *pro : remove)
         emit m_instance->aboutToRemoveProject(pro);
 
     // Refresh dependencies
     QSet<QString> projectFiles;
-    foreach (Project *pro, projects()) {
+    for (Project *pro : projects()) {
         if (!remove.contains(pro))
             projectFiles.insert(pro->projectFilePath().toString());
     }
@@ -711,29 +707,27 @@ void SessionManager::removeProjects(QList<Project *> remove)
     }
 
     d->m_depMap = resMap;
-
-    // TODO: Clear m_modelProjectHash
+    bool changeStartupProject = false;
 
     // Delete projects
-    foreach (Project *pro, remove) {
+    for (Project *pro : remove) {
         pro->saveSettings();
+
+        // Remove the project node:
         d->m_projects.removeOne(pro);
 
         if (pro == d->m_startupProject)
-            setStartupProject(nullptr);
+            changeStartupProject = true;
 
-        disconnect(pro, &Project::fileListChanged,
-                   m_instance, &SessionManager::clearProjectFileCache);
-        d->m_projectFileCache.remove(pro);
-
-        d->m_sessionNode->removeProjectNodes(QList<ProjectNode *>() << pro->rootProjectNode());
+        FolderNavigationWidgetFactory::removeRootDirectory(projectFolderId(pro));
+        disconnect(pro, nullptr, m_instance, nullptr);
         emit m_instance->projectRemoved(pro);
-        delete pro;
     }
 
-    if (!startupProject())
-        if (!d->m_projects.isEmpty())
-            setStartupProject(d->m_projects.first());
+    if (changeStartupProject)
+        setStartupProject(hasProjects() ? projects().first() : nullptr);
+
+     qDeleteAll(remove);
 }
 
 /*!
@@ -745,7 +739,6 @@ void SessionManager::setValue(const QString &name, const QVariant &value)
     if (d->m_values.value(name) == value)
         return;
     d->m_values.insert(name, value);
-    markSessionFileDirty(false);
 }
 
 QVariant SessionManager::value(const QString &name)
@@ -764,7 +757,7 @@ QStringList SessionManager::sessions()
     if (d->m_sessions.isEmpty()) {
         // We are not initialized yet, so do that now
         QDir sessionDir(ICore::userResourcePath());
-        QList<QFileInfo> sessionFiles = sessionDir.entryInfoList(QStringList() << QLatin1String("*.qws"), QDir::NoFilter, QDir::Time);
+        QFileInfoList sessionFiles = sessionDir.entryInfoList(QStringList() << QLatin1String("*.qws"), QDir::NoFilter, QDir::Time);
         foreach (const QFileInfo &fileInfo, sessionFiles) {
             const QString &name = fileInfo.completeBaseName();
             d->m_sessionDateTimes.insert(name, fileInfo.lastModified());
@@ -781,9 +774,9 @@ QDateTime SessionManager::sessionDateTime(const QString &session)
     return d->m_sessionDateTimes.value(session);
 }
 
-FileName SessionManager::sessionNameToFileName(const QString &session)
+FilePath SessionManager::sessionNameToFileName(const QString &session)
 {
-    return FileName::fromString(ICore::userResourcePath() + QLatin1Char('/') + session + QLatin1String(".qws"));
+    return FilePath::fromString(ICore::userResourcePath() + QLatin1Char('/') + session + QLatin1String(".qws"));
 }
 
 /*!
@@ -812,11 +805,15 @@ bool SessionManager::renameSession(const QString &original, const QString &newNa
 /*!
     \brief Shows a dialog asking the user to confirm deleting the session \p session
 */
-bool SessionManager::confirmSessionDelete(const QString &session)
+bool SessionManager::confirmSessionDelete(const QStringList &sessions)
 {
+    const QString title = sessions.size() == 1 ? tr("Delete Session") : tr("Delete Sessions");
+    const QString question = sessions.size() == 1
+            ? tr("Delete session %1?").arg(sessions.first())
+            : tr("Delete these sessions?\n    %1").arg(sessions.join("\n    "));
     return QMessageBox::question(ICore::mainWindow(),
-                                 tr("Delete Session"),
-                                 tr("Delete session %1?").arg(session),
+                                 title,
+                                 question,
                                  QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes;
 }
 
@@ -834,6 +831,12 @@ bool SessionManager::deleteSession(const QString &session)
     return false;
 }
 
+void SessionManager::deleteSessions(const QStringList &sessions)
+{
+    for (const QString &session : sessions)
+        deleteSession(session);
+}
+
 bool SessionManager::cloneSession(const QString &original, const QString &clone)
 {
     if (!d->m_sessions.contains(original))
@@ -843,7 +846,7 @@ bool SessionManager::cloneSession(const QString &original, const QString &clone)
     // If the file does not exist, we can still clone
     if (!fi.exists() || fi.copy(sessionNameToFileName(clone).toString())) {
         d->m_sessions.insert(1, clone);
-        d->m_sessionDateTimes.insert(clone, QFileInfo(sessionNameToFileName(clone).toString()).lastModified());
+        d->m_sessionDateTimes.insert(clone, sessionNameToFileName(clone).toFileInfo().lastModified());
         return true;
     }
     return false;
@@ -882,18 +885,18 @@ void SessionManagerPrivate::askUserAboutFailedProjects()
     if (!failedProjects.isEmpty()) {
         QString fileList =
             QDir::toNativeSeparators(failedProjects.join(QLatin1String("<br>")));
-        auto box = new QMessageBox(QMessageBox::Warning,
+        QMessageBox box(QMessageBox::Warning,
                                    SessionManager::tr("Failed to restore project files"),
                                    SessionManager::tr("Could not restore the following project files:<br><b>%1</b>").
                                    arg(fileList));
-        auto keepButton = new QPushButton(SessionManager::tr("Keep projects in Session"), box);
-        auto removeButton = new QPushButton(SessionManager::tr("Remove projects from Session"), box);
-        box->addButton(keepButton, QMessageBox::AcceptRole);
-        box->addButton(removeButton, QMessageBox::DestructiveRole);
+        auto keepButton = new QPushButton(SessionManager::tr("Keep projects in Session"), &box);
+        auto removeButton = new QPushButton(SessionManager::tr("Remove projects from Session"), &box);
+        box.addButton(keepButton, QMessageBox::AcceptRole);
+        box.addButton(removeButton, QMessageBox::DestructiveRole);
 
-        box->exec();
+        box.exec();
 
-        if (box->clickedButton() == removeButton)
+        if (box.clickedButton() == removeButton)
             m_failedProjects.clear();
     }
 }
@@ -902,7 +905,7 @@ void SessionManagerPrivate::restoreStartupProject(const PersistentSettingsReader
 {
     const QString startupProject = reader.restoreValue(QLatin1String("StartupProject")).toString();
     if (!startupProject.isEmpty()) {
-        foreach (Project *pro, d->m_projects) {
+        for (Project *pro : m_projects) {
             if (pro->projectFilePath().toString() == startupProject) {
                 m_instance->setStartupProject(pro);
                 break;
@@ -912,7 +915,7 @@ void SessionManagerPrivate::restoreStartupProject(const PersistentSettingsReader
     if (!m_startupProject) {
         if (!startupProject.isEmpty())
             qWarning() << "Could not find startup project" << startupProject;
-        if (!m_projects.isEmpty())
+        if (hasProjects())
             m_instance->setStartupProject(m_projects.first());
     }
 }
@@ -957,7 +960,7 @@ bool SessionManager::loadSession(const QString &session)
 
     QStringList fileList;
     // Try loading the file
-    FileName fileName = sessionNameToFileName(session);
+    FilePath fileName = sessionNameToFileName(session);
     PersistentSettingsReader reader;
     if (fileName.exists()) {
         if (!reader.load(fileName)) {
@@ -985,24 +988,16 @@ bool SessionManager::loadSession(const QString &session)
         return false;
     }
 
-    setStartupProject(nullptr);
-
-    QList<Project *> oldProjects = projects();
-    auto it = oldProjects.begin();
-    auto end = oldProjects.end();
-
-    while (it != end) {
-        int index = fileList.indexOf((*it)->projectFilePath().toString());
-        if (index != -1) {
-            fileList.removeAt(index);
-            it = oldProjects.erase(it);
-        } else {
-            ++it;
-        }
-    }
-
-    removeProjects(oldProjects);
-
+    // find a list of projects to close later
+    const QList<Project *> projectsToRemove = Utils::filtered(projects(), [&fileList](Project *p) {
+        return !fileList.contains(p->projectFilePath().toString());
+    });
+    const QList<Project *> openProjects = projects();
+    const QStringList projectPathsToLoad = Utils::filtered(fileList, [&openProjects](const QString &path) {
+        return !Utils::contains(openProjects, [&path](Project *p) {
+            return p->projectFilePath().toString() == path;
+        });
+    });
     d->m_failedProjects.clear();
     d->m_depMap.clear();
     d->m_values.clear();
@@ -1034,17 +1029,17 @@ bool SessionManager::loadSession(const QString &session)
         if (c.isValid())
             StyleHelper::setBaseColor(c);
 
-        d->m_future.setProgressRange(0, fileList.count() + 1/*initialization above*/ + 1/*editors*/);
+        d->m_future.setProgressRange(0, projectPathsToLoad.count() + 1/*initialization above*/ + 1/*editors*/);
         d->m_future.setProgressValue(1);
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
-        // if one processEvents doesn't get the job done
-        // just use two!
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-        d->restoreProjects(fileList);
+        d->restoreProjects(projectPathsToLoad);
         d->sessionLoadingProgress();
         d->restoreDependencies(reader);
         d->restoreStartupProject(reader);
+
+        removeProjects(projectsToRemove); // only remove old projects now that the startup project is set!
+
         d->restoreEditors(reader);
 
         d->m_future.reportFinished();
@@ -1058,6 +1053,7 @@ bool SessionManager::loadSession(const QString &session)
         ModeManager::activateMode(modeId);
         ModeManager::setFocusToCurrentMode();
     } else {
+        removeProjects(projects());
         ModeManager::activateMode(Id(Core::Constants::MODE_EDIT));
         ModeManager::setFocusToCurrentMode();
     }
@@ -1077,20 +1073,14 @@ QString SessionManager::lastSession()
     return ICore::settings()->value(QLatin1String("ProjectExplorer/StartupSession")).toString();
 }
 
-SessionNode *SessionManager::sessionNode()
-{
-    return d->m_sessionNode;
-}
-
 void SessionManager::reportProjectLoadingProgress()
 {
     d->sessionLoadingProgress();
 }
 
-void SessionManager::markSessionFileDirty(bool makeDefaultVirginDirty)
+void SessionManager::markSessionFileDirty()
 {
-    if (makeDefaultVirginDirty)
-        d->m_virginSession = false;
+    d->m_virginSession = false;
 }
 
 void SessionManagerPrivate::sessionLoadingProgress()
@@ -1101,7 +1091,7 @@ void SessionManagerPrivate::sessionLoadingProgress()
 
 QStringList SessionManager::projectsForSessionName(const QString &session)
 {
-    const FileName fileName = sessionNameToFileName(session);
+    const FilePath fileName = sessionNameToFileName(session);
     PersistentSettingsReader reader;
     if (fileName.exists()) {
         if (!reader.load(fileName)) {
@@ -1111,5 +1101,59 @@ QStringList SessionManager::projectsForSessionName(const QString &session)
     }
     return reader.restoreValue(QLatin1String("ProjectList")).toStringList();
 }
+
+#ifdef WITH_TESTS
+
+void ProjectExplorerPlugin::testSessionSwitch()
+{
+    QVERIFY(SessionManager::createSession("session1"));
+    QVERIFY(SessionManager::createSession("session2"));
+    QTemporaryFile cppFile("main.cpp");
+    QVERIFY(cppFile.open());
+    cppFile.close();
+    QTemporaryFile projectFile1("XXXXXX.pro");
+    QTemporaryFile projectFile2("XXXXXX.pro");
+    struct SessionSpec {
+        SessionSpec(const QString &n, QTemporaryFile &f) : name(n), projectFile(f) {}
+        const QString name;
+        QTemporaryFile &projectFile;
+    };
+    std::vector<SessionSpec> sessionSpecs{SessionSpec("session1", projectFile1),
+                SessionSpec("session2", projectFile2)};
+    for (const SessionSpec &sessionSpec : sessionSpecs) {
+        static const QByteArray proFileContents
+                = "TEMPLATE = app\n"
+                  "CONFIG -= qt\n"
+                  "SOURCES = " + cppFile.fileName().toLocal8Bit();
+        QVERIFY(sessionSpec.projectFile.open());
+        sessionSpec.projectFile.write(proFileContents);
+        sessionSpec.projectFile.close();
+        QVERIFY(SessionManager::loadSession(sessionSpec.name));
+        const OpenProjectResult openResult
+                = ProjectExplorerPlugin::openProject(sessionSpec.projectFile.fileName());
+        if (openResult.errorMessage().contains("text/plain"))
+            QSKIP("This test requires the presence of QmakeProjectManager to be fully functional");
+        QVERIFY(openResult);
+        QCOMPARE(openResult.projects().count(), 1);
+        QVERIFY(openResult.project());
+        QCOMPARE(SessionManager::projects().count(), 1);
+    }
+    for (int i = 0; i < 30; ++i) {
+        QVERIFY(SessionManager::loadSession("session1"));
+        QCOMPARE(SessionManager::activeSession(), "session1");
+        QCOMPARE(SessionManager::projects().count(), 1);
+        QVERIFY(SessionManager::loadSession("session2"));
+        QCOMPARE(SessionManager::activeSession(), "session2");
+        QCOMPARE(SessionManager::projects().count(), 1);
+    }
+    QVERIFY(SessionManager::loadSession("session1"));
+    SessionManager::closeAllProjects();
+    QVERIFY(SessionManager::loadSession("session2"));
+    SessionManager::closeAllProjects();
+    QVERIFY(SessionManager::deleteSession("session1"));
+    QVERIFY(SessionManager::deleteSession("session2"));
+}
+
+#endif // WITH_TESTS
 
 } // namespace ProjectExplorer

@@ -2,23 +2,17 @@
 #define DPROJECT_H
 
 #include "dprojectmanagerconstants.h"
-#include "dprojectmanager.h"
 #include "dprojectnodes.h"
 
 #include <projectexplorer/project.h>
 #include <projectexplorer/projectnodes.h>
-#include <projectexplorer/target.h>
-#include <projectexplorer/toolchain.h>
-#include <projectexplorer/buildconfiguration.h>
-#include <coreplugin/idocument.h>
 
-#include <QFuture>
-#include <QSet>
+#include <utils/fileutils.h>
 
 namespace DProjectManager {
 
-//class DManager;
-class DProjectFile;
+class DProjectNode;
+class DProjectGroupNode;
 
 class DProject : public ProjectExplorer::Project
 {
@@ -30,23 +24,13 @@ public:
 		ProjectFile   = 0x01,
 		Files         = 0x02,
 		Configuration = 0x04,
+		Project       = ProjectFile | Configuration,
 		Everything    = ProjectFile | Files | Configuration
 	};
 
 public:
-	DProject(ProjectExplorer::IProjectManager *manager, const QString &filename);
-	~DProject();
-
-	QString displayName() const { return m_projectName; }
-	Core::IDocument* document() const;
-	ProjectExplorer::IProjectManager* projectManager() const
-	{
-		return (ProjectExplorer::IProjectManager*)m_manager;
-	}
-
-	DProjectNode *rootProjectNode() const { return m_rootNode; }
-	QStringList files(FilesMode ) const { return m_files.keys(); }
-	bool setupTarget(ProjectExplorer::Target *t);
+	DProject(const Utils::FilePath &filename);
+	~DProject() override;
 
 	bool addFiles(const QStringList &filePaths);
 	bool removeFiles(const QStringList &filePaths);
@@ -54,62 +38,55 @@ public:
 
 	void refresh(RefreshOptions options);
 
-	const QHash<QString,QString>& files() { return m_files; }
-	const QDir buildDirectory() const { return m_buildDir; }
+	const QString& sourcesDirectory() const { return m_srcDir; }
+	void setSourcesDirectory(QString value) { m_srcDir = value; }
 	const QString& libraries() const { return m_libs; }
 	void setLibraries(QString value) { m_libs = value; }
 	const QString& includes() const { return m_includes; }
-	void setIncludes(QString value) { m_includes = value; }
+	void setIncludes(QString value); // { m_includes = value; }
 	const QString& extraArgs() const { return m_extraArgs; }
 	void setExtraArgs(QString value) { m_extraArgs = value; }
+	uint compilePriority() const { return m_priority; }
+	void setCompilePriority(uint value) { m_priority = value; }
+	const QList<QString>& files() const { return m_files; }
 
 protected:
-	QVariantMap toMap() const;
- RestoreResult fromMap(const QVariantMap &map, QString* errorMessage);
+	QVariantMap toMap() const override;
+	RestoreResult fromMap(const QVariantMap &map, QString* errorMessage) override;
+	bool setupTarget(ProjectExplorer::Target *t) override;
 
 private:
-	bool parseProject(RefreshOptions options);
-	QStringList processEntries(const QStringList &paths,
-																												QHash<QString, QString> *map = 0) const;
+	bool parseProjectFile(RefreshOptions options);
 
-	ProjectExplorer::IProjectManager* m_manager;
-	const QString m_projectName;
-	const QString m_projectFileName;
-	DProjectFile* m_projectIDocument;
-	QDir m_buildDir;
-
-	QHash<QString,QString> m_files;
+	QString m_srcDir;
 	QString m_libs;
 	QString m_includes;
 	QString m_extraArgs;
-
-
-	DProjectNode *m_rootNode;
-	QFuture<void> m_codeModelFuture;
+	uint m_priority;
+	QList<QString> m_files;
 };
 
-class DProjectFile : public Core::IDocument
+class DProjectGroup : public ProjectExplorer::Project
 {
 	Q_OBJECT
 
 public:
-	DProjectFile(DProject *parent, QString fileName, DProject::RefreshOptions options);
+	DProjectGroup(const Utils::FilePath &filename);
+	~DProjectGroup() override;
 
-	bool save(QString *errorString, const QString &fileName, bool autoSave);
+public:
+	const QList<Project*>& projects() const { return m_projects; }
 
-	QString defaultPath() const;
-	QString suggestedFileName() const;
-	QString mimeType() const;
+	bool addSubProject(const QString &projFilePath);
 
-	bool isModified() const;
-	bool isSaveAsAllowed() const;
+	void refresh(QString *errorMessage);
 
-	ReloadBehavior reloadBehavior(ChangeTrigger state, ChangeType type) const;
-	bool reload(QString *errorString, ReloadFlag flag, ChangeType type);
+protected:
+	QVariantMap toMap() const override;
+	RestoreResult fromMap(const QVariantMap &map, QString* errorMessage) override;
 
 private:
-	DProject *m_project;
-	DProject::RefreshOptions m_options;
+	QList<Project*> m_projects;
 };
 
 } // namespace DProjectManager

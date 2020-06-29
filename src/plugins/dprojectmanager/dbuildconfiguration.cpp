@@ -1,192 +1,103 @@
 #include "dbuildconfiguration.h"
-
-#include "dproject.h"
-#include "dmakestep.h"
-#include "drunconfiguration.h"
 #include "dprojectmanagerconstants.h"
+#include "dproject.h"
 
+#include <projectexplorer/buildinfo.h>
+#include <projectexplorer/kit.h>
+#include <projectexplorer/project.h>
 #include <projectexplorer/buildsteplist.h>
-#include <projectexplorer/kitinformation.h>
 #include <projectexplorer/projectexplorerconstants.h>
-#include <projectexplorer/toolchain.h>
-#include <utils/fancylineedit.h>
+#include <projectexplorer/target.h>
+#include <coreplugin/navigationwidget.h>
 #include <utils/pathchooser.h>
 #include <utils/qtcassert.h>
-#include <utils/mimetypes/mimedatabase.h>
-
 
 #include <QFormLayout>
+#include <QLabel>
 #include <QInputDialog>
 #include <QSettings>
 #include <QPlainTextEdit>
+#include <QSpinBox>
 
 using namespace ProjectExplorer;
-using namespace DProjectManager;
 
 namespace DProjectManager {
 
-DBuildConfiguration::DBuildConfiguration(Target *parent)
-	: BuildConfiguration(parent, Core::Id(Constants::D_BC_ID))
+DBuildConfiguration::DBuildConfiguration(Target *parent, Core::Id id)
+	: BuildConfiguration(parent, id) //Core::Id(Constants::D_BC_ID))
 {
+	setConfigWidgetDisplayName(tr("Build settings"));
+	setBuildDirectoryHistoryCompleter("D.BuildDir.History");
+
+	updateCacheAndEmitEnvironmentChanged();
 }
 
-DBuildConfiguration::DBuildConfiguration(Target *parent, const Core::Id id)
-	: BuildConfiguration(parent, id)
+void DBuildConfiguration::initialize()
 {
-}
+	BuildConfiguration::initialize();
 
-DBuildConfiguration::DBuildConfiguration(Target *parent, DBuildConfiguration *source) :
-		BuildConfiguration(parent, source)
-{
-	cloneSteps(source);
-}
+	BuildStepList *buildSteps = stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
+	buildSteps->appendStep(Constants::D_MS_ID);
 
+	// TODO : configure clean step
+//	BuildStepList *cleanSteps = stepList(ProjectExplorer::Constants::BUILDSTEPS_CLEAN);
+//	cleanSteps->appendStep(Constants::D_MS_ID);
+
+	updateCacheAndEmitEnvironmentChanged();
+}
 NamedWidget* DBuildConfiguration::createConfigWidget()
 {
 	return new DBuildSettingsWidget(this);
 }
 
-bool DBuildConfiguration::fromMap(const QVariantMap &map)
+bool DBuildConfiguration::isEnabled() const
 {
-	if(BuildConfiguration::fromMap(map) == false)
-		return false;
-	DProject* prj = static_cast<DProject*>(target()->project());
-	Utils::FileName fn = 	Utils::FileName::fromString(prj->buildDirectory().path());
-	setBuildDirectory(fn);
-	return true;
+	DProject* prj = static_cast<DProject*>(project());
+	QTC_CHECK(prj);
+	return prj->files().count() > 0;
 }
 
+void DBuildConfiguration::emitConfigurationChanged(bool rebuildProjectTree)
+{
+	if(rebuildProjectTree)
+	{
+		// TODO : Это не работает, окно Projects не обновляется
+		//auto navWidget = Core::NavigationWidget::instance(Core::Side::Left);
+		//navWidget->closeSubWidgets();
+		//QWidget* widget = navWidget->activateSubWidget(ProjectExplorer::Constants::PROJECTTREE_ID, Core::Side::Left);
+		//widget = nullptr;
+	}
+	emit configurationChanged();
+}
 //------------------------------------------------------------------------------------------------
 //  class DBuildConfigurationFactory
 //------------------------------------------------------------------------------------------------
 
-DBuildConfigurationFactory::DBuildConfigurationFactory(QObject *parent) :
-		IBuildConfigurationFactory(parent) { }
-
-DBuildConfigurationFactory::~DBuildConfigurationFactory() { }
-
-bool DBuildConfigurationFactory::canCreate(const Target *parent) const
+DBuildConfigurationFactory::DBuildConfigurationFactory() :
+		BuildConfigurationFactory()
 {
-	return canHandle(parent);
+	registerBuildConfiguration<DBuildConfiguration>(Constants::D_BC_ID);
+
+	setSupportedProjectType(Constants::DPROJECT_ID);
+	setSupportedProjectMimeTypeName(Constants::DPROJECT_MIMETYPE);
+
 }
 
-QList<BuildInfo *> DBuildConfigurationFactory::availableBuilds(const Target *parent) const
+QList<BuildInfo> DBuildConfigurationFactory::availableBuilds
+				(const Kit *k, const Utils::FilePath &projectPath, bool /*forSetup*/) const
 {
-	QList<BuildInfo *> result;
-	QTC_ASSERT(canCreate(parent), return result);
+	BuildInfo info(this);
+	info.typeName = tr("D Build");
+	info.displayName = tr("Debug");
+	info.buildDirectory = Project::projectDirectory(projectPath);
+	info.kitId = k->id();
 
-	Utils::FileName projectDir = parent->project()->projectDirectory();
-
-	BuildInfo* info = new BuildInfo(this);
-	info->displayName = tr("Debug");
-	info->typeName = tr("D Build");
-	info->buildDirectory = projectDir;
-	info->kitId = parent->kit()->id();
-	result << info;
-
-	return result;
+	return {info};
 }
 
-BuildConfiguration* DBuildConfigurationFactory::create(Target *parent, const BuildInfo *info) const
-{
-	QTC_ASSERT(canCreate(parent), return 0);
-	QTC_ASSERT(info->factory() == this, return 0);
-	QTC_ASSERT(info->kitId == parent->kit()->id(), return 0);
-	QTC_ASSERT(!info->displayName.isEmpty(), return 0);
-
-	DBuildConfiguration *bc = new DBuildConfiguration(parent);
-	bc->setDisplayName(info->displayName);
-	bc->setDefaultDisplayName(info->displayName);
-
-	BuildStepList *buildSteps = bc->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
-	Q_ASSERT(buildSteps);
-	DMakeStep *makeStep = new DMakeStep(buildSteps);
-	if(info->displayName == QLatin1String("Debug"))
-		makeStep->setBuildPreset(DMakeStep::Debug);
-	else if(info->displayName == QLatin1String("Release"))
-		makeStep->setBuildPreset(DMakeStep::Release);
-	else if(info->displayName == QLatin1String("Unittest"))
-		makeStep->setBuildPreset(DMakeStep::Unittest);
-	buildSteps->insertStep(0, makeStep);
-
-	// TODO : configure clean step
-	//    BuildStepList *cleanSteps = bc->stepList(ProjectExplorer::Constants::BUILDSTEPS_CLEAN);
-	//    Q_ASSERT(cleanSteps);
-	//    GenericMakeStep *cleanMakeStep = new GenericMakeStep(cleanSteps);
-	//    cleanSteps->insertStep(0, cleanMakeStep);
-	//    cleanMakeStep->setBuildTarget(QLatin1String("clean"), /* on = */ true);
-	//    cleanMakeStep->setClean(true);
-
-	return bc;
-}
-
-bool DBuildConfigurationFactory::canClone(const Target* parent, BuildConfiguration *source) const
-{
-	if (!canHandle(parent))
-		return false;
-	return source->id() == Constants::D_BC_ID;
-}
-
-BuildConfiguration* DBuildConfigurationFactory::clone(Target *parent, BuildConfiguration *source)
-{
-	if (!canClone(parent, source))
-		return 0;
-	return new DBuildConfiguration(parent, qobject_cast<DBuildConfiguration *>(source));
-}
-
-bool DBuildConfigurationFactory::canRestore(const Target *parent, const QVariantMap &map) const
-{
-	if (!canHandle(parent))
-		return false;
-	Core::Id id = ProjectExplorer::idFromMap(map);
-	return id == Constants::D_BC_ID;
-}
-
-BuildConfiguration* DBuildConfigurationFactory::restore(Target *parent, const QVariantMap &map)
-{
-	if (!canRestore(parent, map))
-		return 0;
-	DBuildConfiguration *bc(new DBuildConfiguration(parent));
-	if (bc->fromMap(map))
-		return bc;
-	delete bc;
-	return 0;
-}
-
-bool DBuildConfigurationFactory::canHandle(const Target *t) const
-{
-	if (!t->project()->supportsKit(t->kit()))
-		return false;
-	return qobject_cast<DProject *>(t->project());
-}
-
-bool DBuildConfigurationFactory::canSetup(const Kit *k, const QString &projectPath) const
-{
-	Q_UNUSED(projectPath);
-	return k /*&& Utils::MimeDatabase::findByFile(QFileInfo(projectPath))
-			.matchesType(QLatin1String(Constants::D_BC_ID))*/;
-}
-
-QList<BuildInfo *> DBuildConfigurationFactory::availableSetups(const Kit *k, const QString &projectPath) const
-{
-	QList<BuildInfo *> result;
-	QTC_ASSERT(canSetup(k, projectPath), return result);
-
-	BuildInfo* info = new BuildInfo(this);
-	info->displayName = tr("Debug");
-	info->typeName = tr("D Build");
-	info->buildDirectory =
-			ProjectExplorer::Project::projectDirectory(Utils::FileName::fromString(projectPath));
-	info->kitId = k->id();
-	result << info;
-
-	return result;
-
-}
-////////////////////////////////////////////////////////////////////////////////////
-// DBuildSettingsWidget
-////////////////////////////////////////////////////////////////////////////////////
-
+//------------------------------------------------------------------------------------------------
+//  class DBuildSettingsWidget
+//------------------------------------------------------------------------------------------------
 DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
 	: m_buildConfiguration(bc)
 {
@@ -196,59 +107,76 @@ DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
 
 	setDisplayName(tr("Project settings"));
 
-	// build directory
+	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
+	Q_ASSERT(proj);
+		QString projectDir = proj->projectDirectory().toString();
+	fl->addRow(tr("Project directory:"), new QLabel(projectDir));
+
+	// source directory
 	m_pathChooser = new Utils::PathChooser(this);
 	m_pathChooser->setEnabled(true);
 	m_pathChooser->lineEdit()->setReadOnly(true);
 	m_pathChooser->setExpectedKind(Utils::PathChooser::ExistingDirectory);
-	m_pathChooser->setBaseDirectory(bc->target()->project()->projectDirectory().toString());
+	m_pathChooser->setBaseDirectory(projectDir);
 	m_pathChooser->setEnvironment(bc->environment());
-	QSettings sets(m_buildConfiguration->target()->project()->projectFilePath().toString(), QSettings::IniFormat);
-	QString root = sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString();
-	m_pathChooser->setPath(root);
- connect(m_pathChooser, SIGNAL(pathChanged(QString)), this, SLOT(buildDirectoryChanged()));
+	QString srcRoot = proj->sourcesDirectory();
+	m_pathChooser->setPath(srcRoot.length() ? srcRoot : QLatin1String("."));
+	connect(m_pathChooser, SIGNAL(pathChanged(QString)), this, SLOT(sourceDirectoryChanged()));
 	fl->addRow(tr("Source directory:"), m_pathChooser);
-
-	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
-	Q_ASSERT(proj);
 
 	// Includes
 	editIncludes = new QLineEdit(this);
 	editIncludes->setText(proj->includes());
-	connect(editIncludes, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
+	//connect(editIncludes, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
 	connect(editIncludes, SIGNAL(editingFinished()),	this, SLOT(editsEditingFinished()));
 	fl->addRow(tr("Include paths:"), editIncludes);
 
 	// Libs
 	editLibs = new QLineEdit(this);
 	editLibs->setText(proj->libraries());
-	connect(editLibs, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
+	//connect(editLibs, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
 	connect(editLibs, SIGNAL(editingFinished()),	this, SLOT(editsEditingFinished()));
 	fl->addRow(tr("Libraries:"), editLibs);
 
 	// ExtraArgs
 	editExtra = new QLineEdit(this);
 	editExtra->setText(proj->extraArgs());
-	connect(editExtra, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
+	//connect(editExtra, SIGNAL(textEdited(QString)),	this, SLOT(editsTextChanged()));
 	connect(editExtra, SIGNAL(editingFinished()),	this, SLOT(editsEditingFinished()));
 	fl->addRow(tr("Extra args:"), editExtra);
 
+	// CompilePriority
+	editPriority = new QSpinBox(this);
+	editPriority->setMinimum(0);
+	editPriority->setMaximum(1000);
+	editPriority->setValue(proj->compilePriority());
+	//connect(editPriority, SIGNAL(valueChanged(int)),	this, SLOT(priorityValueChanged(int)));
+	connect(editPriority, SIGNAL(editingFinished()),	this, SLOT(editsEditingFinished()));
+	fl->addRow(tr("Compile priority:"), editPriority);
 
 }
-void DBuildSettingsWidget::buildDirectoryChanged()
+void DBuildSettingsWidget::sourceDirectoryChanged()
 {
-	QDir d(m_buildConfiguration->target()->project()->projectDirectory().toString());
+	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
+	Q_ASSERT(proj);
+
+	QDir d(proj->projectDirectory().toString());
 	QString rel = d.relativeFilePath(m_pathChooser->rawPath());
-
 	m_pathChooser->setPath(rel);
-	QSettings sets(m_buildConfiguration->target()->project()->projectFilePath().toString(),
-																QSettings::IniFormat);
-	sets.setValue(QLatin1String(Constants::INI_SOURCE_ROOT_KEY), rel);
-	sets.sync();
-	static_cast<DProject*>(m_buildConfiguration->target()->project())->refresh(DProject::Everything);
-	m_buildConfiguration->setBuildDirectory(Utils::FileName::fromString(rel));
-}
+	proj->setSourcesDirectory(rel);
 
+	proj->saveSettings();
+	proj->refresh(DProject::Project);
+	m_buildConfiguration->emitConfigurationChanged(false);
+}
+/*void DBuildSettingsWidget::priorityValueChanged(int val)
+{
+	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
+	Q_ASSERT(proj);
+
+	proj->setCompilePriority(val);
+	emit m_buildConfiguration->configurationChanged();
+}
 void DBuildSettingsWidget::editsTextChanged()
 {
 	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
@@ -256,15 +184,21 @@ void DBuildSettingsWidget::editsTextChanged()
 	proj->setIncludes(editIncludes->text());
 	proj->setLibraries(editLibs->text());
 	proj->setExtraArgs(editExtra->text());
-	m_buildConfiguration->configurationChanged();
-}
+	emit m_buildConfiguration->configurationChanged();
+}*/
 void DBuildSettingsWidget::editsEditingFinished()
 {
-	QSettings sets(m_buildConfiguration->target()->project()->projectFilePath().toString(),
-																QSettings::IniFormat);
-	sets.setValue(QLatin1String(Constants::INI_INCLUDES_KEY), editIncludes->text());
-	sets.setValue(QLatin1String(Constants::INI_LIBRARIES_KEY), editLibs->text());
-	sets.setValue(QLatin1String(Constants::INI_EXTRA_ARGS_KEY), editExtra->text());
-	sets.sync();
+	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
+	Q_ASSERT(proj);
+
+	proj->setIncludes(editIncludes->text());
+	proj->setLibraries(editLibs->text());
+	proj->setExtraArgs(editExtra->text());
+	proj->setCompilePriority(editPriority->value());
+
+	proj->saveSettings();
+	proj->refresh(DProject::Project);
+	m_buildConfiguration->emitConfigurationChanged(QObject::sender() == editPriority);
 }
+
 } // namespace DProjectManager

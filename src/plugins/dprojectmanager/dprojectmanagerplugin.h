@@ -5,15 +5,7 @@
 
 #include <extensionsystem/iplugin.h>
 
-namespace ProjectExplorer
-{
-	class Project;
-	class Node;
-}
-
 namespace DProjectManager {
-
-class ProjectFilesFactory;
 
 class DProjectManagerPlugin : public ExtensionSystem::IPlugin
 {
@@ -22,11 +14,10 @@ class DProjectManagerPlugin : public ExtensionSystem::IPlugin
 
 public:
 	DProjectManagerPlugin();
-	~DProjectManagerPlugin();
+	~DProjectManagerPlugin() override;
 
-	bool initialize(const QStringList &arguments, QString *errorString);
-	void extensionsInitialized();
-	ShutdownFlag aboutToShutdown();
+	bool initialize(const QStringList &arguments, QString *errorString) override;
+	void extensionsInitialized() override;
 };
 
 } // namespace DProjectManager

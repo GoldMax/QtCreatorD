@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
+		<mime-type type="text/x-dproject-group">
+				<sub-class-of type="text/plain"/>
+				<comment>Qt Creator D language projects group file</comment>
+				<glob pattern="*.qcdg"/>
+		</mime-type>
+
+</mime-info>

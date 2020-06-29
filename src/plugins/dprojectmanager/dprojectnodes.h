@@ -1,46 +1,55 @@
 #ifndef DPROJECTNODE_H
 #define DPROJECTNODE_H
 
-#include <projectexplorer/projectnodes.h>
+#include "dprojectmanager/dproject.h"
 
-#include <QStringList>
-#include <QHash>
-#include <QSet>
+#include <projectexplorer/projectnodes.h>
 
 namespace Core
 {
 class IDocument;
 }
 
+using namespace ProjectExplorer;
+
 namespace DProjectManager {
 
 class DProject;
+class DProjectGroup;
 
 class DProjectNode : public ProjectExplorer::ProjectNode
 {
 public:
- DProjectNode(DProject *project, Core::IDocument *projectFile);
+	DProjectNode(DProject* project);
 
- Core::IDocument *projectFile() const;
+	bool canAddSubProject(const QString &) const override { return false; }
+	bool addSubProject(const QString &) override { return false; }
+	bool removeSubProject(const QString &) override { return false; }
 
- bool hasBuildTargets() const { return true; }
- bool canAddSubProject(const QString &) const { return false; }
- bool addSubProjects(const QStringList &) { return false; }
- bool removeSubProjects(const QStringList &) { return false; }
-
- bool addFiles(const QStringList &filePaths, QStringList *notAdded = 0);
- bool removeFiles(const QStringList &filePaths, QStringList *notRemoved = 0);
- bool deleteFiles(const QStringList &) { return false; }
- bool renameFile(const QString &filePath, const QString &newFilePath);
-
- QList<ProjectExplorer::ProjectAction> supportedActions(Node *node) const;
- QList<ProjectExplorer::RunConfiguration *> runConfigurationsFor(Node *node);
-
-	void refresh(bool needRebuild);
+	bool supportsAction(ProjectExplorer::ProjectAction action, const Node *) const override;
+	bool addFiles(const QStringList &filePaths, QStringList *notAdded = nullptr) override;
+	RemovedFilesFromProject removeFiles(const QStringList &filePaths, QStringList *notRemoved = nullptr) override;
+	bool deleteFiles(const QStringList &) override { return false; }
+	bool canRenameFile(const QString &, const QString &) override { return true; }
+	bool renameFile(const QString &filePath, const QString &newFilePath) override;
 
 private:
- DProject *m_project;
- Core::IDocument *m_projectFile;
+	DProject *m_project;
+};
+
+class DProjectGroupNode : public ProjectExplorer::ProjectNode
+{
+public:
+	DProjectGroupNode(DProjectGroup* project);
+
+	bool supportsAction(ProjectExplorer::ProjectAction action, const Node *) const override;
+	bool canAddSubProject(const QString &) const override;
+	QStringList subProjectFileNamePatterns() const override;
+	bool addSubProject(const QString &) override ;
+	bool removeSubProject(const QString &) override ;
+
+private:
+	DProjectGroup *m_project;
 };
 
 } // namespace DProjectManager

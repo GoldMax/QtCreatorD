@@ -1,19 +1,19 @@
 #include "dhoverhandler.h"
-#include "deditorfactory.h"
+
+#include <texteditor/texteditor.h>
+#include <texteditor/basehoverhandler.h>
 
 using namespace DEditor;
 
 DHoverHandler::DHoverHandler() : BaseHoverHandler()
-{}
-
-void DHoverHandler::identifyMatch(TextEditor::TextEditorWidget* editorWidget, int pos)
 {
-	if (!editorWidget->extraSelectionTooltip(pos).isEmpty())
-		setToolTip(editorWidget->extraSelectionTooltip(pos));
+
 }
 
-void DHoverHandler::decorateToolTip()
+void DHoverHandler::identifyMatch(TextEditor::TextEditorWidget *editorWidget, int pos,
+																																		BaseHoverHandler::ReportPriority report)
 {
-	if (Qt::mightBeRichText(toolTip()))
-		setToolTip(toolTip().toHtmlEscaped());
+	BaseHoverHandler::identifyMatch(editorWidget, pos, report);
+
 }
+

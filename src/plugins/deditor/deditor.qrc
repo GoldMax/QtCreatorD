@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/deditor">
-        <file>DEditor.mimetypes.xml</file>
         <file>images/d.png</file>
         <file>images/di.png</file>
         <file>images/class.png</file>

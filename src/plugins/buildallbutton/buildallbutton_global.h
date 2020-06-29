@@ -1,5 +1,5 @@
-#ifndef BUILDALLBUTTON_GLOBAL_H
-#define BUILDALLBUTTON_GLOBAL_H
+#pragma once
+
 
 #include <QtGlobal>
 
@@ -9,5 +9,4 @@
 #  define BUILDALLBUTTONSHARED_EXPORT Q_DECL_IMPORT
 #endif
 
-#endif // BUILDALLBUTTON_GLOBAL_H
 

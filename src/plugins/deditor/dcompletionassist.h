@@ -8,6 +8,7 @@
 #include <texteditor/codeassist/ifunctionhintproposalmodel.h>
 #include <texteditor/snippets/snippetassistcollector.h>
 
+#include <QObject>
 #include <QScopedPointer>
 #include <QIcon>
 
@@ -27,7 +28,9 @@ class DCompletionAssistProvider : public CompletionAssistProvider
 {
 	Q_OBJECT
 public:
-	bool supportsEditor(Core::Id editorId) const override;
+	DCompletionAssistProvider(QObject *parent = nullptr);
+
+	bool supportsEditor(Core::Id editorId) const;
 	IAssistProcessor* createProcessor() const override;
 
 	int activationCharSequenceLength() const override;
@@ -52,7 +55,7 @@ private:
 
 	int m_startPosition;
 	QScopedPointer<const DCompletionAssistInterface> m_interface;
- QList<TextEditor::AssistProposalItemInterface *> m_completions;
+	QList<TextEditor::AssistProposalItemInterface *> m_completions;
 
 	QIcon i_ClassName, i_InterfaceName, i_StructName, i_UnionName,
 	i_VariableName, i_MemberVariableName, i_Keyword, i_FunctionName,
@@ -65,7 +68,7 @@ private:
 class DFunctionHintProposalModel : public TextEditor::IFunctionHintProposalModel
 {
 public:
- DFunctionHintProposalModel(const QList<AssistProposalItemInterface *> items) :
+	DFunctionHintProposalModel(const QList<AssistProposalItemInterface *> items) :
 			m_items(items),	m_currentArg(-1)
 	{
 	}
@@ -76,7 +79,7 @@ public:
 	virtual int activeArgument(const QString &prefix) const;
 
 private:
- const QList<AssistProposalItemInterface *> m_items;
+	const QList<AssistProposalItemInterface *> m_items;
 	mutable int m_currentArg;
 };
 

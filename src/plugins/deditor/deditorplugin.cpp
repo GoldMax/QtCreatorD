@@ -1,69 +1,101 @@
-#include "deditorconstants.h"
 #include "deditorplugin.h"
-#include "deditorfactory.h"
+#include "deditorconstants.h"
+#include "deditor.h"
+#include "deditordocument.h"
 #include "dfilewizard.h"
-#include "dhoverhandler.h"
 #include "dcompletionassist.h"
-#include "deditorhighlighter.h"
-#include "dsnippetprovider.h"
+#include "dindenter.h"
+#include "dautocompleter.h"
+#include "dhoverhandler.h"
 #include "qcdassist.h"
 
 #include <coreplugin/icore.h>
-#include <coreplugin/icontext.h>
 #include <coreplugin/coreconstants.h>
-#include <coreplugin/actionmanager/actionmanager.h>
-#include <coreplugin/actionmanager/command.h>
-#include <coreplugin/actionmanager/actioncontainer.h>
-#include <coreplugin/coreconstants.h>
-//#include <coreplugin/mimedatabase.h>
-#include <coreplugin/id.h>
 #include <coreplugin/fileiconprovider.h>
-#include <utils/qtcassert.h>
-//#include <texteditor/generichighlighter/manager.h>
-#include <utils/mimetypes/mimedatabase.h>
+#include <coreplugin/actionmanager/actionmanager.h>
+#include <coreplugin/actionmanager/actioncontainer.h>
+#include <coreplugin/actionmanager/command.h>
 
-#include <QAction>
-#include <QMessageBox>
-#include <QMainWindow>
-#include <QMenu>
-#include <QtPlugin>
+#include <texteditor/texteditorconstants.h>
+#include <texteditor/texteditor.h>
+#include <texteditor/textdocument.h>
+#include <texteditor/texteditoractionhandler.h>
+#include <texteditor/snippets/snippetprovider.h>
+
 #include <QCoreApplication>
-#include <QShortcut>
+#include <QAction>
+#include <QMenu>
+#include <QList>
 
 using namespace Core;
 using namespace TextEditor;
-using namespace TextEditor::Internal;
-
 using namespace DEditor;
 
-DEditorPlugin* DEditorPlugin::m_instance = 0;
+namespace DEditor
+{
+	//---- DEditorFactory ----------------------------
+	class DEditorFactory : public TextEditorFactory
+	{
+	public:
+		DEditorFactory()
+		{
+			setId(DEditor::Constants::C_DEDITOR_ID);
+			setDisplayName(QCoreApplication::translate("OpenWith::Editors",
+																																		DEditor::Constants::C_DEDITOR_DISPLAY_NAME));
+			addMimeType(DEditor::Constants::D_MIMETYPE_SRC);
+			addMimeType(DEditor::Constants::D_MIMETYPE_HDR);
+
+
+			setDocumentCreator([]() { return new DEditorDocument; });
+			setEditorCreator([]() { return new DTextEditor; });
+			setEditorWidgetCreator([]() { return new DEditorWidget; });
+			setCommentDefinition(Utils::CommentDefinition::CppStyle);
+			setCodeFoldingSupported(true);
+			setParenthesesMatchingEnabled(true);
+			setMarksVisible(true);
+
+			setIndenterCreator([](QTextDocument * d) { return new DIndenter(d); });
+			setCompletionAssistProvider(new DCompletionAssistProvider);
+			setAutoCompleterCreator([]() { return new DAutoCompleter; });
+
+			setEditorActionHandlers(TextEditorActionHandler::Format
+																									| TextEditorActionHandler::UnCommentSelection
+																									| TextEditorActionHandler::UnCollapseAll
+																									| TextEditorActionHandler::FollowSymbolUnderCursor);
+
+			addHoverHandler(new DHoverHandler);
+		}
+	};
+
+	//--- DEditorPluginPrivate -----------------------
+	class DEditorPluginPrivate : public QObject
+	{
+	public:
+		DEditorFactory m_editorFactory;
+	};
+}
+
+DEditorPlugin* DEditorPlugin::m_instance = nullptr;
 
 DEditorPlugin::DEditorPlugin()
 {
-	QTC_ASSERT(!m_instance, return);
 	m_instance = this;
 }
 DEditorPlugin::~DEditorPlugin()
 {
-	m_instance = NULL;
+	delete d;
+	d = nullptr;
+	m_instance = nullptr;
 }
 
 bool DEditorPlugin::initialize(const QStringList &arguments, QString *errorString)
 {
-	// Register objects in the plugin manager's object pool
-	// Load settings
-	// Add actions to menus
-	// Connect to other plugins' signals
-	// In the initialize method, a plugin can be sure that the plugins it
-	// depends on have initialized their members.
-
 	Q_UNUSED(arguments)
 
-	Utils::MimeDatabase::addMimeTypes(QLatin1String(":/deditor/DEditor.mimetypes.xml"));
+	d = new DEditorPluginPrivate;
 
-	addAutoReleasedObject(new DEditorFactory);
-	addAutoReleasedObject(new DCompletionAssistProvider);
-	addAutoReleasedObject(new DSnippetProvider);
+	SnippetProvider::registerGroup(Constants::D_SNIPPETS_GROUP_ID, tr("D", "SnippetProvider"),
+																																&DTextEditor::decorateEditor);
 
 	IWizardFactory::registerFactoryCreator([]()
 	{

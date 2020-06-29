@@ -1,24 +1,25 @@
-#ifndef DEDITORHIGHLIGHTER_H
-#define DEDITORHIGHLIGHTER_H
+#pragma once
 
 #include "deditorconstants.h"
 
 #include <texteditor/syntaxhighlighter.h>
-#include <cplusplus/Token.h>
 #include <cplusplus/SimpleLexer.h>
-
+#include <cplusplus/Token.h>
 
 namespace DEditor {
 
-class DEditorHighlighter : public TextEditor::SyntaxHighlighter
+class DHighlighter : public TextEditor::SyntaxHighlighter
 {
 	Q_OBJECT
 
 public:
-	DEditorHighlighter();
+	DHighlighter();
+
+	void setLanguageFeatures(const CPlusPlus::LanguageFeatures &languageFeatures);
+	void highlightBlock(const QString &text);
+
 
 protected:
-	void highlightBlock(const QString &text);
 	void highlightLine(const QString &line, int position, int length,
 																				const QTextCharFormat &format);
 	void highlightWord(QStringRef word, int position, int length);
@@ -27,10 +28,10 @@ protected:
 																														int length);
 
 private:
+	CPlusPlus::LanguageFeatures m_languageFeatures = CPlusPlus::LanguageFeatures::defaultFeatures();
 	bool isPPKeyword(const QStringRef &text) const;
 	void correctTokens(CPlusPlus::Tokens& tokens, const QString& text);
 };
 
 } // namespace DEditor
 
-#endif // DEDITORHIGHLIGHTER_H

@@ -16,149 +16,73 @@ using namespace ProjectExplorer;
 
 namespace DProjectManager {
 
-DProjectNode::DProjectNode(DProject *project, Core::IDocument *projectFile)
-	: ProjectNode(projectFile->filePath()), m_project(project), m_projectFile(projectFile)
+DProjectNode::DProjectNode(DProject* project)
+	: ProjectNode(project->projectFilePath()),
+			m_project(project)
 {
-	static uint count = 0;
-	setDisplayName(projectFile->filePath().toFileInfo().completeBaseName());
- setAbsoluteFilePathAndLine(projectFile->filePath(),++count);
+	static int count = 0;
+	setDisplayName(project->projectFilePath().toFileInfo().completeBaseName());
+	setIcon(QIcon(QLatin1String(Constants::ICON_DPROJECT)));
+	setAbsoluteFilePathAndLine(project->projectFilePath(),++count);
+	setShowWhenEmpty(true);
 }
-
-Core::IDocument *DProjectNode::projectFile() const
+bool DProjectNode::supportsAction(ProjectExplorer::ProjectAction action, const Node *) const
 {
-	return m_projectFile;
+	return action == AddNewFile
+			|| action == AddExistingFile
+			|| action == RemoveFile
+			|| action == Rename;
 }
-
 bool DProjectNode::addFiles(const QStringList &filePaths, QStringList *notAdded)
 {
 	Q_UNUSED(notAdded)
 	return m_project->addFiles(filePaths);
 }
-
-bool DProjectNode::removeFiles(const QStringList &filePaths, QStringList *notRemoved)
+RemovedFilesFromProject DProjectNode::removeFiles(const QStringList &filePaths, QStringList *notRemoved)
 {
 	Q_UNUSED(notRemoved)
 	m_project->removeFiles(filePaths);
-	refresh(false);
-	return true;
+	return RemovedFilesFromProject::Ok;
 }
-
 bool DProjectNode::renameFile(const QString &filePath, const QString &newFilePath)
 {
 	return m_project->renameFile(filePath, newFilePath);
 }
 
-QList<ProjectAction> DProjectNode::supportedActions(Node *node) const
+//--- DProjectGroupNode ---------------------
+
+DProjectGroupNode::DProjectGroupNode(DProjectGroup* project)
+	: ProjectNode(project->projectFilePath())
+	, m_project(project)
 {
-	Q_UNUSED(node);
-	return QList<ProjectAction>()
-			<< AddNewFile
-			<< AddExistingFile
-			<< RemoveFile
-			<< Rename;
+	//static int count = 0;
+	setDisplayName(project->projectFilePath().toFileInfo().completeBaseName());
+	setIcon(QIcon(QLatin1String(Constants::ICON_DPROJECTGROUP)));
+	setAbsoluteFilePathAndLine(project->projectFilePath(),0);
+	setShowWhenEmpty(true);
 }
-
-QList<RunConfiguration *> DProjectNode::runConfigurationsFor(Node *node)
+bool DProjectGroupNode::supportsAction(ProjectExplorer::ProjectAction action, const Node *) const
 {
-	Q_UNUSED(node)
-	return QList<RunConfiguration *>();
+	return
+						action == InheritedFromParent
+			|| action == AddSubProject
+			|| action == AddExistingProject
+			|| action == RemoveSubProject
+			;
+
 }
-
-bool isEmpty(FolderNode* f)
+bool DProjectGroupNode::canAddSubProject(const QString &) const { return true; }
+QStringList DProjectGroupNode::subProjectFileNamePatterns() const
 {
-	return f->fileNodes().length() + f->subFolderNodes().length() == 0;
+	return QStringList() << "*.qcd";
 }
-
-void DProjectNode::refresh(bool needRebuild)
+bool DProjectGroupNode::addSubProject(const QString &projFilePath)
 {
-	if(needRebuild)
-	{
-		this->removeFileNodes(this->fileNodes());
-		this->removeFolderNodes(this->subFolderNodes());
-	}
-
-	const QHash<QString,QString>& files = m_project->files();
-
-	QHash<QString,FileNode*> nodes;
-	QStack<FolderNode*> stack;
-	stack.push(this);
-	while(stack.count() > 0)
-	{
-		FolderNode* n = stack.pop();
-		foreach(FileNode* i, n->fileNodes())
-   nodes[i->filePath().toString()] = i;
-		foreach(FolderNode* i, n->subFolderNodes())
-			stack.push(i);
-	}
-
-	// adding
-	typedef QHash<QString,QString>::ConstIterator FilesKeyValue;
-	for (FilesKeyValue kv = files.constBegin(); kv != files.constEnd(); ++kv)
-	{
-		if(nodes.contains(kv.key()))
-			continue;
-		FolderNode* folder = this;
-		QStringList parts = kv.value().split(QDir::separator());
-		QString absFolderPath = m_project->buildDirectory().path();
-		parts.pop_back();
-		foreach(QString part, parts)
-		{
-			FolderNode* fn = 0;
-			absFolderPath.append(QDir::separator()).append(part);
-
-			foreach(FolderNode* f, folder->subFolderNodes())
-				if(f->displayName() == part)
-				{
-					fn = f;
-					break;
-				}
-			if(fn == 0)
-			{
-				QList<FolderNode*> list;
-				list.append(fn = new FolderNode(Utils::FileName::fromString(absFolderPath)));
-				fn->setDisplayName(part);
-				folder->addFolderNodes(list);
-			}
-			folder = fn;
-		}
-		FileNode* node = 0;
-		foreach(FileNode* n, folder->fileNodes())
-   if(n->filePath().toString() == kv.key())
-			{
-				node = n;
-				break;
-			}
-		if(node == 0)
-		{
-			QList<FileNode*> list;
-			list.append(new FileNode(Utils::FileName::fromString(kv.key()), SourceType, false));
-			folder->addFileNodes(list);
-		}
-	}
-
-	// removing
-	typedef QHash<QString, FileNode*>::Iterator KeyValue;
-	for (KeyValue kv = nodes.begin(); kv != nodes.end(); ++kv)
-	{
-		if(files.contains(kv.key()))
-			continue;
-		QList<FileNode*> list;
-		list.append(kv.value());
-		FolderNode* parent = kv.value()->parentFolderNode();
-		parent->removeFileNodes(list);
-
-		while(parent != this)
-			if(isEmpty(parent))
-			{
-				FolderNode* p = parent->parentFolderNode();
-				QList<FolderNode*> list;
-				list.append(parent);
-				p->removeFolderNodes(list);
-				parent = p;
-			}
-		else
-				break;
-	}
+	return m_project->addSubProject(projFilePath);
+}
+bool DProjectGroupNode::removeSubProject(const QString &)
+{
+	return false;
 }
 
 } // namespace DProjectManager

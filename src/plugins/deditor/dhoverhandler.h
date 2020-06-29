@@ -7,13 +7,13 @@ namespace DEditor {
 
 class DHoverHandler : public TextEditor::BaseHoverHandler
 {
-	Q_OBJECT
 public:
 	DHoverHandler();
 
 private:
-	virtual void identifyMatch(TextEditor::TextEditorWidget *editorWidget, int pos);
-	virtual void decorateToolTip();
+	void identifyMatch(TextEditor::TextEditorWidget *editorWidget,
+																				int pos,
+																				BaseHoverHandler::ReportPriority report) override;
 };
 
 } // namespace DEditor

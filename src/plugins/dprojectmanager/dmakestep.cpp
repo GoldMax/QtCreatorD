@@ -5,67 +5,43 @@
 #include "dbuildconfiguration.h"
 #include "drunconfiguration.h"
 
-#include <extensionsystem/pluginmanager.h>
-#include <projectexplorer/buildsteplist.h>
-#include <projectexplorer/gnumakeparser.h>
-#include <projectexplorer/kitinformation.h>
 #include <projectexplorer/projectexplorer.h>
 #include <projectexplorer/projectexplorerconstants.h>
+#include <projectexplorer/project.h>
+#include <projectexplorer/target.h>
+#include <projectexplorer/taskhub.h>
+#include <projectexplorer/abi.h>
+#include <projectexplorer/buildsteplist.h>
+#include <projectexplorer/buildconfiguration.h>
+#include <projectexplorer/abstractprocessstep.h>
+#include <projectexplorer/processparameters.h>
+#include <projectexplorer/gnumakeparser.h>
+#include <projectexplorer/kitinformation.h>
 #include <projectexplorer/toolchain.h>
-#include <qtsupport/qtkitinformation.h>
-#include <qtsupport/qtparser.h>
-#include <utils/stringutils.h>
-#include <utils/qtcassert.h>
 #include <utils/qtcprocess.h>
 
-#include <QSettings>
-
-using namespace Core;
 using namespace ProjectExplorer;
 using namespace DProjectManager;
 
 namespace DProjectManager {
 
 DMakeStep::DMakeStep(BuildStepList *parent) :
-		AbstractProcessStep(parent, Id(Constants::D_MS_ID)),
+		AbstractProcessStep(parent, Core::Id(Constants::D_MS_ID)),
 		m_targetType(Executable), m_buildPreset(Debug)
 {
-	ctor();
-}
+	setDefaultDisplayName(QLatin1String(Constants::D_MS_DISPLAY_NAME));
 
-DMakeStep::DMakeStep(BuildStepList *parent, const Id id) :
-		AbstractProcessStep(parent, id),
-		m_targetType(Executable), m_buildPreset(Debug)
-{
-	ctor();
-}
-
-DMakeStep::DMakeStep(BuildStepList *parent, DMakeStep *bs) :
-		AbstractProcessStep(parent, bs),
-		m_targetType(bs->m_targetType),
-		m_buildPreset(bs->m_buildPreset),
-		m_makeArguments(bs->m_makeArguments),
-		m_targetName(bs->m_targetName),
-		m_targetDirName(bs->m_targetDirName),
-		m_objDirName(bs->m_objDirName)
-{
-	ctor();
-}
-
-void DMakeStep::ctor()
-{
-	setDefaultDisplayName(QCoreApplication::translate("DProjectManager::Internal::DMakeStep",
-																																																			Constants::D_MS_DISPLAY_NAME));
-
-	if(m_targetName.length() == 0)
-		m_targetName =  project()->displayName();
+	m_targetName = project()->displayName();
 
 	QString bname = this->buildConfiguration()->displayName().toLower();
-	QString sep(QDir::separator());
+	// this->buildConfiguration()->displayName() может быть пустым,
+	// так как имя еще может быть не установлено
+	if(bname.length() == 0)
+		bname = "debug";
 	if(m_targetDirName.length() == 0)
-		m_targetDirName = QLatin1String("bin") + sep + bname;
+		m_targetDirName = QLatin1String("bin") + QDir::separator() + bname;
 	if(m_objDirName.length() == 0)
-		m_objDirName = QLatin1String("obj") + sep + bname;
+		m_objDirName = QLatin1String("obj") + QDir::separator() + bname;
 
 	if(m_makeArguments.length() == 0)
 	{
@@ -73,44 +49,6 @@ void DMakeStep::ctor()
 		if(abi.wordWidth() == 64)
 			m_makeArguments = QLatin1String("-m64");
 	}
-}
-
-DMakeStep::~DMakeStep() { }
-
-bool DMakeStep::init(QList<const BuildStep *> &earlierSteps)
-{
-	BuildConfiguration *bc = buildConfiguration();
-	if (!bc)
-		bc = target()->activeBuildConfiguration();
-
-	m_tasks.clear();
-	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit(), ToolChain::Language::Cxx);
-	if (!tc) {
-		m_tasks.append(Task(Task::Error, tr("Qt Creator needs a compiler set up to build. Configure a compiler in the kit options."),
-																						Utils::FileName(), -1,
-																						Core::Id(ProjectExplorer::Constants::TASK_CATEGORY_BUILDSYSTEM)));
-		return true; // otherwise the tasks will not get reported
-	}
-
-	ProcessParameters *pp = processParameters();
-	pp->setMacroExpander(bc->macroExpander());
-	pp->setWorkingDirectory(bc->buildDirectory().toString());
-	Utils::Environment env = bc->environment();
-	// Force output to english for the parsers. Do this here and not in the toolchain's
-	// addToEnvironment() to not screw up the users run environment.
-	env.set(QLatin1String("LC_ALL"), QLatin1String("C"));
-	pp->setEnvironment(env);
-	pp->setCommand(makeCommand(bc->environment()));
-	pp->setArguments(allArguments());
-	pp->resolveAll();
-
-	setOutputParser(new GnuMakeParser());
-	IOutputParser *parser = target()->kit()->createOutputParser();
-	if (parser)
-		appendOutputParser(parser);
-	outputParser()->setWorkingDirectory(pp->effectiveWorkingDirectory());
-
- return AbstractProcessStep::init(earlierSteps);
 }
 
 QVariantMap DMakeStep::toMap() const
@@ -124,31 +62,62 @@ QVariantMap DMakeStep::toMap() const
 	map.insert(QLatin1String(Constants::INI_MAKE_ARGUMENTS_KEY), m_makeArguments);
 	return map;
 }
-
 bool DMakeStep::fromMap(const QVariantMap &map)
 {
-	m_targetType = (TargetType)map.value(QLatin1String(Constants::INI_TARGET_TYPE_KEY)).toInt();
-	m_buildPreset = (BuildPreset)map.value(QLatin1String(Constants::INI_BUILD_PRESET_KEY)).toInt();
+	m_targetType =
+			static_cast<TargetType>(map.value(QLatin1String(Constants::INI_TARGET_TYPE_KEY)).toInt());
+	m_buildPreset =
+			static_cast<BuildPreset>(map.value(QLatin1String(Constants::INI_BUILD_PRESET_KEY)).toInt());
 	m_targetName = map.value(QLatin1String(Constants::INI_TARGET_NAME_KEY)).toString();
 	m_targetDirName = map.value(QLatin1String(Constants::INI_TARGET_DIRNAME_KEY)).toString();
 	m_objDirName = map.value(QLatin1String(Constants::INI_OBJ_DIRNAME_KEY)).toString();
 	m_makeArguments = map.value(QLatin1String(Constants::INI_MAKE_ARGUMENTS_KEY)).toString();
 	return BuildStep::fromMap(map);
 }
-
-QString DMakeStep::makeCommand(const Utils::Environment &environment) const
+BuildStepConfigWidget *DMakeStep::createConfigWidget()
 {
-	ToolChain *tc = ToolChainKitInformation::toolChain(target()->kit(), ToolChain::Language::Cxx);
-	if (tc)
-		return tc->makeCommand(environment);
-	else
-		return QLatin1String("dmd");
+	return new DMakeStepConfigWidget(this);
 }
 
+Utils::FilePath DMakeStep::makeCommand() const
+{
+	BuildConfiguration *bc = buildConfiguration();
+	if (!bc)
+		bc = target()->activeBuildConfiguration();
+	if (!bc)
+		return {};
+	const Utils::Environment env = bc->environment();
+
+	for (const ToolChain *tc :  ToolChainKitAspect::toolChains(target()->kit()))
+	{
+		Utils::FilePath make = tc->makeCommand(env);
+		if (!make.isEmpty())
+			return make;
+	}
+	return Utils::FilePath::fromString("dmd");
+}
+QString DMakeStep::outFileName() const
+{
+	QString outName = m_targetName;
+	if(m_targetType > 0)
+	{
+		QString fix = QLatin1String("lib");
+		if(outName.startsWith(fix) == false)
+			outName = fix + outName;
+
+		if(m_targetType == StaticLibrary)
+				fix = QLatin1String(".a");
+		else if(m_targetType == SharedLibrary)
+			fix = QLatin1String(".so");
+
+		if(outName.endsWith(fix) == false)
+			outName.append(fix);
+	}
+
+	return outName;
+}
 QString DMakeStep::allArguments() const
 {
-	QString bname = this->buildConfiguration()->displayName().toLower();
-
 	QString args;
 
 	if(m_buildPreset == Debug)
@@ -196,6 +165,8 @@ QString DMakeStep::allArguments() const
 			Utils::QtcProcess::addArgs(&args, QLatin1String("-L-l") + s);
 	}
 	// Includes
+	if(proj->sourcesDirectory() != ".")
+		Utils::QtcProcess::addArgs(&args, QLatin1String("-I./") + proj->sourcesDirectory());
 	QStringList incs = proj->includes().split(QLatin1Char(' '), QString::SkipEmptyParts);
 	foreach(QString s, incs)
 	{
@@ -213,52 +184,50 @@ QString DMakeStep::allArguments() const
 	static QLatin1String dotdi(".di");
 	static QLatin1String space(" ");
 	QString srcs = QLatin1String(" ");
-	const QHash<QString,QString>& files = static_cast<DProject*>(project())->files();
-	foreach(QString file, files.values())
+	for(QString file : static_cast<DProject*>(project())->files())
 		if(file.endsWith(dotd) || file.endsWith(dotdi))
 			srcs.append(file).append(space);
 	Utils::QtcProcess::addArgs(&args, srcs);
 	return args;
 }
 
-QString DMakeStep::outFileName() const
+bool DMakeStep::init()
 {
-	QString outName = m_targetName;
-	if(m_targetType > 0)
+	const auto bc = static_cast<DBuildConfiguration *>(buildConfiguration());
+	if(!bc)
+		emit addTask(Task::buildConfigurationMissingTask());
+
+	Utils::CommandLine cmd = Utils::CommandLine(makeCommand());
+	if(cmd.executable().isEmpty())
+		emit addTask(Task::compilerMissingTask());
+
+	if(!bc || cmd.executable().isEmpty())
 	{
-		QString fix = QLatin1String("lib");
-		if(outName.startsWith(fix) == false)
-			outName = fix + outName;
-
-		if(m_targetType == StaticLibrary)
-				fix = QLatin1String(".a");
-		else if(m_targetType == SharedLibrary)
-			fix = QLatin1String(".so");
-
-		if(outName.endsWith(fix) == false)
-			outName.append(fix);
+		emitFaultyConfigurationMessage();
+		return false;
 	}
 
-	return outName;
+	ProcessParameters *pp = processParameters();
+	pp->setMacroExpander(bc->macroExpander());
+	pp->setWorkingDirectory(bc->buildDirectory());
+	pp->setEnvironment(bc->environment());
+	cmd.addArgs(allArguments(), Utils::CommandLine::RawType::Raw);
+	pp->setCommandLine(cmd);
+	pp->resolveAll();
+
+	setOutputParser(new ProjectExplorer::GnuMakeParser());
+	IOutputParser *parser = target()->kit()->createOutputParser();
+	if (parser)
+		appendOutputParser(parser);
+	outputParser()->setWorkingDirectory(pp->effectiveWorkingDirectory());
+
+	return AbstractProcessStep::init();
+}
+void DMakeStep::doRun()
+{
+	AbstractProcessStep::doRun();
 }
 
-void DMakeStep::run(QFutureInterface<bool> &fi)
-{
-	bool canContinue = true;
-	foreach (const Task &t, m_tasks)
-	{
-		addTask(t);
-		canContinue = false;
-	}
-	if (!canContinue)
-	{
-		emit addOutput(tr("Configuration is faulty. Check the Issues view for details."), BuildStep::MessageOutput);
-		fi.reportResult(false);
-  //emit finished();
-		return;
-	}
-	AbstractProcessStep::run(fi);
-}
 QString ddemangle(const QString& line)
 {
 	QString res = line;
@@ -301,14 +270,14 @@ void DMakeStep::stdError(const QString &line)
 	AbstractProcessStep::stdError(res);
 }
 
-BuildStepConfigWidget *DMakeStep::createConfigWidget()
+////-------------------------------------------------------------------------
+////-- DMakeStepFactory
+////-------------------------------------------------------------------------
+DMakeStepFactory::DMakeStepFactory()
 {
-	return new DMakeStepConfigWidget(this);
-}
-
-bool DMakeStep::immutable() const
-{
-	return false;
+	registerStep<DMakeStep>(Constants::D_MS_ID);
+	setDisplayName(QLatin1String(Constants::D_MS_DISPLAY_NAME)); //MakeStep::defaultDisplayName());
+	setSupportedProjectType(Constants::DPROJECT_ID);
 }
 
 //-------------------------------------------------------------------------
@@ -316,9 +285,11 @@ bool DMakeStep::immutable() const
 //-------------------------------------------------------------------------
 
 DMakeStepConfigWidget::DMakeStepConfigWidget(DMakeStep *makeStep)
-	: m_makeStep(makeStep)
+	: BuildStepConfigWidget(makeStep)
+			, m_makeStep(makeStep)
 {
-	Project *pro = m_makeStep->target()->project();
+	setDisplayName("D make");
+
 	m_ui = new DProjectManager::Ui::DMakeStepUi;
 	m_ui->setupUi(this);
 
@@ -331,8 +302,8 @@ DMakeStepConfigWidget::DMakeStepConfigWidget(DMakeStep *makeStep)
 	m_ui->buildPresetComboBox->addItem(QLatin1String("Unittest"));
 	m_ui->buildPresetComboBox->addItem(QLatin1String("None"));
 
-	m_ui->targetTypeComboBox->setCurrentIndex((int)m_makeStep->m_targetType);
-	m_ui->buildPresetComboBox->setCurrentIndex((int)m_makeStep->m_buildPreset);
+	m_ui->targetTypeComboBox->setCurrentIndex(static_cast<int>(m_makeStep->m_targetType));
+	m_ui->buildPresetComboBox->setCurrentIndex(static_cast<int>(m_makeStep->m_buildPreset));
 	m_ui->makeArgumentsLineEdit->setPlainText(m_makeStep->m_makeArguments);
 	m_ui->targetNameLineEdit->setText(m_makeStep->m_targetName);
 	m_ui->targetDirLineEdit->setText(m_makeStep->m_targetDirName);
@@ -355,8 +326,6 @@ DMakeStepConfigWidget::DMakeStepConfigWidget(DMakeStep *makeStep)
 
 	connect(ProjectExplorerPlugin::instance(), SIGNAL(settingsChanged()),
 									this, SLOT(updateDetails()));
-	connect(pro, SIGNAL(environmentChanged()),
-									this, SLOT(updateDetails()));
 	connect(m_makeStep->buildConfiguration(), SIGNAL(buildDirectoryChanged()),
 									this, SLOT(updateDetails()));
 	connect(m_makeStep->buildConfiguration(), SIGNAL(configurationChanged()),
@@ -368,11 +337,6 @@ DMakeStepConfigWidget::~DMakeStepConfigWidget()
 	delete m_ui;
 }
 
-QString DMakeStepConfigWidget::displayName() const
-{
-	return tr("Make", "D Makestep");
-}
-
 void DMakeStepConfigWidget::updateDetails()
 {
 	BuildConfiguration *bc = m_makeStep->buildConfiguration();
@@ -381,34 +345,30 @@ void DMakeStepConfigWidget::updateDetails()
 
 	ProcessParameters param;
 	param.setMacroExpander(bc->macroExpander());
-	param.setWorkingDirectory(bc->buildDirectory().toString());
+	param.setWorkingDirectory(bc->buildDirectory());
 	param.setEnvironment(bc->environment());
-	param.setCommand(m_makeStep->makeCommand(bc->environment()));
-	param.setArguments(m_makeStep->allArguments());
-	m_summaryText = param.summary(displayName());
+	Utils::CommandLine cmd = Utils::CommandLine(m_makeStep->makeCommand());
+	cmd.addArgs(m_makeStep->allArguments(), Utils::CommandLine::RawType::Raw);
+	param.setCommandLine(cmd);
+	this->setSummaryText(param.summary(displayName()));
 	emit updateSummary();
 
 	foreach(RunConfiguration* rc, m_makeStep->target()->runConfigurations())
 	{
 		DRunConfiguration * brc = dynamic_cast<DRunConfiguration *>(rc);
 		if(brc)
-   brc->updateConfig();
+			brc->updateConfig(m_makeStep);
 	}
-}
-
-QString DMakeStepConfigWidget::summaryText() const
-{
-	return m_summaryText;
 }
 
 void DMakeStepConfigWidget::targetTypeComboBoxSelectItem(int index)
 {
-	m_makeStep->m_targetType = (DMakeStep::TargetType)index;
+	m_makeStep->m_targetType = static_cast<DMakeStep::TargetType>(index);
 	updateDetails();
 }
 void DMakeStepConfigWidget::buildPresetComboBoxSelectItem(int index)
 {
-	m_makeStep->m_buildPreset = (DMakeStep::BuildPreset)index;
+	m_makeStep->m_buildPreset = static_cast<DMakeStep::BuildPreset>(index);
 	updateDetails();
 }
 void DMakeStepConfigWidget::makeArgumentsLineEditTextEdited()
@@ -432,83 +392,5 @@ void DMakeStepConfigWidget::objDirLineEditTextEdited()
 	updateDetails();
 }
 
-//--------------------------------------------------------------------------
-//-- DMakeStepFactory
-//--------------------------------------------------------------------------
-DMakeStepFactory::DMakeStepFactory(QObject *parent) :
-		IBuildStepFactory(parent)
-{
-}
-
-QList<BuildStepInfo> DMakeStepFactory::availableSteps(BuildStepList* parent) const
-{
- if (parent->target()->project()->id() != Constants::DPROJECT_ID)
-         return {};
-
-     return {{ Constants::D_MS_ID,
-               QCoreApplication::translate("DProjectManager::DMakeStep",
-               Constants::D_MS_DISPLAY_NAME) }};
-}
-
-bool DMakeStepFactory::canCreate(BuildStepList *parent, const Id id) const
-{
-	Core::Id idd = parent->target()->project()->id();
-	if (idd == Constants::DPROJECT_ID)
-		return id == Constants::D_MS_ID;
-	return false;
-}
-
-BuildStep *DMakeStepFactory::create(BuildStepList *parent, const Id id)
-{
-	if (!canCreate(parent, id))
-		return 0;
-	DMakeStep *step = new DMakeStep(parent);
-	return step;
-}
-
-bool DMakeStepFactory::canClone(BuildStepList *parent, BuildStep *source) const
-{
-	return canCreate(parent, source->id());
-}
-
-BuildStep *DMakeStepFactory::clone(BuildStepList *parent, BuildStep *source)
-{
-	if (!canClone(parent, source))
-		return 0;
-	DMakeStep *old(qobject_cast<DMakeStep *>(source));
-	Q_ASSERT(old);
-	return new DMakeStep(parent, old);
-}
-
-bool DMakeStepFactory::canRestore(BuildStepList *parent, const QVariantMap &map) const
-{
-	return canCreate(parent, idFromMap(map));
-}
-
-BuildStep *DMakeStepFactory::restore(BuildStepList *parent, const QVariantMap &map)
-{
-	if (!canRestore(parent, map))
-		return 0;
-	DMakeStep *bs(new DMakeStep(parent));
-	if (bs->fromMap(map))
-		return bs;
-	delete bs;
-	return 0;
-}
-
-QList<Id> DMakeStepFactory::availableCreationIds(BuildStepList *parent) const
-{
-	if (parent->target()->project()->id() == Constants::DPROJECT_ID)
-		return QList<Id>() << Id(Constants::D_MS_ID);
-	return QList<Id>();
-}
-
-QString DMakeStepFactory::displayNameForId(const Id id) const
-{
-	if (id == Constants::D_MS_ID)
-		return QCoreApplication::translate("DProjectManager::DMakeStep",
-																																					Constants::D_MS_DISPLAY_NAME);
-	return QString();
-}
 
 } // namespace DProjectManager

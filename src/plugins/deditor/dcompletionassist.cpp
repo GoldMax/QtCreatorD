@@ -1,6 +1,5 @@
 #include "deditorconstants.h"
 #include "dcompletionassist.h"
-#include "deditorplugin.h"
 #include "qcdassist.h"
 
 #include <coreplugin/idocument.h>
@@ -17,7 +16,6 @@
 
 using namespace DEditor;
 using namespace TextEditor;
-using namespace TextEditor::Internal;
 
 namespace // Anonymous
 {
@@ -69,8 +67,8 @@ QString prettyPrint(QString str, int currentArgument)
 	int left = str.indexOf(ob);
 	int right = str.lastIndexOf(cb);
 	int x=0,y,i;
-	Q_UNUSED(x);
-	Q_UNUSED(i);
+	Q_UNUSED(x)
+	Q_UNUSED(i)
 	for(int i = 0,x = y = left+1; y <= right-1; i++)
 	{
 		y = str.indexOf(QLatin1Char(','),y);
@@ -107,6 +105,12 @@ DCompletionAssistInterface::DCompletionAssistInterface(QTextDocument *textDocume
 // --------------------------------------------------------------------------------
 // DCompletionAssistProvider
 // --------------------------------------------------------------------------------
+DCompletionAssistProvider::DCompletionAssistProvider(QObject *parent) :
+		CompletionAssistProvider(parent)
+{
+
+}
+
 bool DCompletionAssistProvider::supportsEditor(Core::Id editorId) const
 {
 	return editorId == Constants::C_DEDITOR_ID;
@@ -188,16 +192,16 @@ IAssistProposal *DCompletionAssistProcessor::perform(const AssistInterface *inte
 	m_interface.reset(static_cast<const DCompletionAssistInterface *>(interface));
 
 	if(QcdAssist::isDCDEnabled() == false)
-		return 0;
+		return nullptr;
 
 	AssistReason reason = interface->reason();
 	int pos = interface->position();
 	if(pos == 0)
-		return 0;
+		return nullptr;
 
 	// просто по нажатию кнопки
 	if (reason == IdleEditor && !acceptsIdleEditor())
-		return 0;
+		return nullptr;
 	else if(reason == ExplicitlyInvoked)
 	{
 		if(isActivationChar(interface->characterAt(pos-1)))
@@ -217,12 +221,12 @@ IAssistProposal *DCompletionAssistProcessor::perform(const AssistInterface *inte
 		m_startPosition = pos;
 
 	if(m_startPosition == 0)
-		return 0;
+		return nullptr;
 
 	QTextDocument* doc = interface->textDocument();
 	QByteArray arr;
 	toUtf8(arr, doc, pos);
-	DCDCompletion c = QcdAssist::sendRequestToDCD(arr, pos);
+	DCDCompletion c = QcdAssist::sendRequestToDCD(arr, static_cast<unsigned>(pos));
 	//qDebug() <<  "DCD items: " << c.completions.length();
 	foreach(DCDCompletionItem i, c.completions)
 	{
@@ -256,7 +260,7 @@ IAssistProposal *DCompletionAssistProcessor::perform(const AssistInterface *inte
 	else if(c.type == Identifiers || reason == ExplicitlyInvoked)
 		return createContentProposal();
 	else
-		return NULL;
+		return nullptr;
 }
 
 void DCompletionAssistProcessor::toUtf8(QByteArray& arr, QTextDocument* doc, int& charPosition)
@@ -270,18 +274,13 @@ void DCompletionAssistProcessor::toUtf8(QByteArray& arr, QTextDocument* doc, int
 
 IAssistProposal* DCompletionAssistProcessor::createContentProposal()
 {
-//	GenericProposalModel* model = new GenericProposalModel();
-//	model->loadContent(m_completions);
-//			//new BasicProposalItemListModel(m_completions);
-//	IAssistProposal *proposal = new GenericProposal(m_startPosition, model);
-//	return proposal;
 	addSnippets();
 	return new GenericProposal(m_startPosition, m_completions);
 }
 
 IAssistProposal* DCompletionAssistProcessor::createHintProposal() const
 {
-	IFunctionHintProposalModel *model = new DFunctionHintProposalModel(m_completions);
+	FunctionHintProposalModelPtr model(new DFunctionHintProposalModel(m_completions));
 	IAssistProposal *proposal = new FunctionHintProposal(m_startPosition, model);
 	return proposal;
 }

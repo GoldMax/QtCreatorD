@@ -1,12 +1,29 @@
 {
 				\"Name\" : \"DEditor\",
-				\"Version\" : \"0.3.0\",
-				\"CompatVersion\" : \"0.3.0\",
+				\"Version\" : \"0.4.0\",
+				\"CompatVersion\" : \"0.4.0\",
 				\"Vendor\" : \"Max Goldaev\",
-				\"Copyright\" : \"(C) 2013-2015 Max Goldaev\",
+				\"Copyright\" : \"(C) 2013-2019 Max Goldaev\",
 				\"License\" : \"LGPL v3\",
 				\"Description\" : \"Editor for D language files.\",
 				\"Category\" : \"D Language\",
 				\"Url\" : \"\",
-				$$dependencyList
+				$$dependencyList,
+
+				\"Mimetypes\" : [
+				\"	<?xml version=\'1.0\'?>\",
+				\"<mime-info xmlns=\'http://www.freedesktop.org/standards/shared-mime-info\'>\",
+				\"    <mime-type type=\'text/x-dsrc\'>\",
+				\"        <comment>D source code</comment>\",
+				\"        <sub-class-of type=\'text/x-d\'/>\",
+				\"								<comment>D source file</comment>\",
+				\"        <glob pattern=\'*.d\'/>\",
+				\"    </mime-type>\",
+				\"    <mime-type type=\'text/x-disrc\'>\",
+				\"        <sub-class-of type=\'text/x-d\'/>\",
+				\"        <comment>D interface code</comment>\",
+				\"        <glob pattern=\'*.di\'/>\",
+				\"    </mime-type>\",
+				\"</mime-info>\"
+]
 }
