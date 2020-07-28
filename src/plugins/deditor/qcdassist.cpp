@@ -101,7 +101,7 @@ DCDCompletion QcdAssist::processCompletion(QByteArray dataArray)
 	DCDCompletion completion;
 
 	QString data = QString::fromUtf8(dataArray.data(),dataArray.length());
-	QStringList lines = data.split(QRegExp(QLatin1String("[\r\n]")), QString::SkipEmptyParts);
+	QStringList lines = data.split(QRegExp(QLatin1String("[\r\n]")), Qt::SkipEmptyParts);
 	if(lines.length() == 0)
 		return completion;
 
@@ -129,7 +129,7 @@ DCDCompletion QcdAssist::processCompletion(QByteArray dataArray)
 		if(line.trimmed().length() == 0)
 			continue;
 
-		QStringList kv = line.split(QRegExp(QLatin1String("\\s+")), QString::SkipEmptyParts);
+		QStringList kv = line.split(QRegExp(QLatin1String("\\s+")), Qt::SkipEmptyParts);
 		if(kv.length() != 2 && completion.type != Calltips)
 		{
 			//Core::MessageManager::write(QString(QLatin1String("qcdassist error: invalid completion data:")).arg(kv.length()).arg(completion.type));

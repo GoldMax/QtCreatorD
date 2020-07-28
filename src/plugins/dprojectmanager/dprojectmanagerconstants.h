@@ -7,7 +7,6 @@ namespace Constants {
 // Contexts
 const char DPROJECT_ID[] = "DProjectManager.DProject";
 const char DPROJECTFILE_ID[] = "DProjectManager.DProjectFile";
-const char DPROJECTGROUP_ID[] = "DProjectManager.DProjectGroup";
 
 // MIME types:
 const char DPROJECT_MIMETYPE[] = "text/x-dproject";

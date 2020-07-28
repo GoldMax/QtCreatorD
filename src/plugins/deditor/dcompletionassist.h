@@ -30,7 +30,7 @@ class DCompletionAssistProvider : public CompletionAssistProvider
 public:
 	DCompletionAssistProvider(QObject *parent = nullptr);
 
-	bool supportsEditor(Core::Id editorId) const;
+	//bool supportsEditor(Core::Id editorId) const;
 	IAssistProcessor* createProcessor() const override;
 
 	int activationCharSequenceLength() const override;

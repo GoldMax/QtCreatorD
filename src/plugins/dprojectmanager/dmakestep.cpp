@@ -25,8 +25,8 @@ using namespace DProjectManager;
 
 namespace DProjectManager {
 
-DMakeStep::DMakeStep(BuildStepList *parent) :
-		AbstractProcessStep(parent, Core::Id(Constants::D_MS_ID)),
+DMakeStep::DMakeStep(BuildStepList *parent, Utils::Id /*id*/) :
+		AbstractProcessStep(parent, Utils::Id(Constants::D_MS_ID)),
 		m_targetType(Executable), m_buildPreset(Debug)
 {
 	setDefaultDisplayName(QLatin1String(Constants::D_MS_DISPLAY_NAME));
@@ -155,7 +155,7 @@ QString DMakeStep::allArguments() const
 
 	DProject* proj = static_cast<DProject*>(project());
 	// Libs
-	QStringList libs = proj->libraries().split(QLatin1Char(' '), QString::SkipEmptyParts);
+	QStringList libs = proj->libraries().split(QLatin1Char(' '), Qt::SkipEmptyParts);
 		foreach(QString s, libs)
 	{
 		s = s.replace(QLatin1String("%{TargetDir}"),relTargetDir);
@@ -167,7 +167,7 @@ QString DMakeStep::allArguments() const
 	// Includes
 	if(proj->sourcesDirectory() != ".")
 		Utils::QtcProcess::addArgs(&args, QLatin1String("-I./") + proj->sourcesDirectory());
-	QStringList incs = proj->includes().split(QLatin1Char(' '), QString::SkipEmptyParts);
+	QStringList incs = proj->includes().split(QLatin1Char(' '), Qt::SkipEmptyParts);
 	foreach(QString s, incs)
 	{
 		s = s.replace(QLatin1String("%{TargetDir}"),relTargetDir);
@@ -195,7 +195,7 @@ bool DMakeStep::init()
 {
 	const auto bc = static_cast<DBuildConfiguration *>(buildConfiguration());
 	if(!bc)
-		emit addTask(Task::buildConfigurationMissingTask());
+		emit addTask(Task::compilerMissingTask());
 
 	Utils::CommandLine cmd = Utils::CommandLine(makeCommand());
 	if(cmd.executable().isEmpty())
@@ -215,11 +215,11 @@ bool DMakeStep::init()
 	pp->setCommandLine(cmd);
 	pp->resolveAll();
 
-	setOutputParser(new ProjectExplorer::GnuMakeParser());
-	IOutputParser *parser = target()->kit()->createOutputParser();
-	if (parser)
-		appendOutputParser(parser);
-	outputParser()->setWorkingDirectory(pp->effectiveWorkingDirectory());
+//	setOutputParser(new ProjectExplorer::GnuMakeParser());
+//	IOutputParser *parser = target()->kit()->createOutputParser();
+//	if (parser)
+//		appendOutputParser(parser);
+//	outputParser()->setWorkingDirectory(pp->effectiveWorkingDirectory());
 
 	return AbstractProcessStep::init();
 }

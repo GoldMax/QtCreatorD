@@ -11,6 +11,7 @@
 #include <coreplugin/navigationwidget.h>
 #include <utils/pathchooser.h>
 #include <utils/qtcassert.h>
+#include <utils/fileutils.h>
 
 #include <QFormLayout>
 #include <QLabel>
@@ -20,31 +21,44 @@
 #include <QSpinBox>
 
 using namespace ProjectExplorer;
+using namespace Utils;
 
 namespace DProjectManager {
 
-DBuildConfiguration::DBuildConfiguration(Target *parent, Core::Id id)
-	: BuildConfiguration(parent, id) //Core::Id(Constants::D_BC_ID))
+DBuildConfiguration::DBuildConfiguration(Target *parent, Utils::Id id)
+	: BuildConfiguration(parent, id) //Utils::Id(Constants::D_BC_ID))
 {
 	setConfigWidgetDisplayName(tr("Build settings"));
 	setBuildDirectoryHistoryCompleter("D.BuildDir.History");
 
+	m_buildSystem = new DBuildSystem(this);
+
+	setInitializer([this](const BuildInfo &) {
+					buildSteps()->appendStep(Constants::D_MS_ID);
+					cleanSteps()->appendStep(Constants::D_MS_ID);
+					updateCacheAndEmitEnvironmentChanged();
+	});
+
 	updateCacheAndEmitEnvironmentChanged();
 }
 
-void DBuildConfiguration::initialize()
+BuildSystem* DBuildConfiguration::buildSystem() const
 {
-	BuildConfiguration::initialize();
-
-	BuildStepList *buildSteps = stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
-	buildSteps->appendStep(Constants::D_MS_ID);
-
-	// TODO : configure clean step
-//	BuildStepList *cleanSteps = stepList(ProjectExplorer::Constants::BUILDSTEPS_CLEAN);
-//	cleanSteps->appendStep(Constants::D_MS_ID);
-
-	updateCacheAndEmitEnvironmentChanged();
+				return m_buildSystem;
 }
+//void DBuildConfiguration::initialize()
+//{
+//	BuildConfiguration::initialize();
+
+//	BuildStepList *buildSteps = stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
+//	buildSteps->appendStep(Constants::D_MS_ID);
+
+//	// TODO : configure clean step
+////	BuildStepList *cleanSteps = stepList(ProjectExplorer::Constants::BUILDSTEPS_CLEAN);
+////	cleanSteps->appendStep(Constants::D_MS_ID);
+
+//	updateCacheAndEmitEnvironmentChanged();
+//}
 NamedWidget* DBuildConfiguration::createConfigWidget()
 {
 	return new DBuildSettingsWidget(this);
@@ -69,10 +83,10 @@ void DBuildConfiguration::emitConfigurationChanged(bool rebuildProjectTree)
 	}
 	emit configurationChanged();
 }
+
 //------------------------------------------------------------------------------------------------
 //  class DBuildConfigurationFactory
 //------------------------------------------------------------------------------------------------
-
 DBuildConfigurationFactory::DBuildConfigurationFactory() :
 		BuildConfigurationFactory()
 {
@@ -81,36 +95,50 @@ DBuildConfigurationFactory::DBuildConfigurationFactory() :
 	setSupportedProjectType(Constants::DPROJECT_ID);
 	setSupportedProjectMimeTypeName(Constants::DPROJECT_MIMETYPE);
 
+
+	setBuildGenerator([](const Kit *, const FilePath &projectPath, bool forSetup) {
+					BuildInfo info;
+					info.typeName = BuildConfiguration::tr("BuD Buildild");
+					info.buildDirectory = forSetup ? Project::projectDirectory(projectPath) : projectPath;
+
+					if (forSetup)  {
+									//: The name of the build configuration created by default for a generic project.
+									info.displayName = BuildConfiguration::tr("Debug");
+					}
+
+					return QList<BuildInfo>{info};
+	});
 }
 
-QList<BuildInfo> DBuildConfigurationFactory::availableBuilds
-				(const Kit *k, const Utils::FilePath &projectPath, bool /*forSetup*/) const
-{
-	BuildInfo info(this);
-	info.typeName = tr("D Build");
-	info.displayName = tr("Debug");
-	info.buildDirectory = Project::projectDirectory(projectPath);
-	info.kitId = k->id();
+//QList<BuildInfo> DBuildConfigurationFactory::availableBuilds
+//				(const Kit *k, const Utils::FilePath &projectPath, bool /*forSetup*/) const
+//{
+//	BuildInfo info(this);
+//	info.typeName = tr("D Build");
+//	info.displayName = tr("Debug");
+//	info.buildDirectory = Project::projectDirectory(projectPath);
+//	info.kitId = k->id();
 
-	return {info};
-}
+//	return {info};
+//}
 
 //------------------------------------------------------------------------------------------------
 //  class DBuildSettingsWidget
 //------------------------------------------------------------------------------------------------
 DBuildSettingsWidget::DBuildSettingsWidget(DBuildConfiguration *bc)
-	: m_buildConfiguration(bc)
+	: NamedWidget(tr("Project settings")),
+			m_buildConfiguration(bc)
 {
 	QFormLayout *fl = new QFormLayout(this);
 	fl->setContentsMargins(0, -1, 0, -1);
 	fl->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
 
-	setDisplayName(tr("Project settings"));
+	//setDisplayName(tr("Project settings"));
 
 	DProject* proj = static_cast<DProject*>(m_buildConfiguration->target()->project());
 	Q_ASSERT(proj);
-		QString projectDir = proj->projectDirectory().toString();
-	fl->addRow(tr("Project directory:"), new QLabel(projectDir));
+		Utils::FilePath projectDir = proj->projectDirectory();
+	fl->addRow(tr("Project directory:"), new QLabel(projectDir.toString()));
 
 	// source directory
 	m_pathChooser = new Utils::PathChooser(this);
@@ -199,6 +227,57 @@ void DBuildSettingsWidget::editsEditingFinished()
 	proj->saveSettings();
 	proj->refresh(DProject::Project);
 	m_buildConfiguration->emitConfigurationChanged(QObject::sender() == editPriority);
+}
+
+//------------------------------------------------------------------------------------------------
+//  class DBuildSystem
+//------------------------------------------------------------------------------------------------
+DBuildSystem::DBuildSystem(DBuildConfiguration *bc)
+				: BuildSystem(bc)
+{
+}
+DBuildSystem::~DBuildSystem()
+{
+}
+bool DBuildSystem::supportsAction(Node *context, ProjectAction action, const Node *node) const
+{
+	Q_UNUSED(context)
+	Q_UNUSED(node)
+	return action == AddNewFile
+			|| action == AddExistingFile
+			|| action == RemoveFile
+			|| action == Rename;
+}
+
+void DBuildSystem::triggerParsing()
+{
+	DProject* proj = dynamic_cast<DProject*>(this->project());
+	Q_ASSERT(proj);
+	proj->refresh(DProject::RefreshOptions::Everything);
+}
+bool DBuildSystem::addFiles(Node* context, const QStringList &filePaths, QStringList *notAdded)
+{
+	Q_UNUSED(context)
+	Q_UNUSED(notAdded)
+	DProject* proj = dynamic_cast<DProject*>(this->project());
+	Q_ASSERT(proj);
+	return proj->addFiles(filePaths);
+}
+RemovedFilesFromProject DBuildSystem::removeFiles(Node* context, const QStringList &filePaths, QStringList *notRemoved)
+{
+	Q_UNUSED(context)
+	Q_UNUSED(notRemoved)
+	DProject* proj = dynamic_cast<DProject*>(this->project());
+	Q_ASSERT(proj);
+	proj->removeFiles(filePaths);
+	return RemovedFilesFromProject::Ok;
+}
+bool DBuildSystem::renameFile(Node* context, const QString &filePath, const QString &newFilePath)
+{
+	Q_UNUSED(context)
+	DProject* proj = dynamic_cast<DProject*>(this->project());
+	Q_ASSERT(proj);
+	return proj->renameFile(filePath, newFilePath);
 }
 
 } // namespace DProjectManager

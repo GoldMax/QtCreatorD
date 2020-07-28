@@ -14,13 +14,14 @@ class DRunConfiguration : public ProjectExplorer::CustomExecutableRunConfigurati
 	Q_OBJECT
 
 public:
-	DRunConfiguration(Target *parent, Core::Id id);
+	DRunConfiguration(Target *parent, Utils::Id id);
 
 	QString defaultDisplayName() const { return tr("Build Run"); }
 
 	void updateConfig(const DMakeStep* makeStep);
-	bool isConfigured() const override;
-	void updateEnabledState() override;
+//	bool isConfigured() const override;
+//	void updateEnabledState() override;
+
 };
 
 class DRunConfigurationFactory : public FixedRunConfigurationFactory

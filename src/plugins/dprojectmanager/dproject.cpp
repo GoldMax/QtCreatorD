@@ -2,7 +2,6 @@
 
 #include "dprojectmanagerconstants.h"
 #include "dproject.h"
-#include "dprojectnodes.h"
 #include "dmakestep.h"
 #include "dbuildconfiguration.h"
 #include "drunconfiguration.h"
@@ -62,7 +61,7 @@ void DProject::setIncludes(QString value)
 	if(QcdAssist::isDCDEnabled())
 	{
 		QDir dir(this->projectDirectory().toString());
-		foreach(QString s, this->includes().split(QLatin1Char(' '), QString::SkipEmptyParts))
+		foreach(QString s, this->includes().split(QLatin1Char(' '), Qt::SkipEmptyParts))
 		{
 			if(s.startsWith(QLatin1String("-I")))
 				s = s.remove(0,2);
@@ -284,7 +283,8 @@ bool DProject::setupTarget(Target *t)
 
 	Utils::FilePath projectDir = t->project()->projectDirectory();
 
-	BuildInfo info(factory);
+	BuildInfo info;
+	info.factory = factory;
 	info.displayName = tr("Debug");
 	info.typeName = tr("D Build");
 	info.buildDirectory = projectDir;
@@ -296,7 +296,8 @@ bool DProject::setupTarget(Target *t)
 	t->addBuildConfiguration(bc);
 	SessionManager::instance()->setActiveBuildConfiguration(t,bc, SetActive::Cascade);
 
-	info = BuildInfo(factory);
+	info = BuildInfo();
+	info.factory = factory;
 	info.displayName = tr("Release");
 	info.typeName = tr("D Build");
 	info.buildDirectory = projectDir;
@@ -307,7 +308,8 @@ bool DProject::setupTarget(Target *t)
 		return false;
 	t->addBuildConfiguration(bc);
 
-	info = BuildInfo(factory);
+	info = BuildInfo();
+	info.factory = factory;
 	info.displayName = tr("Unittest");
 	info.typeName = tr("D Build");
 	info.buildDirectory = projectDir;
@@ -324,198 +326,17 @@ bool DProject::setupTarget(Target *t)
 }
 
 //--------------------------------------------------------------------------------------
-//
-// DProjectGroup
-//
+// DProjectNode
 //--------------------------------------------------------------------------------------
-DProjectGroup::DProjectGroup(const Utils::FilePath &fileName)
-	: ProjectExplorer::Project(Constants::DPROJECTGROUP_MIMETYPE, fileName)
+DProjectNode::DProjectNode(DProject* project)
+	: ProjectNode(project->projectFilePath()),
+			m_project(project)
 {
-	setId(Constants::DPROJECTGROUP_ID);
-	setProjectLanguages(Context(ProjectExplorer::Constants::CXX_LANGUAGE_ID));
-	setDisplayName(fileName.toFileInfo().completeBaseName());
+	static int count = 0;
+	setDisplayName(project->projectFilePath().toFileInfo().completeBaseName());
+	setIcon(QIcon(QLatin1String(Constants::ICON_DPROJECT)));
+	setAbsoluteFilePathAndLine(project->projectFilePath(),++count);
+	setShowWhenEmpty(true);
 }
-DProjectGroup::~DProjectGroup()
-{
-	setRootProjectNode(nullptr);
-}
-
-bool DProjectGroup::addSubProject(const QString& projFilePath)
-{
-	QSettings projs(projectFilePath().toString(), QSettings::IniFormat);
-	projs.beginGroup(QLatin1String(Constants::INI_PROJECTS_ROOT_KEY));
-
-	foreach(QString p, projs.allKeys())
-		if(projFilePath == projFilePath)
-			return false;
-
-	projs.setValue(projFilePath, 0);
-	projs.sync();
-
-	QString s;
-	refresh(&s);
-	return true;
-}
-
-QVariantMap DProjectGroup::toMap() const
-{
-//	QSettings sets(projectFilePath().toString(),	QSettings::IniFormat);
-//	sets.setValue(QLatin1String(Constants::INI_SOURCE_ROOT_KEY), sourcesDirectory());
-//	sets.setValue(QLatin1String(Constants::INI_INCLUDES_KEY), includes());
-//	sets.setValue(QLatin1String(Constants::INI_LIBRARIES_KEY), libraries());
-//	sets.setValue(QLatin1String(Constants::INI_EXTRA_ARGS_KEY), extraArgs());
-//	sets.setValue(QLatin1String(Constants::INI_COMPILE_PRIORITY_KEY), compilePriority());
-//	sets.sync();
-
-	return Project::toMap();
-}
-Project::RestoreResult DProjectGroup::fromMap(const QVariantMap &map, QString *errorMessage)
-{
-	RestoreResult result = Project::fromMap(map, errorMessage);
-	if (result != RestoreResult::Ok)
-					return result;
-
-//	if (!activeTarget())
-//					addTargetForDefaultKit();
-
-
-//	// Sanity check: We need both a buildconfiguration and a runconfiguration!
-//	const QList<Target *> targetList = targets();
-//	if (targetList.isEmpty())
-//		return RestoreResult::Error;
-//	for (Target *t : targetList)
-//	{
-//		if (!t->activeBuildConfiguration())
-//		{
-//			removeTarget(t);
-//			continue;
-//		}
-//		if (!t->activeRunConfiguration())
-//			t->addRunConfiguration(new DRunConfiguration(t, Constants::BUILDRUN_CONFIG_ID));
-//	}
-
-	refresh(errorMessage);
-	return result;
-}
-static void appendError(QString &errorString, const QString &error)
-{
-	if (error.isEmpty())
-		return;
-
-	if (!errorString.isEmpty())
-		errorString.append(QLatin1Char('\n'));
-	errorString.append(error);
-}
-void DProjectGroup::refresh(QString *errorMessage)
-{
-	QSettings sets(projectFilePath().toString(), QSettings::IniFormat);
-
-//	setSourcesDirectory(sets.value(QLatin1String(Constants::INI_SOURCE_ROOT_KEY)).toString());
-//	setLibraries(sets.value(QLatin1String(Constants::INI_LIBRARIES_KEY)).toString());
-//	setIncludes(sets.value(QLatin1String(Constants::INI_INCLUDES_KEY)).toString());
-//	setExtraArgs(sets.value(QLatin1String(Constants::INI_EXTRA_ARGS_KEY)).toString());
-//	setCompilePriority(sets.value(QLatin1String(Constants::INI_COMPILE_PRIORITY_KEY)).toInt());
-
-//	if(options & Files)
-//	{
-//		m_files.clear();
-
-//		FilePath src;
-//		if(sourcesDirectory() != ".")
-//			src = FilePath::fromString(sourcesDirectory());
-
-		//QStringList fileNames;
-
-		sets.beginGroup(QLatin1String(Constants::INI_PROJECTS_ROOT_KEY));
-		for(QString rel : sets.allKeys())
-		{
-			if(rel.length() == 0)
-				continue;
-			if(QDir::isRelativePath(rel))
-				rel = "/" + rel;
-			qDebug() << "Project: " << rel;
-			//fileNames.append(rel);
-
-			QTC_ASSERT(!rel.isEmpty(), continue);
-
-
-			const QFileInfo fi(rel);
-			const auto filePath = Utils::FilePath::fromString(fi.absoluteFilePath());
-			Project *found = Utils::findOrDefault(SessionManager::projects(),
-																																									Utils::equal(&Project::projectFilePath, filePath));
-			if (found)
-			{
-				//alreadyOpen.append(found);
-			//	SessionManager::reportProjectLoadingProgress();
-				continue;
-			}
-
-			Utils::MimeType mt = Utils::mimeTypeForFile(rel);
-			if (ProjectManager::canOpenProjectForMimeType(mt) == false)
-			{
-				appendError(*errorMessage, tr("Failed opening project \"%1\": No plugin can open project type \"%2\".")
-																.arg(QDir::toNativeSeparators(rel))
-																.arg(mt.name()));
-				continue;
-			}
-
-			if (!filePath.toFileInfo().isFile())
-			{
-				appendError(*errorMessage,
-																tr("Failed opening project \"%1\": Project is not a file.")
-																.arg(rel));
-			}
-			else if (Project *pro = ProjectManager::openProject(mt, filePath))
-			{
-//					QObject::connect(pro, &Project::parsingFinished, [pro]() {
-//						emit SessionManager::instance()->projectFinishedParsing(pro);
-//					});
-				QString restoreError;
-				Project::RestoreResult restoreResult = pro->restoreSettings(&restoreError);
-				if (restoreResult == Project::RestoreResult::Ok)
-				{
-//						connect(pro, &Project::fileListChanged,
-//														m_instance, &ProjectExplorerPlugin::fileListChanged);
-//						SessionManager::addProject(pro);
-					m_projects += pro;
-				}
-				else
-				{
-					if (restoreResult == Project::RestoreResult::Error)
-						appendError(*errorMessage, restoreError);
-					delete pro;
-				}
-			}
-
-//			if (fileNames.size() > 1)
-//				SessionManager::reportProjectLoadingProgress();
-		}
-
-//		ProjectExplorerPlugin::OpenProjectResult res =
-//				ProjectExplorerPlugin::instance()->openProjects(fileNames);
-//		*errorMessage = res.errorMessage();
-
-//		for(Project* p : res.projects())
-//			m_projects.append(p);
-
-		auto root = std::make_unique<DProjectGroupNode>(this);
-		for(Project* p : m_projects)
-		{
-			//root->addNode(std::unique_ptr<Node>(p->containerNode()));
-			//p->containerNode()->setParentFolderNode(root.get());
-			root->addNode(std::unique_ptr<Node>(p->rootProjectNode()));
-			//p->rootProjectNode()->setParentFolderNode(root.get());
-		}
-
-		// setRootProjectNode не хочет добавлять пустые ветви, поэтому мухлюем
-		if(root->isEmpty())
-		{
-			auto prjNone = std::make_unique<FileNode>(projectFilePath(),	FileType::Project);
-			root->addNestedNode(std::move(prjNone), projectDirectory());
-		}
-		setRootProjectNode(std::move(root));
-//	}
-}
-
 
 } // namespace DProjectManager

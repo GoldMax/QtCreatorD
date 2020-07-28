@@ -2,7 +2,6 @@
 #define DPROJECT_H
 
 #include "dprojectmanagerconstants.h"
-#include "dprojectnodes.h"
 
 #include <projectexplorer/project.h>
 #include <projectexplorer/projectnodes.h>
@@ -12,7 +11,6 @@
 namespace DProjectManager {
 
 class DProjectNode;
-class DProjectGroupNode;
 
 class DProject : public ProjectExplorer::Project
 {
@@ -66,29 +64,20 @@ private:
 	QList<QString> m_files;
 };
 
-class DProjectGroup : public ProjectExplorer::Project
+class DProjectNode : public ProjectExplorer::ProjectNode
 {
-	Q_OBJECT
-
 public:
-	DProjectGroup(const Utils::FilePath &filename);
-	~DProjectGroup() override;
+	DProjectNode(DProject* project);
 
-public:
-	const QList<Project*>& projects() const { return m_projects; }
-
-	bool addSubProject(const QString &projFilePath);
-
-	void refresh(QString *errorMessage);
-
-protected:
-	QVariantMap toMap() const override;
-	RestoreResult fromMap(const QVariantMap &map, QString* errorMessage) override;
+	bool canAddSubProject(const QString &) const override { return false; }
+	bool addSubProject(const QString &) override { return false; }
+	bool removeSubProject(const QString &) override { return false; }
 
 private:
-	QList<Project*> m_projects;
+	DProject *m_project;
 };
 
 } // namespace DProjectManager
+
 
 #endif // DPROJECT_H

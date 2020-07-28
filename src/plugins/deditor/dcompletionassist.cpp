@@ -111,10 +111,10 @@ DCompletionAssistProvider::DCompletionAssistProvider(QObject *parent) :
 
 }
 
-bool DCompletionAssistProvider::supportsEditor(Core::Id editorId) const
-{
-	return editorId == Constants::C_DEDITOR_ID;
-}
+//bool DCompletionAssistProvider::supportsEditor(Core::Id editorId) const
+//{
+//	return editorId == Constants::C_DEDITOR_ID;
+//}
 IAssistProcessor* DCompletionAssistProvider::createProcessor() const
 {
 	return new DCompletionAssistProcessor;
