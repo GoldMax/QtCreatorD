@@ -1,42 +1,28 @@
 #ifndef QCDASSIST_H
 #define QCDASSIST_H
 
+#include <texteditor/textdocument.h>
+#include <utils/link.h>
+
 #include "deditor_global.h"
 
 #include <QtGlobal>
 #include <QString>
 #include <QList>
-#include <string>
+
+class QTextDocument;
 
 namespace QcdAssist
 {
-	DEDITORSHARED_EXPORT bool isDCDEnabled();
 	void isDCDEnabled(bool value);
 	QString dcdClient();
 
-// struct AutocompleteRequest
-// {
-//  enum RequestKind
-//  {
-//   autocomplete,
-//   clearCache,
-//   addImport,
-//   shutdown
-//  };
+	// Записывает содержимое документа в массив байт UTF-8 кодировки
+	// возвращает преобразованное значение символьной позиции в байтовое смещение
+	int toUtf8(QByteArray& arr, QTextDocument* doc, int charPosition);
+	// Отправляет запрос к DCD
+	QString sendRequestToDCD(QByteArray& filedata, QString command, uint bytePosition);
 
-//  // File name used for error reporting
-//  std::string fileName;
-//  // Command coming from the client
-//  int kind;
-//  // Paths to be searched for import files
-//  std::string importPaths;
-//  // The source code to auto complete
-//  std::vector<char> sourceCode;
-//  // The cursor position
-//  size_t cursorPosition;
-
-//  MSGPACK_DEFINE(fileName, kind, importPaths, sourceCode, cursorPosition)
-// };
 
 	enum DCDCompletionType { Identifiers, Calltips };
 	enum DCDCompletionItemType
@@ -77,10 +63,11 @@ namespace QcdAssist
 	//-------------------
 	//--- Client Func ---
 	//-------------------
+	DEDITORSHARED_EXPORT bool isDCDEnabled();
 	DEDITORSHARED_EXPORT void sendClearChache();
 	DEDITORSHARED_EXPORT void sendAddImportToDCD(QString path);
-	DEDITORSHARED_EXPORT DCDCompletion sendRequestToDCD(QByteArray& filedata, uint pos);
-	DEDITORSHARED_EXPORT DCDCompletion processCompletion(QByteArray dataArray);
+	DEDITORSHARED_EXPORT DCDCompletion autocompletion(QTextDocument* document, int charPosition);
+	DEDITORSHARED_EXPORT Utils::Link symbolLocation(QTextDocument* document, int charPosition);
 }
 
 #endif // QCDASSIST_H

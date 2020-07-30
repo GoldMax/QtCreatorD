@@ -294,7 +294,7 @@ bool DProject::setupTarget(Target *t)
 	if (!bc)
 		return false;
 	t->addBuildConfiguration(bc);
-	SessionManager::instance()->setActiveBuildConfiguration(t,bc, SetActive::Cascade);
+	//SessionManager::instance()->setActiveBuildConfiguration(t,bc, SetActive::Cascade);
 
 	info = BuildInfo();
 	info.factory = factory;

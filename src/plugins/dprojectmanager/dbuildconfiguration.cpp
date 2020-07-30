@@ -35,7 +35,7 @@ DBuildConfiguration::DBuildConfiguration(Target *parent, Utils::Id id)
 
 	setInitializer([this](const BuildInfo &) {
 					buildSteps()->appendStep(Constants::D_MS_ID);
-					cleanSteps()->appendStep(Constants::D_MS_ID);
+					//cleanSteps()->appendStep(Constants::D_MS_ID);
 					updateCacheAndEmitEnvironmentChanged();
 	});
 
@@ -98,7 +98,7 @@ DBuildConfigurationFactory::DBuildConfigurationFactory() :
 
 	setBuildGenerator([](const Kit *, const FilePath &projectPath, bool forSetup) {
 					BuildInfo info;
-					info.typeName = BuildConfiguration::tr("BuD Buildild");
+					info.typeName = BuildConfiguration::tr("D Build");
 					info.buildDirectory = forSetup ? Project::projectDirectory(projectPath) : projectPath;
 
 					if (forSetup)  {

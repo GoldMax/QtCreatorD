@@ -38,6 +38,15 @@ DMakeStep::DMakeStep(BuildStepList *parent, Utils::Id /*id*/) :
 	// так как имя еще может быть не установлено
 	if(bname.length() == 0)
 		bname = "debug";
+	if(bname == "debug")
+		m_buildPreset = Debug;
+	else if(bname == "release")
+		m_buildPreset = Release;
+	else if(bname == "unittest")
+		m_buildPreset = Unittest;
+	else
+		m_buildPreset = None;
+
 	if(m_targetDirName.length() == 0)
 		m_targetDirName = QLatin1String("bin") + QDir::separator() + bname;
 	if(m_objDirName.length() == 0)
@@ -235,7 +244,8 @@ QString ddemangle(const QString& line)
 	{
 		QProcess proc;
 		proc.setProcessChannelMode(QProcess::MergedChannels);
-		proc.start(QLatin1String("ddemangle"));
+		proc.setProgram(QLatin1String("ddemangle"));
+		proc.start();
 		if (!proc.waitForStarted(10000))
 			return line;
 		proc.write(line.toUtf8());

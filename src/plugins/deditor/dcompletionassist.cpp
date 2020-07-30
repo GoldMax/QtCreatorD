@@ -223,10 +223,7 @@ IAssistProposal *DCompletionAssistProcessor::perform(const AssistInterface *inte
 	if(m_startPosition == 0)
 		return nullptr;
 
-	QTextDocument* doc = interface->textDocument();
-	QByteArray arr;
-	toUtf8(arr, doc, pos);
-	DCDCompletion c = QcdAssist::sendRequestToDCD(arr, static_cast<unsigned>(pos));
+	DCDCompletion c = QcdAssist::autocompletion(interface->textDocument(), pos);
 	//qDebug() <<  "DCD items: " << c.completions.length();
 	foreach(DCDCompletionItem i, c.completions)
 	{
@@ -261,15 +258,6 @@ IAssistProposal *DCompletionAssistProcessor::perform(const AssistInterface *inte
 		return createContentProposal();
 	else
 		return nullptr;
-}
-
-void DCompletionAssistProcessor::toUtf8(QByteArray& arr, QTextDocument* doc, int& charPosition)
-{
-	const QString text = doc->toPlainText();
-	arr.append(text.leftRef(charPosition).toUtf8());
-	int pos = arr.length();
-	arr.append(QStringRef(&text,charPosition, text.length()-charPosition).toUtf8());
-	charPosition = pos;
 }
 
 IAssistProposal* DCompletionAssistProcessor::createContentProposal()

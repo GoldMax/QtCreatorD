@@ -43,8 +43,6 @@ public:
 	DCompletionAssistProcessor();
 	IAssistProposal *perform(const AssistInterface *interface) override;
 
-	void toUtf8(QByteArray& arr, QTextDocument* doc, int & charPosition);
-
 private:
 	IAssistProposal* createContentProposal();
 	IAssistProposal* createHintProposal() const;

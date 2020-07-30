@@ -4,6 +4,7 @@
 #include "dindenter.h"
 #include "dcompletionassist.h"
 #include "dautocompleter.h"
+#include "qcdassist.h"
 
 #include <texteditor/textdocument.h>
 #include <texteditor/texteditorsettings.h>
@@ -12,6 +13,8 @@
 #include <cplusplus/MatchingText.h>
 #include <cplusplus/CppDocument.h>
 #include <cpptools/cppsemanticinfo.h>
+
+#include <utils/link.h>
 
 #include <QDebug>
 
@@ -33,7 +36,6 @@ void DTextEditor::decorateEditor(TextEditor::TextEditorWidget *editor)
 	editor->textDocument()->setSyntaxHighlighter(new DHighlighter);
 	editor->textDocument()->setIndenter(new DIndenter(editor->textDocument()->document()));
 	editor->setAutoCompleter(new DAutoCompleter);
-
 }
 //-----------------------------
 //- DEditorWidget
@@ -70,6 +72,25 @@ void DEditorWidget::keyPressEvent(QKeyEvent *e)
 //	}
 
 	TextEditorWidget::keyPressEvent(e);
+}
+void DEditorWidget::findLinkAt(const QTextCursor &cursor,
+																																		Utils::ProcessLinkCallback &&callback,
+																																		bool resolveTarget,
+																																		bool inNextSplit)
+{
+	Utils::Link link = QcdAssist::symbolLocation(cursor.document(), cursor.position());
+
+	if(link.hasValidTarget())
+	{
+//		if(link.targetFileName == "stdin")
+//			((QTextCursor&)cursor).setPosition(link.targetColumn);
+//		else
+		callback(link);
+
+	}
+	else
+		emit requestLinkAt(cursor, callback, resolveTarget, inNextSplit);
+	//TextEditorWidget::findLinkAt(cursor, callback, resolveTarget, inNextSplit);
 }
 
 bool DEditorWidget::handleStringSplitting(QKeyEvent *e) const
