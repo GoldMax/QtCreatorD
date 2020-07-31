@@ -6,7 +6,6 @@ DEFINES += DPROJECTMANAGER_LIBRARY
 
 SOURCES += dprojectmanagerplugin.cpp \
 				dproject.cpp \
-				dprojectnodes.cpp \
 				dbuildconfiguration.cpp \
 				dmakestep.cpp \
 				drunconfiguration.cpp \
@@ -15,7 +14,6 @@ SOURCES += dprojectmanagerplugin.cpp \
 HEADERS += dprojectmanagerplugin.h \
 								dprojectmanager_global.h \
 								dprojectmanagerconstants.h \
-				dprojectnodes.h \
 				dproject.h \
 				dbuildconfiguration.h \
 				dmakestep.h \
@@ -48,6 +46,5 @@ FORMS += \
 				dmakestep.ui
 
 DISTFILES += \
-	DProjectGroup.mimetypes.xml \
-	DProjectManager.mimetypes.xml
+		DProjectManager.mimetypes.xml
 

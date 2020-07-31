@@ -33,10 +33,10 @@ public:
 	{
 		RunWorkerFactory::make<SimpleTargetRunner>(),
 		{
-			//ProjectExplorer::Constants::NORMAL_RUN_MODE,
+			ProjectExplorer::Constants::NORMAL_RUN_MODE,
 			ProjectExplorer::Constants::DEBUG_RUN_MODE
 		},
-		{ runConfigFactory.id() },
+		{ runConfigFactory.runConfigurationId() },
 		{ Id(ProjectExplorer::Constants::DESKTOP_DEVICE_TYPE) }
 	};
 };
@@ -44,14 +44,11 @@ DProjectPluginPrivate::DProjectPluginPrivate()
 {
 	ProjectManager::registerProjectType<DProject>(
 				DProjectManager::Constants::DPROJECT_MIMETYPE);
-	ProjectManager::registerProjectType<DProjectGroup>(
-				DProjectManager::Constants::DPROJECTGROUP_MIMETYPE);
-	IWizardFactory::registerFactoryCreator([]()
+		IWizardFactory::registerFactoryCreator([]()
 	{
 		return QList<IWizardFactory *>
 		{
-			new DProjectWizard,
-			new DProjectGroupWizard
+			new DProjectWizard
 		};
 	});
 
@@ -84,16 +81,6 @@ bool DProjectManagerPlugin::initialize(const QStringList &arguments, QString *er
 	}
 	if(data.isEmpty() == false)
 		Utils::addMimeTypes(Constants::DPROJECT_ID,data);
-
-	const QLatin1String gmimetypesXml(":/dprojectmanager/DProjectGroup.mimetypes.xml");
-	QFile gf(gmimetypesXml);
-	if(gf.open(QIODevice::OpenModeFlag::ReadOnly))
-	{
-		data = gf.readAll();
-		gf.close();
-	}
-	if(data.isEmpty() == false)
-		Utils::addMimeTypes(Constants::DPROJECTGROUP_ID,data);
 
 	dd = new DProjectPluginPrivate;
 

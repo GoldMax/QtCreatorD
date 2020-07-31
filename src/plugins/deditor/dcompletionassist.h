@@ -30,7 +30,7 @@ class DCompletionAssistProvider : public CompletionAssistProvider
 public:
 	DCompletionAssistProvider(QObject *parent = nullptr);
 
-	bool supportsEditor(Core::Id editorId) const;
+	//bool supportsEditor(Core::Id editorId) const;
 	IAssistProcessor* createProcessor() const override;
 
 	int activationCharSequenceLength() const override;
@@ -42,8 +42,6 @@ class DCompletionAssistProcessor : public IAssistProcessor
 public:
 	DCompletionAssistProcessor();
 	IAssistProposal *perform(const AssistInterface *interface) override;
-
-	void toUtf8(QByteArray& arr, QTextDocument* doc, int & charPosition);
 
 private:
 	IAssistProposal* createContentProposal();

@@ -27,7 +27,7 @@ public:
 		None = 3
 	};
 
-	explicit DMakeStep(ProjectExplorer::BuildStepList *parent);
+	explicit DMakeStep(ProjectExplorer::BuildStepList *parent, Utils::Id id);
 
 public:
 	QVariantMap toMap() const override;

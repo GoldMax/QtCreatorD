@@ -28,6 +28,11 @@ public:
 
 protected:
 	void keyPressEvent(QKeyEvent *e) override;
+	void contextMenuEvent(QContextMenuEvent *) override;
+	void findLinkAt(const QTextCursor &,
+																									Utils::ProcessLinkCallback &&processLinkCallback,
+																									bool resolveTarget = true,
+																									bool inNextSplit = false) override;
 
 private:
 	bool handleStringSplitting(QKeyEvent *e) const;

@@ -4,16 +4,23 @@
 #include "dindenter.h"
 #include "dcompletionassist.h"
 #include "dautocompleter.h"
+#include "qcdassist.h"
 
+#include <texteditor/texteditorconstants.h>
 #include <texteditor/textdocument.h>
 #include <texteditor/texteditorsettings.h>
 #include <texteditor/completionsettings.h>
 
+#include <coreplugin/actionmanager/actioncontainer.h>
+#include <coreplugin/actionmanager/actionmanager.h>
 #include <cplusplus/MatchingText.h>
 #include <cplusplus/CppDocument.h>
 #include <cpptools/cppsemanticinfo.h>
 
+#include <utils/link.h>
+
 #include <QDebug>
+#include <QMenu>
 
 using namespace DEditor;
 using namespace TextEditor;
@@ -33,7 +40,6 @@ void DTextEditor::decorateEditor(TextEditor::TextEditorWidget *editor)
 	editor->textDocument()->setSyntaxHighlighter(new DHighlighter);
 	editor->textDocument()->setIndenter(new DIndenter(editor->textDocument()->document()));
 	editor->setAutoCompleter(new DAutoCompleter);
-
 }
 //-----------------------------
 //- DEditorWidget
@@ -70,6 +76,48 @@ void DEditorWidget::keyPressEvent(QKeyEvent *e)
 //	}
 
 	TextEditorWidget::keyPressEvent(e);
+}
+void DEditorWidget::contextMenuEvent(QContextMenuEvent *e)
+{
+	const QPointer<QMenu> menu(new QMenu(this));
+
+	Core::Command *cmd;
+	cmd = Core::ActionManager::command(TextEditor::Constants::FOLLOW_SYMBOL_UNDER_CURSOR);
+	if(cmd)
+		menu->addAction(cmd->action());
+
+	menu->addSeparator();
+
+	cmd = Core::ActionManager::command(TextEditor::Constants::AUTO_INDENT_SELECTION);
+	if(cmd)
+	menu->addAction(cmd->action());
+
+	cmd = Core::ActionManager::command(TextEditor::Constants::UN_COMMENT_SELECTION);
+	menu->addAction(cmd->action());
+
+
+	appendStandardContextMenuActions(menu);
+
+	menu->exec(e->globalPos());
+	if (menu)
+		delete menu; // OK, menu was not already deleted by closed editor widget.
+}
+void DEditorWidget::findLinkAt(const QTextCursor &cursor,
+																																		Utils::ProcessLinkCallback &&callback,
+																																		bool resolveTarget,
+																																		bool inNextSplit)
+{
+	Utils::Link link = QcdAssist::symbolLocation(cursor.document(), cursor.position());
+
+	if(link.hasValidTarget())
+	{
+		if(link.targetFileName == "stdin")
+			link.targetFileName = textDocument()->filePath().toString();
+		callback(link);
+	}
+	else
+		emit requestLinkAt(cursor, callback, resolveTarget, inNextSplit);
+	//TextEditorWidget::findLinkAt(cursor, callback, resolveTarget, inNextSplit);
 }
 
 bool DEditorWidget::handleStringSplitting(QKeyEvent *e) const
