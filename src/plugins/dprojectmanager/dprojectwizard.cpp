@@ -89,8 +89,7 @@ Core::GeneratedFiles DProjectWizard::generateFiles(const QWizard *w,
 	const QString projectFileName = QFileInfo(dir, projectName + QLatin1String(".qcd")).absoluteFilePath();
 
 	Core::GeneratedFile generatedProjectFile(projectFileName);
-	auto group = QLatin1String("[") + QLatin1String(Constants::INI_FILES_ROOT_KEY) +
-														QLatin1String("]\n");
+	QString group = QString("[%1]\n").arg(Constants::INI_FILES_ROOT_KEY);
 	generatedProjectFile.setContents(group);
 	generatedProjectFile.setAttributes(Core::GeneratedFile::OpenProjectAttribute);
 
@@ -107,97 +106,5 @@ bool DProjectWizard::postGenerateFiles(const QWizard *w,
 	Q_UNUSED(w)
 	return ProjectExplorer::CustomProjectWizard::postGenerateOpen(l, errorMessage);
 }
-
-//----------------------------------------------------------------------------
-//
-// DProjectGroupWizardDialog
-//
-//----------------------------------------------------------------------------
-DProjectGroupWizardDialog::DProjectGroupWizardDialog(
-		const Core::BaseFileWizardFactory *factory,
-		QWidget *parent) :
-Core::BaseFileWizard(factory, QVariantMap(), parent)
-{
-	setWindowTitle(tr("Create a D language projects group"));
-
-	// first page
-	m_firstPage = new Utils::FileWizardPage;
-	m_firstPage->setTitle(tr("Project group name and location"));
-	m_firstPage->setFileNameLabel(tr("Project group name:"));
-	m_firstPage->setPathLabel(tr("Location:"));
-	const int firstPageId = addPage(m_firstPage);
-	wizardProgress()->item(firstPageId)->setTitle(tr("Location"));
-}
-QString DProjectGroupWizardDialog::path() const
-{
-	return m_firstPage->path();
-}
-void DProjectGroupWizardDialog::setPath(const QString &path)
-{
-	m_firstPage->setPath(path);
-}
-QString DProjectGroupWizardDialog::projectName() const
-{
-	return m_firstPage->fileName();
-}
-
-//----------------------------------------------------------------------------
-//
-// DProjectGroupWizard
-//
-//----------------------------------------------------------------------------
-DProjectGroupWizard::DProjectGroupWizard()
-{
-	setSupportedProjectTypes({ Constants::DPROJECTGROUP_ID });
-	setId("A.DProjectGroup");
-	setDisplayName(tr("D projects group"));
-	setDescription(tr("Create a D language projects group."));
-	setCategory(QLatin1String(ProjectExplorer::Constants::QT_PROJECT_WIZARD_CATEGORY));
-	setDisplayCategory(QLatin1String(ProjectExplorer::Constants::QT_PROJECT_WIZARD_CATEGORY_DISPLAY));
-	setIcon(QIcon(QLatin1String(":/dprojectmanager/dfolder_64.png")));
-	setFlags(Core::IWizardFactory::PlatformIndependent);
-}
-Core::BaseFileWizard* DProjectGroupWizard::create(QWidget *parent,
-																														const Core::WizardDialogParameters &params) const
-{
-	DProjectGroupWizardDialog *wizard = new DProjectGroupWizardDialog(this, parent);
-	wizard->setPath(params.defaultPath());
-
-	foreach (QWizardPage *p, wizard->extensionPages())
-		wizard->addPage(p);
-
-	return wizard;
-}
-Core::GeneratedFiles DProjectGroupWizard::generateFiles(const QWizard *w,
-																																																									QString *errorMessage) const
-{
-	Q_UNUSED(errorMessage)
-
-	const DProjectGroupWizardDialog *wizard = qobject_cast<const DProjectGroupWizardDialog *>(w);
-	const QString projectName = wizard->projectName();
-	const QDir dir(wizard->path());
-
-	const QString projectFileName = QFileInfo(dir, projectName + QLatin1String(".qcdg")).absoluteFilePath();
-
-	Core::GeneratedFile generatedProjectFile(projectFileName);
-	auto group = QLatin1String("[") + QLatin1String(Constants::INI_PROJECTS_ROOT_KEY) +
-														QLatin1String("]\n");
-	generatedProjectFile.setContents(group);
-	generatedProjectFile.setAttributes(Core::GeneratedFile::OpenProjectAttribute);
-
-
-	Core::GeneratedFiles files;
-	files.append(generatedProjectFile);
-
-	return files;
-}
-bool DProjectGroupWizard::postGenerateFiles(const QWizard *w,
-																																							const Core::GeneratedFiles &l,
-																																							QString *errorMessage) const
-{
-	Q_UNUSED(w)
-	return ProjectExplorer::CustomProjectWizard::postGenerateOpen(l, errorMessage);
-}
-
 
 } // namespace DProjectManager

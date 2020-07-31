@@ -12,6 +12,7 @@
 #include <projectexplorer/taskhub.h>
 #include <projectexplorer/abi.h>
 #include <projectexplorer/buildsteplist.h>
+#include <projectexplorer/buildstep.h>
 #include <projectexplorer/buildconfiguration.h>
 #include <projectexplorer/abstractprocessstep.h>
 #include <projectexplorer/processparameters.h>
@@ -19,14 +20,15 @@
 #include <projectexplorer/kitinformation.h>
 #include <projectexplorer/toolchain.h>
 #include <utils/qtcprocess.h>
+#include <utils/outputformatter.h>
 
 using namespace ProjectExplorer;
 using namespace DProjectManager;
 
 namespace DProjectManager {
 
-DMakeStep::DMakeStep(BuildStepList *parent) :
-		AbstractProcessStep(parent, Core::Id(Constants::D_MS_ID)),
+DMakeStep::DMakeStep(BuildStepList *parent, Utils::Id /*id*/) :
+		AbstractProcessStep(parent, Utils::Id(Constants::D_MS_ID)),
 		m_targetType(Executable), m_buildPreset(Debug)
 {
 	setDefaultDisplayName(QLatin1String(Constants::D_MS_DISPLAY_NAME));
@@ -38,6 +40,15 @@ DMakeStep::DMakeStep(BuildStepList *parent) :
 	// так как имя еще может быть не установлено
 	if(bname.length() == 0)
 		bname = "debug";
+	if(bname == "debug")
+		m_buildPreset = Debug;
+	else if(bname == "release")
+		m_buildPreset = Release;
+	else if(bname == "unittest")
+		m_buildPreset = Unittest;
+	else
+		m_buildPreset = None;
+
 	if(m_targetDirName.length() == 0)
 		m_targetDirName = QLatin1String("bin") + QDir::separator() + bname;
 	if(m_objDirName.length() == 0)
@@ -78,7 +89,11 @@ BuildStepConfigWidget *DMakeStep::createConfigWidget()
 {
 	return new DMakeStepConfigWidget(this);
 }
-
+void DMakeStep::setupOutputFormatter(Utils::OutputFormatter *formatter)
+{
+	formatter->addLineParsers(target()->kit()->createOutputParsers());
+	AbstractProcessStep::setupOutputFormatter(formatter);
+}
 Utils::FilePath DMakeStep::makeCommand() const
 {
 	BuildConfiguration *bc = buildConfiguration();
@@ -155,7 +170,7 @@ QString DMakeStep::allArguments() const
 
 	DProject* proj = static_cast<DProject*>(project());
 	// Libs
-	QStringList libs = proj->libraries().split(QLatin1Char(' '), QString::SkipEmptyParts);
+	QStringList libs = proj->libraries().split(QLatin1Char(' '), Qt::SkipEmptyParts);
 		foreach(QString s, libs)
 	{
 		s = s.replace(QLatin1String("%{TargetDir}"),relTargetDir);
@@ -167,7 +182,7 @@ QString DMakeStep::allArguments() const
 	// Includes
 	if(proj->sourcesDirectory() != ".")
 		Utils::QtcProcess::addArgs(&args, QLatin1String("-I./") + proj->sourcesDirectory());
-	QStringList incs = proj->includes().split(QLatin1Char(' '), QString::SkipEmptyParts);
+	QStringList incs = proj->includes().split(QLatin1Char(' '), Qt::SkipEmptyParts);
 	foreach(QString s, incs)
 	{
 		s = s.replace(QLatin1String("%{TargetDir}"),relTargetDir);
@@ -195,7 +210,7 @@ bool DMakeStep::init()
 {
 	const auto bc = static_cast<DBuildConfiguration *>(buildConfiguration());
 	if(!bc)
-		emit addTask(Task::buildConfigurationMissingTask());
+		emit addTask(Task::compilerMissingTask());
 
 	Utils::CommandLine cmd = Utils::CommandLine(makeCommand());
 	if(cmd.executable().isEmpty())
@@ -215,11 +230,11 @@ bool DMakeStep::init()
 	pp->setCommandLine(cmd);
 	pp->resolveAll();
 
-	setOutputParser(new ProjectExplorer::GnuMakeParser());
-	IOutputParser *parser = target()->kit()->createOutputParser();
-	if (parser)
-		appendOutputParser(parser);
-	outputParser()->setWorkingDirectory(pp->effectiveWorkingDirectory());
+//	setOutputParser(new ProjectExplorer::GnuMakeParser());
+//	IOutputParser *parser = target()->kit()->createOutputParser();
+//	if (parser)
+//		appendOutputParser(parser);
+//	outputParser()->setWorkingDirectory(pp->effectiveWorkingDirectory());
 
 	return AbstractProcessStep::init();
 }
@@ -235,7 +250,8 @@ QString ddemangle(const QString& line)
 	{
 		QProcess proc;
 		proc.setProcessChannelMode(QProcess::MergedChannels);
-		proc.start(QLatin1String("ddemangle"));
+		proc.setProgram(QLatin1String("ddemangle"));
+		proc.start();
 		if (!proc.waitForStarted(10000))
 			return line;
 		proc.write(line.toUtf8());

@@ -2,7 +2,6 @@
 #define DPROJECT_H
 
 #include "dprojectmanagerconstants.h"
-#include "dprojectnodes.h"
 
 #include <projectexplorer/project.h>
 #include <projectexplorer/projectnodes.h>
@@ -12,7 +11,6 @@
 namespace DProjectManager {
 
 class DProjectNode;
-class DProjectGroupNode;
 
 class DProject : public ProjectExplorer::Project
 {
@@ -46,8 +44,8 @@ public:
 	void setIncludes(QString value); // { m_includes = value; }
 	const QString& extraArgs() const { return m_extraArgs; }
 	void setExtraArgs(QString value) { m_extraArgs = value; }
-	uint compilePriority() const { return m_priority; }
-	void setCompilePriority(uint value) { m_priority = value; }
+	int compilePriority() const { return m_priority; }
+	void setCompilePriority(int value) { m_priority = value; }
 	const QList<QString>& files() const { return m_files; }
 
 protected:
@@ -62,33 +60,24 @@ private:
 	QString m_libs;
 	QString m_includes;
 	QString m_extraArgs;
-	uint m_priority;
+	int m_priority;
 	QList<QString> m_files;
 };
 
-class DProjectGroup : public ProjectExplorer::Project
+class DProjectNode : public ProjectExplorer::ProjectNode
 {
-	Q_OBJECT
-
 public:
-	DProjectGroup(const Utils::FilePath &filename);
-	~DProjectGroup() override;
+	DProjectNode(DProject* project);
 
-public:
-	const QList<Project*>& projects() const { return m_projects; }
-
-	bool addSubProject(const QString &projFilePath);
-
-	void refresh(QString *errorMessage);
-
-protected:
-	QVariantMap toMap() const override;
-	RestoreResult fromMap(const QVariantMap &map, QString* errorMessage) override;
+	bool canAddSubProject(const QString &) const override { return false; }
+	bool addSubProject(const QString &) override { return false; }
+	bool removeSubProject(const QString &) override { return false; }
 
 private:
-	QList<Project*> m_projects;
+	DProject *m_project;
 };
 
 } // namespace DProjectManager
+
 
 #endif // DPROJECT_H

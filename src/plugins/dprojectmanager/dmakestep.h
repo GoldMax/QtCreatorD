@@ -27,12 +27,13 @@ public:
 		None = 3
 	};
 
-	explicit DMakeStep(ProjectExplorer::BuildStepList *parent);
+	explicit DMakeStep(ProjectExplorer::BuildStepList *parent, Utils::Id id);
 
 public:
 	QVariantMap toMap() const override;
 	bool fromMap(const QVariantMap &map) override;
 	ProjectExplorer::BuildStepConfigWidget *createConfigWidget() override;
+	void setupOutputFormatter(Utils::OutputFormatter *formatter) override;
 	void stdError(const QString &line) override;
 	void stdOutput(const QString &line) override;
 

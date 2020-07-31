@@ -18,8 +18,8 @@ namespace DProjectManager
 //-----------------------------------------------------------------------------
 //--- DRunConfiguration
 //-----------------------------------------------------------------------------
-DRunConfiguration::DRunConfiguration(Target *target, Core::Id /*id*/) :
-		CustomExecutableRunConfiguration(target, Core::Id(Constants::BUILDRUN_CONFIG_ID))
+DRunConfiguration::DRunConfiguration(Target *target, Utils::Id /*id*/) :
+		CustomExecutableRunConfiguration(target, Utils::Id(Constants::BUILDRUN_CONFIG_ID))
 {
 	setDefaultDisplayName(defaultDisplayName());
 
@@ -35,16 +35,16 @@ DRunConfiguration::DRunConfiguration(Target *target, Core::Id /*id*/) :
 
 void DRunConfiguration::updateConfig(const DMakeStep* makeStep)
 {
-	if(makeStep == nullptr)
-	{
-		BuildConfiguration* build = this->activeBuildConfiguration();
-		if(!build)
-			return;
-		BuildStepList* bsl = build->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
-		Q_ASSERT(bsl);
-		auto makeStep = bsl->firstOfType<DMakeStep>();
-		Q_ASSERT(makeStep);
-	}
+	Q_ASSERT(makeStep);
+//	if(makeStep == nullptr)
+//	{
+//		BuildConfiguration* build = this->activeBuildConfiguration();
+//		if(!build)
+//			return;
+//		BuildStepList* bsl = build->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
+//		Q_ASSERT(bsl);
+//		auto makeStep = bsl->firstOfType<DMakeStep>();
+//	}
 
 	Utils::FilePath outDir;
 	if(FileUtils::isRelativePath(makeStep->targetDirName()))
@@ -60,16 +60,16 @@ void DRunConfiguration::updateConfig(const DMakeStep* makeStep)
 	this->aspect<ExecutableAspect>()->setExecutable(outDir);
 }
 
-bool DRunConfiguration::isConfigured() const
-{
-	//return this->aspect<ExecutableAspect>()->executable().isEmpty() == false;
-	return true;
-}
+//bool DRunConfiguration::isConfigured() const
+//{
+//	//return this->aspect<ExecutableAspect>()->executable().isEmpty() == false;
+//	return true;
+//}
 
-void DRunConfiguration::updateEnabledState()
-{
-	setEnabled(isConfigured());
-}
+//void DRunConfiguration::updateEnabledState()
+//{
+//	setEnabled(isConfigured());
+//}
 
 //---------------------------------------------------------------------------------
 //--- DRunConfigurationFactory
