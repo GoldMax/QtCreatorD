@@ -181,7 +181,7 @@ Utils::Link QcdAssist::symbolLocation(QTextDocument* document, int charPosition)
 	QString data = sendRequestToDCD(dataArray, QLatin1String("--symbolLocation"), bytePosition);
 
 	data = data.trimmed();
-	Core::MessageManager::write(QLatin1String("qcdassist: %1").arg(data));
+	//Core::MessageManager::write(QLatin1String("qcdassist: %1").arg(data));
 
 	if(data.toLower() == "not found")
 		return Utils::Link();
