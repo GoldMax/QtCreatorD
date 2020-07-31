@@ -82,11 +82,9 @@ void DEditorWidget::findLinkAt(const QTextCursor &cursor,
 
 	if(link.hasValidTarget())
 	{
-//		if(link.targetFileName == "stdin")
-//			((QTextCursor&)cursor).setPosition(link.targetColumn);
-//		else
+		if(link.targetFileName == "stdin")
+			link.targetFileName = textDocument()->filePath().toString();
 		callback(link);
-
 	}
 	else
 		emit requestLinkAt(cursor, callback, resolveTarget, inNextSplit);

@@ -190,15 +190,27 @@ Utils::Link QcdAssist::symbolLocation(QTextDocument* document, int charPosition)
 	if(lines.length() != 2)
 		return Utils::Link();
 
-	Utils::Link link;
+	bytePosition = lines[1].toInt();
 
+	Utils::Link link;
 	link.targetFileName = lines[0];
-	if(link.targetFileName == "stdin")
+	link.targetLine = 0;
+	link.targetColumn = 0;
+
+	if(link.targetFileName != "stdin")
 	{
-		link.targetFileName = "";
-		link.targetLine = 1;
-		link.targetColumn = 1;
+		QFile file(link.targetFileName);
+		if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+			return Utils::Link();
+		dataArray = file.read(bytePosition);
+		if(dataArray.length() < bytePosition)
+			return Utils::Link();
 	}
+	data = QString::fromUtf8(dataArray.data(), bytePosition);
+
+	link.targetLine = data.count(QChar('\n'));
+	if(link.targetLine > 0)
+		link.targetColumn = data.length() - data.lastIndexOf(QChar('\n'));
 
 	return link;
 }
